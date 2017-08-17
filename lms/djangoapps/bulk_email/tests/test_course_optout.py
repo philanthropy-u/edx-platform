@@ -11,6 +11,11 @@ from mock import Mock, patch
 from nose.plugins.attrib import attr
 
 from bulk_email.models import BulkEmailFlag
+from bulk_email.policies import CourseEmailOptout
+from edx_ace.message import Message
+from edx_ace.recipient import Recipient
+from edx_ace.policy import PolicyResult
+from edx_ace.channel import ChannelType
 from student.models import CourseEnrollment
 from student.tests.factories import AdminFactory, CourseEnrollmentFactory, UserFactory
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
@@ -27,7 +32,7 @@ class TestOptoutCourseEmails(ModuleStoreTestCase):
     def setUp(self):
         super(TestOptoutCourseEmails, self).setUp()
         course_title = u"ẗëṡẗ title ｲ乇丂ｲ ﾶ乇丂丂ﾑg乇 ｷo尺 ﾑﾚﾚ тэѕт мэѕѕаБэ"
-        self.course = CourseFactory.create(display_name=course_title)
+        self.course = CourseFactory.create(run='testcourse1', display_name=course_title)
         self.instructor = AdminFactory.create()
         self.student = UserFactory.create()
         CourseEnrollmentFactory.create(user=self.student, course_id=self.course.id)
@@ -114,3 +119,56 @@ class TestOptoutCourseEmails(ModuleStoreTestCase):
         sent_addresses = [message.to[0] for message in mail.outbox]
         self.assertIn(self.student.email, sent_addresses)
         self.assertIn(self.instructor.email, sent_addresses)
+
+    def test_policy_optedout(self):
+        """
+        Make sure the policy prevents ACE emails if the user is opted-in.
+        """
+        url = reverse('change_email_settings')
+        # This is a checkbox, so on the post of opting out (that is, an Un-check of the box),
+        # the Post that is sent will not contain 'receive_emails'
+        response = self.client.post(url, {'course_id': self.course.id.to_deprecated_string()})
+        self.assertEquals(json.loads(response.content), {'success': True})
+
+        policy = CourseEmailOptout()
+        channel_mods = policy.check(self.create_test_message())
+        self.assertEqual(channel_mods, PolicyResult(deny={ChannelType.EMAIL}))
+
+    def create_test_message(self):
+        return Message(
+            app_label='foo',
+            name='bar',
+            recipient=Recipient(
+                username=self.student.username,
+                email_address=self.student.email,
+            ),
+            context={
+                'course_id': str(self.course.id)
+            },
+        )
+
+    def test_policy_optedin(self):
+        """
+        Make sure the policy allows ACE emails if the user is opted-in.
+        """
+        url = reverse('change_email_settings')
+        response = self.client.post(url, {'course_id': self.course.id.to_deprecated_string(), 'receive_emails': 'on'})
+        self.assertEquals(json.loads(response.content), {'success': True})
+
+        policy = CourseEmailOptout()
+        channel_mods = policy.check(self.create_test_message())
+        self.assertEqual(channel_mods, PolicyResult(deny=set()))
+
+    def test_policy_no_course_id(self):
+        """
+        Make sure the policy allows ACE emails if the user is opted-in.
+        """
+        url = reverse('change_email_settings')
+        response = self.client.post(url, {'course_id': self.course.id.to_deprecated_string(), 'receive_emails': 'on'})
+        self.assertEquals(json.loads(response.content), {'success': True})
+
+        policy = CourseEmailOptout()
+        message = self.create_test_message()
+        message.context = {}
+        channel_mods = policy.check(message)
+        self.assertEqual(channel_mods, PolicyResult(deny=set()))
