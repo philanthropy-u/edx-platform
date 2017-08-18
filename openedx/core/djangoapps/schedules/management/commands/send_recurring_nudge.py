@@ -37,7 +37,7 @@ class ScheduleStartResolver(RecipientResolver):
             _schedule_hour.delay(week, target_hour)
 
 
-@task
+@task(ignore_result=True, routing_key=settings.ACE_ROUTING_KEY)
 def _schedule_hour(week, target_hour):
     msg_type = RecurringNudge(week)
 
@@ -54,7 +54,7 @@ def _schedule_hour(week, target_hour):
         _schedule_send.delay(msg)
 
 
-@task
+@task(ignore_result=True, routing_key=settings.ACE_ROUTING_KEY)
 def _schedule_send(msg):
     try:
         ace.send(msg)
