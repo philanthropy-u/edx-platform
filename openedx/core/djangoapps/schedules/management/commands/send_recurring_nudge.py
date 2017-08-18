@@ -72,6 +72,9 @@ def _schedules_for_hour(target_hour):
         start__lt=target_hour + datetime.timedelta(minutes=60),
     )
 
+    if "read_replica" in settings.DATABASES:
+        schedules = schedules.using("read_replica")
+
     for schedule in schedules:
         enrollment = schedule.enrollment
         user = enrollment.user

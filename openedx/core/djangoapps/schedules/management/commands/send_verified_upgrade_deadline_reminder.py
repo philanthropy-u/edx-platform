@@ -64,6 +64,9 @@ class VerifiedDeadlineResolver(RecipientResolver):
             upgrade_deadline__day=self.schedule_deadline.day,
         )
 
+        if "read_replica" in settings.DATABASES:
+            schedules = schedules.using("read_replica")
+
         for schedule in schedules:
             enrollment = schedule.enrollment
             user = enrollment.user
