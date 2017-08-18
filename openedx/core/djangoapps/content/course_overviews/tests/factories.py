@@ -4,6 +4,7 @@ import factory
 from factory.django import DjangoModelFactory
 
 from ..models import CourseOverview
+from opaque_keys.edx.locator import CourseLocator
 
 
 class CourseOverviewFactory(DjangoModelFactory):
@@ -14,6 +15,7 @@ class CourseOverviewFactory(DjangoModelFactory):
     version = CourseOverview.VERSION
     pre_requisite_courses = []
     start = factory.Faker('past_datetime')
+    org = 'edX'
 
     @factory.lazy_attribute
     def _pre_requisite_courses_json(self):
@@ -22,3 +24,7 @@ class CourseOverviewFactory(DjangoModelFactory):
     @factory.lazy_attribute
     def _location(self):
         return self.id.make_usage_key('course', 'course')
+
+    @factory.lazy_attribute
+    def id(self):
+        return CourseLocator(self.org, 'toy', '2012_Fall')

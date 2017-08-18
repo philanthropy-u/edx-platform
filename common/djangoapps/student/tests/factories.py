@@ -128,7 +128,6 @@ class CourseEnrollmentFactory(DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     course = factory.SubFactory(
         'openedx.core.djangoapps.content.course_overviews.tests.factories.CourseOverviewFactory',
-        id=CourseKey.from_string('edX/toy/2012_Fall')
     )
 
 

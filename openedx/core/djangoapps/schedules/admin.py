@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
+from config_models.admin import ConfigurationModelAdmin
+
 from . import models
 
 
@@ -25,3 +27,5 @@ class ScheduleAdmin(admin.ModelAdmin):
         qs = super(ScheduleAdmin, self).get_queryset(request)
         qs = qs.select_related('enrollment', 'enrollment__user')
         return qs
+
+admin.site.register(models.ScheduleConfig, ConfigurationModelAdmin)
