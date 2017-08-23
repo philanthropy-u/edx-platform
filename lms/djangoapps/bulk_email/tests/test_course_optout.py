@@ -49,10 +49,6 @@ class TestOptoutCourseEmails(ModuleStoreTestCase):
         }
         BulkEmailFlag.objects.create(enabled=True, require_course_email_auth=False)
 
-    def tearDown(self):
-        super(TestOptoutCourseEmails, self).tearDown()
-        BulkEmailFlag.objects.all().delete()
-
     def navigate_to_email_view(self):
         """Navigate to the instructor dash's email view"""
         # Pull up email view on instructor dashboard
@@ -120,18 +116,45 @@ class TestOptoutCourseEmails(ModuleStoreTestCase):
         self.assertIn(self.student.email, sent_addresses)
         self.assertIn(self.instructor.email, sent_addresses)
 
-    def test_policy_optedout(self):
-        """
-        Make sure the policy prevents ACE emails if the user is opted-in.
-        """
+
+@attr(shard=1)
+@patch('bulk_email.models.html_to_text', Mock(return_value='Mocking CourseEmail.text_message', autospec=True))
+class TestACEOptoutCourseEmails(ModuleStoreTestCase):
+    """
+    Test that optouts are referenced in sending course email.
+    """
+    def setUp(self):
+        super(TestACEOptoutCourseEmails, self).setUp()
+        course_title = u"ẗëṡẗ title ｲ乇丂ｲ ﾶ乇丂丂ﾑg乇 ｷo尺 ﾑﾚﾚ тэѕт мэѕѕаБэ"
+        self.course = CourseFactory.create(run='testcourse1', display_name=course_title)
+        self.instructor = AdminFactory.create()
+        self.student = UserFactory.create()
+        CourseEnrollmentFactory.create(user=self.student, course_id=self.course.id)
+
+        self.client.login(username=self.student.username, password="test")
+
+        self._set_email_optout(False)
+        self.policy = CourseEmailOptout()
+
+    def _set_email_optout(self, opted_out):
         url = reverse('change_email_settings')
         # This is a checkbox, so on the post of opting out (that is, an Un-check of the box),
         # the Post that is sent will not contain 'receive_emails'
-        response = self.client.post(url, {'course_id': self.course.id.to_deprecated_string()})
+        post_data = {'course_id': self.course.id.to_deprecated_string()}
+
+        if not opted_out:
+            post_data['receive_emails'] = 'on'
+
+        response = self.client.post(url, post_data)
         self.assertEquals(json.loads(response.content), {'success': True})
 
-        policy = CourseEmailOptout()
-        channel_mods = policy.check(self.create_test_message())
+    def test_policy_optedout(self):
+        """
+        Make sure the policy prevents ACE emails if the user is opted-out.
+        """
+        self._set_email_optout(True)
+
+        channel_mods = self.policy.check(self.create_test_message())
         self.assertEqual(channel_mods, PolicyResult(deny={ChannelType.EMAIL}))
 
     def create_test_message(self):
@@ -151,24 +174,14 @@ class TestOptoutCourseEmails(ModuleStoreTestCase):
         """
         Make sure the policy allows ACE emails if the user is opted-in.
         """
-        url = reverse('change_email_settings')
-        response = self.client.post(url, {'course_id': self.course.id.to_deprecated_string(), 'receive_emails': 'on'})
-        self.assertEquals(json.loads(response.content), {'success': True})
-
-        policy = CourseEmailOptout()
-        channel_mods = policy.check(self.create_test_message())
+        channel_mods = self.policy.check(self.create_test_message())
         self.assertEqual(channel_mods, PolicyResult(deny=set()))
 
     def test_policy_no_course_id(self):
         """
-        Make sure the policy allows ACE emails if the user is opted-in.
+        Make sure the policy denies ACE emails if there is no course id in the context.
         """
-        url = reverse('change_email_settings')
-        response = self.client.post(url, {'course_id': self.course.id.to_deprecated_string(), 'receive_emails': 'on'})
-        self.assertEquals(json.loads(response.content), {'success': True})
-
-        policy = CourseEmailOptout()
         message = self.create_test_message()
         message.context = {}
-        channel_mods = policy.check(message)
+        channel_mods = self.policy.check(message)
         self.assertEqual(channel_mods, PolicyResult(deny=set()))
