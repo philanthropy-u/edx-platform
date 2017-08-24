@@ -9,6 +9,7 @@ from django.db.models import Prefetch
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.db import DEFAULT_DB_ALIAS, connections
+from django.utils.http import urlquote
 
 from openedx.core.djangoapps.schedules.models import Schedule
 from openedx.core.djangoapps.user_api.models import UserPreference
@@ -78,7 +79,7 @@ class VerifiedDeadlineResolver(RecipientResolver):
             course_id_str = str(enrollment.course_id)
             course = enrollment.course
 
-            course_root = reverse('course_root', kwargs={'course_id': course_id_str})
+            course_root = reverse('course_root', kwargs={'course_id': urlquote(course_id_str)})
 
             def absolute_url(relative_path):
                 return u'{}{}'.format(settings.LMS_ROOT_URL, relative_path)

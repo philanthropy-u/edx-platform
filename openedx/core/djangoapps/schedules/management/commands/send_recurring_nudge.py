@@ -9,6 +9,7 @@ from celery import task
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.utils.http import urlquote
 
 from openedx.core.djangoapps.schedules.models import Schedule, ScheduleConfig
 from openedx.core.djangoapps.site_configuration.models import SiteConfiguration
@@ -104,8 +105,7 @@ def _schedules_for_hour(target_hour, org_list, exclude_orgs=False):
         course_id_str = str(enrollment.course_id)
         course = enrollment.course
 
-        # TODO: this produces a URL that contains the literal "+" character in the course key, which breaks sailthru
-        course_root = reverse('course_root', kwargs={'course_id': course_id_str})
+        course_root = reverse('course_root', kwargs={'course_id': urlquote(course_id_str)})
 
         def absolute_url(relative_path):
             return u'{}{}'.format(settings.LMS_ROOT_URL, relative_path)
