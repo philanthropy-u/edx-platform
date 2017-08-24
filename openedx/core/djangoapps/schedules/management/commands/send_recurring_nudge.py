@@ -35,6 +35,9 @@ class ScheduleStartResolver(RecipientResolver):
         self.current_date = current_date.replace(hour=0, minute=0, second=0)
 
     def send(self, week):
+        """
+        Send a message to all users whose schedule starts at ``self.current_date`` - ``week`` weeks.
+        """
         if not ScheduleConfig.current(self.site).enqueue_recurring_nudge:
             return
 
@@ -126,7 +129,11 @@ def _schedules_for_hour(target_hour, org_list, exclude_orgs=False):
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        parser.add_argument('--date', default=datetime.datetime.utcnow().date().isoformat())
+        parser.add_argument(
+            '--date',
+            default=datetime.datetime.utcnow().date().isoformat(),
+            help='The date to compute weekly messages relative to, in YYYY-MM-DD format',
+        )
         parser.add_argument('site_domain_name')
 
     def handle(self, *args, **options):
