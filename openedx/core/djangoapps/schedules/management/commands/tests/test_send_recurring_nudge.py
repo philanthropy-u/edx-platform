@@ -8,6 +8,7 @@ from django.conf import settings
 
 from opaque_keys.edx.keys import CourseKey
 from openedx.core.djangoapps.schedules.management.commands import send_recurring_nudge as nudge
+from openedx.core.djangoapps.site_configuration.tests.factories import SiteFactory
 from openedx.core.djangolib.testing.utils import CacheIsolationTestCase
 from openedx.core.djangoapps.schedules.tests.factories import ScheduleFactory, ScheduleConfigFactory
 from openedx.core.djangoapps.site_configuration.tests.factories import SiteConfigurationFactory
@@ -25,7 +26,8 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         ScheduleFactory.create(start=datetime.datetime(2017, 8, 1, 17, 34, 30, tzinfo=pytz.UTC))
         ScheduleFactory.create(start=datetime.datetime(2017, 8, 2, 15, 34, 30, tzinfo=pytz.UTC))
 
-        self.site_config = SiteConfigurationFactory.create()
+        site = SiteFactory.create()
+        self.site_config = SiteConfigurationFactory.create(site=site)
         ScheduleConfigFactory.create(site=self.site_config.site)
 
     @patch.object(nudge, 'ScheduleStartResolver')
@@ -125,8 +127,10 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
     def test_site_config(self, org_list, exclude_orgs, expected_message_count, mock_schedule_send, mock_ace):
         filtered_org = 'filtered_org'
         unfiltered_org = 'unfiltered_org'
-        limited_config = SiteConfigurationFactory.create(values={'course_org_filter': [filtered_org]})
-        unlimited_config = SiteConfigurationFactory.create(values={'course_org_filter': []})
+        site1 = SiteFactory.create(domain='foo1.bar', name='foo1.bar')
+        limited_config = SiteConfigurationFactory.create(values={'course_org_filter': [filtered_org]}, site=site1)
+        site2 = SiteFactory.create(domain='foo2.bar', name='foo2.bar')
+        unlimited_config = SiteConfigurationFactory.create(values={'course_org_filter': []}, site=site2)
 
         for config in (limited_config, unlimited_config):
             ScheduleConfigFactory.create(site=config.site)
