@@ -164,4 +164,3 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         print(mock_schedule_send.mock_calls)
         self.assertEqual(mock_schedule_send.apply_async.call_count, expected_message_count)
         self.assertFalse(mock_ace.send.called)
-
