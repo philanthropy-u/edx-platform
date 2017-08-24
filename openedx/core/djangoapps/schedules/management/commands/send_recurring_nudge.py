@@ -88,6 +88,7 @@ def _schedules_for_hour(target_hour, org_list, exclude_orgs=False):
     ).filter(
         start__gte=target_hour,
         start__lt=target_hour + datetime.timedelta(minutes=60),
+        enrollment__is_active=True,
     )
 
     if exclude_orgs:
