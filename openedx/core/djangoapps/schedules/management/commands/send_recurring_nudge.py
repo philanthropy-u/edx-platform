@@ -41,17 +41,21 @@ class ScheduleStartResolver(RecipientResolver):
         if not ScheduleConfig.current(self.site).enqueue_recurring_nudge:
             return
 
-        site_config = SiteConfiguration.objects.get(site_id=self.site.id)
-        org_list = site_config.values.get('course_org_filter', None)
-        exclude_orgs = False
-        if not org_list:
-            not_orgs = set()
-            for other_site_config in SiteConfiguration.objects.all():
-                not_orgs.update(other_site_config.values.get('course_org_filter', []))
-            org_list = list(not_orgs)
-            exclude_orgs = True
-        elif not isinstance(org_list, list):
-            org_list = [org_list]
+        try:
+            site_config = SiteConfiguration.objects.get(site_id=self.site.id)
+            org_list = site_config.values.get('course_org_filter', None)
+            exclude_orgs = False
+            if not org_list:
+                not_orgs = set()
+                for other_site_config in SiteConfiguration.objects.all():
+                    not_orgs.update(other_site_config.values.get('course_org_filter', []))
+                org_list = list(not_orgs)
+                exclude_orgs = True
+            elif not isinstance(org_list, list):
+                org_list = [org_list]
+        except SiteConfiguration.DoesNotExist:
+            org_list = None
+            exclude_orgs = False
 
         target_date = self.current_date - datetime.timedelta(days=week * 7)
         for hour in range(24):
@@ -94,10 +98,11 @@ def _schedules_for_hour(target_hour, org_list, exclude_orgs=False):
         enrollment__is_active=True,
     )
 
-    if exclude_orgs:
-        schedules = schedules.exclude(enrollment__course__org__in=org_list)
-    else:
-        schedules = schedules.filter(enrollment__course__org__in=org_list)
+    if org_list is not None:
+        if exclude_orgs:
+            schedules = schedules.exclude(enrollment__course__org__in=org_list)
+        else:
+            schedules = schedules.filter(enrollment__course__org__in=org_list)
 
     if "read_replica" in settings.DATABASES:
         schedules = schedules.using("read_replica")
@@ -109,10 +114,10 @@ def _schedules_for_hour(target_hour, org_list, exclude_orgs=False):
         course_id_str = str(enrollment.course_id)
         course = enrollment.course
 
-        course_root = reverse('course_root', kwargs={'course_id': urlquote(course_id_str)})
+        course_root = reverse('course_root', kwargs={'course_id': course_id_str})
 
         def absolute_url(relative_path):
-            return u'{}{}'.format(settings.LMS_ROOT_URL, relative_path)
+            return u'{}{}'.format(settings.LMS_ROOT_URL, urlquote(relative_path))
 
         template_context = {
             'student_name': user.profile.name,
