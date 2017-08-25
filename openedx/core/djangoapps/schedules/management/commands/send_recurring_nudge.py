@@ -115,7 +115,7 @@ def _schedules_for_hour(target_hour, org_list, exclude_orgs=False):
         course_id_str = str(enrollment.course_id)
         course = enrollment.course
 
-        course_root = reverse('course_root', kwargs={'course_id': course_id_str})
+        course_root = reverse('course_root', args=[course_id_str])
 
         def absolute_url(relative_path):
             return u'{}{}'.format(settings.LMS_ROOT_URL, urlquote(relative_path))
