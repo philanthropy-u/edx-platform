@@ -21,6 +21,7 @@ from edx_ace.recipient import Recipient
 
 
 LOG = logging.getLogger(__name__)
+ROUTING_KEY = getattr(settings, 'ACE_ROUTING_KEY', None)
 
 
 class RecurringNudge(MessageType):
@@ -63,7 +64,7 @@ class ScheduleStartResolver(RecipientResolver):
             _schedule_hour.apply_async((self.site.id, week, target_hour, org_list, exclude_orgs), retry=False)
 
 
-@task(ignore_result=True, routing_key=settings.ACE_ROUTING_KEY)
+@task(ignore_result=True, routing_key=ROUTING_KEY)
 def _schedule_hour(site_id, week, target_hour, org_list, exclude_orgs=False):
     msg_type = RecurringNudge(week)
 
@@ -79,7 +80,7 @@ def _schedule_hour(site_id, week, target_hour, org_list, exclude_orgs=False):
         _schedule_send.apply_async((site_id, msg), retry=False)
 
 
-@task(ignore_result=True, routing_key=settings.ACE_ROUTING_KEY)
+@task(ignore_result=True, routing_key=ROUTING_KEY)
 def _schedule_send(site_id, msg):
     site = Site.objects.get(pk=site_id)
     if not ScheduleConfig.current(site).deliver_recurring_nudge:
