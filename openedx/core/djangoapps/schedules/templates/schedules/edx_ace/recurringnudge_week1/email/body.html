@@ -1,3 +1,43 @@
-Dear {{student_name}},
-<br><br>
-Remember when you enrolled in <strong>{{course_name}}</strong> on edX.org? We do! We are excited to let you know the course has started. Come see what everyone is learning.
+{% extends 'schedules/edx_ace/common/base_body.html' %}
+
+{% block content %}
+
+  <table width="100%" align="left" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+      <td>
+        <h1 style="
+          color: #292B2C;
+          font-size: 1.5em;
+          margin: 0 0 20px;
+        ">{{course_name}} has started on edX.org!</h1>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <p style="
+          margin: 0 0 20px;
+        ">
+            Remember when you enrolled in <b>{{course_name}}</b> on edX.org? We do! We are excited to let you know the course has started. Come see what everyone is learning.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <table class="buttonwrapper" bgcolor="#005686" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td class="button" align="center" height="50" style="
+              font-weight: 700;
+              font-size: 1.25em;
+              padding: 0 30px 0 30px;
+            ">
+              <a href="{{ course_url }}" style="
+                color: #ffffff;
+                text-decoration: none;
+              ">Start Learning</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+{% endblock %}
