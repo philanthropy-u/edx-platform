@@ -9,13 +9,13 @@ from django.conf import settings
 from opaque_keys.edx.keys import CourseKey
 from openedx.core.djangoapps.schedules.management.commands import send_recurring_nudge as nudge
 from openedx.core.djangoapps.site_configuration.tests.factories import SiteFactory
-from openedx.core.djangolib.testing.utils import CacheIsolationTestCase
+from openedx.core.djangolib.testing.utils import CacheIsolationTestCase, skip_unless_lms
 from openedx.core.djangoapps.schedules.tests.factories import ScheduleFactory, ScheduleConfigFactory
 from openedx.core.djangoapps.site_configuration.tests.factories import SiteConfigurationFactory
-from student.tests.factories import UserFactory
 
 
 @ddt.ddt
+@skip_unless_lms
 @skipUnless('openedx.core.djangoapps.schedules.apps.SchedulesConfig' in settings.INSTALLED_APPS, "Can't test schedules if the app isn't installed")
 class TestSendRecurringNudge(CacheIsolationTestCase):
 
