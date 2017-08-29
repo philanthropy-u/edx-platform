@@ -82,11 +82,15 @@ def _schedule_hour(site_id, week, target_hour, org_list, exclude_orgs=False):
 
 @task(ignore_result=True, routing_key=ROUTING_KEY)
 def _schedule_send(site_id, msg):
-    site = Site.objects.get(pk=site_id)
-    if not ScheduleConfig.current(site).deliver_recurring_nudge:
-        return
+    try:
+        site = Site.objects.get(pk=site_id)
+        if not ScheduleConfig.current(site).deliver_recurring_nudge:
+            return
 
-    ace.send(msg)
+        ace.send(msg)
+    except:
+        LOG.exception('')
+        raise
 
 
 def _schedules_for_hour(target_hour, org_list, exclude_orgs=False):

@@ -1,5 +1,1 @@
-Dear {{student_name}},
-
-Remember when you enrolled in {{course_name}} on edX.org?
-We do! We are excited to let you know the course has started. Come see
-what everyone is learning.
+Many edX learners in {{course_name}} are completing problems every week. What do you want to do to keep learning?

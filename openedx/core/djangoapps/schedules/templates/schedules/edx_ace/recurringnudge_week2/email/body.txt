@@ -1,4 +1,1 @@
-Dear {{student_name}},
-<br><br>
-Numerous edX learners in {{course_name}} are completing more problems every week.
-What do you want to do to keep learning?
+Many edX learners in {{course_name}} are watching videos every week. What do you want to do to keep learning?
