@@ -2,11 +2,11 @@
 .navigation-container {
   border-bottom: 1px solid $brand-primary;
   text-decoration: none;
-  background-color: $header-bg;
+  background-color: $body-bg;
 
   &.slim {
     border-bottom: 1px solid $inverse-color;
-    box-shadow: 0 1px 5px 0 $black-t0;
+    box-shadow: 0 1px 5px 0 $gray-900;
   }
 
   .navbar {
