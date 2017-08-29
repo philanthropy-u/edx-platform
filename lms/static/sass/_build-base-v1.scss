@@ -2,6 +2,10 @@
 @import 'bourbon/bourbon'; // lib - bourbon
 @import 'vendor/bi-app/bi-app-ltr'; // set the layout for left to right languages
 
+// Bootstrap functions for compatibility
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/theme';
+
 // base - utilities
 @import 'base/reset';
 @import 'base/variables';

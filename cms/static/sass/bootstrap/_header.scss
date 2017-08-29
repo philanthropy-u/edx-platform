@@ -78,7 +78,7 @@
     }
 
     .nav-item a {
-      color: $gray;
+      color: color("gray");
 
       &:hover {
         color: $link-hover-color;
@@ -144,7 +144,7 @@
   // specific elements - course name/info
   .info-course {
     margin-right: flex-gutter();
-    border-right: 1px solid $gray-lighter;
+    border-right: 1px solid $gray-300;
     padding: ($baseline*0.75) flex-gutter() ($baseline*0.75) 0;
 
     .course-org, .course-number {
@@ -157,7 +157,7 @@
       white-space: nowrap;
       text-overflow: ellipsis;
       opacity: 1.0;
-      color: $gray-dark;
+      color: theme-color("primary");
     }
 
     .course-org {
@@ -177,7 +177,7 @@
     // entire link
     .course-link {
       display: block;
-      color: $gray-dark;
+      color: theme-color("primary");
 
       &:hover {
         color: $link-hover-color;
@@ -406,7 +406,7 @@
     box-shadow: 0 1px 1px $shadow-l1;
     position: relative;
     width: 100%;
-    border: 1px solid $gray-light;
+    border: 1px solid $gray-500;
     padding: ($baseline/2) ($baseline*0.75);
     background: $white;
 
@@ -429,7 +429,7 @@
 
     &:before {
       border-color: rgba(178, 178, 178, 0);
-      border-bottom-color: $gray-light;
+      border-bottom-color: $gray-500;
       border-width: 11px;
     }
 
@@ -438,7 +438,7 @@
       @extend %t-regular;
       display: block;
       margin: 0 0 ($baseline/4) 0;
-      border-bottom: 1px solid $gray-lighter;
+      border-bottom: 1px solid $gray-300;
       padding: 0 0($baseline/4) 0;
 
       &:last-child {
@@ -451,7 +451,7 @@
         display: block;
 
         &:hover, &:active {
-          color: $brand-primary;
+          color: theme-color("primary");
         }
       }
     }
@@ -559,10 +559,10 @@ body.course.view-team .nav-library-settings .title,
 body.course.view-team .nav-library-settings-team
 
 {
-  color: $brand-primary;
+  color: theme-color("primary");
 
   a {
-    color: $brand-primary;
+    color: theme-color("primary");
     pointer-events: none;
   }
 }

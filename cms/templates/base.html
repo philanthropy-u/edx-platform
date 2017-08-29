@@ -66,6 +66,11 @@ from openedx.core.djangolib.markup import HTML
 
     <%static:webpack entry="commons"/>
 
+    % if uses_bootstrap:
+      <%static:webpack entry="Popper"/>
+      <%static:webpack entry="Bootstrap"/>
+    % endif
+
     <script type="text/javascript">
       window.baseUrl = "${settings.STATIC_URL | n, js_escaped_string}";
       require.config({

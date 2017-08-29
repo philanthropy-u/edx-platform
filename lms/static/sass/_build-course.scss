@@ -3,6 +3,10 @@
 
 // About: Sass compile for the LMS Courseware Elements that are shared between LTR and RTL UI. Configuration and vendor specific imports happen before this shared set of imports are compiled in the lms-course-*.scss files.
 
+// Bootstrap functions for compatibility
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/theme';
+
 @import 'base/base';
 @import 'base/headings';
 @import 'base/extends';

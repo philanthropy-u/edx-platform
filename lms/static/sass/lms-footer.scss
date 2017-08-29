@@ -1,6 +1,10 @@
 // Footer for OpenEdX (left-to-right)
 // ==================================
 
+// Bootstrap functions for compatibility
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/theme';
+
 // libs and resets *do not edit*
 @import 'bourbon/bourbon'; // lib - bourbon
 @import 'vendor/bi-app/bi-app-ltr'; // set the layout for left to right languages

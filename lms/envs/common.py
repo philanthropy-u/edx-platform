@@ -1646,7 +1646,10 @@ PIPELINE_JS = {
     },
     'lms_bootstrap': {
         'source_filenames': [
-            'common/js/vendor/tether.js',
+            # Bootstrap uses popper.js for dropdowns
+            'common/js/vendor/popper.js',
+
+            # Load Bootstrap itself
             'common/js/vendor/bootstrap.js',
         ],
         'output_filename': 'js/lms-bootstrap.js',

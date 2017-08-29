@@ -22,10 +22,10 @@
         .nav-link {
           text-decoration: none;
           padding: 0;
-          color: $brand-inverse;
+          color: $gray-900;
 
           &:hover {
-            color: $brand-primary;
+            color: theme-color("primary");
           }
         }
       }
@@ -54,8 +54,8 @@
 
     .copyright {
       margin-top: $baseline;
-      font-size: $font-size-xs;
-      color: $gray-dark;
+      font-size: $font-size-sm;
+      color: theme-color("primary");
     }
 
     .footer-about-openedx {

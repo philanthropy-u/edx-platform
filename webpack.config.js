@@ -18,15 +18,22 @@ var wpconfig = {
     context: __dirname,
 
     entry: {
+        // Common libraries
+        Bootstrap: './node_modules/bootstrap/dist/js/bootstrap.js',
+        Popper: './node_modules/popper.js/dist/popper.js',
+
+        // Studio
+        Import: './cms/static/js/features/import/factories/import.js',
+        StudioIndex: './cms/static/js/features_jsx/studio/index.jsx',
+
+        // Features
         CourseHome: './openedx/features/course_experience/static/course_experience/js/CourseHome.js',
         CourseOutline: './openedx/features/course_experience/static/course_experience/js/CourseOutline.js',
         CourseSock: './openedx/features/course_experience/static/course_experience/js/CourseSock.js',
         CourseTalkReviews: './openedx/features/course_experience/static/course_experience/js/CourseTalkReviews.js',
-        LatestUpdate: './openedx/features/course_experience/static/course_experience/js/LatestUpdate.js',
-        WelcomeMessage: './openedx/features/course_experience/static/course_experience/js/WelcomeMessage.js',
         Enrollment: './openedx/features/course_experience/static/course_experience/js/Enrollment.js',
-        Import: './cms/static/js/features/import/factories/import.js',
-        StudioIndex: './cms/static/js/features_jsx/studio/index.jsx'
+        LatestUpdate: './openedx/features/course_experience/static/course_experience/js/LatestUpdate.js',
+        WelcomeMessage: './openedx/features/course_experience/static/course_experience/js/WelcomeMessage.js'
     },
 
     output: {
@@ -58,7 +65,8 @@ var wpconfig = {
             _: 'underscore',
             $: 'jquery',
             jQuery: 'jquery',
-            'window.jQuery': 'jquery'
+            'window.jQuery': 'jquery',
+            Popper: 'popper.js'
         }),
 
         // Note: Until karma-webpack releases v3, it doesn't play well with

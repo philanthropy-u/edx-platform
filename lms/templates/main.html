@@ -77,11 +77,12 @@ from pipeline_mako import render_require_js_path_overrides
     <%static:js group='application'/>
   % endif
 
-  % if uses_bootstrap:
-    <%static:js group='lms_bootstrap'/>
-  % endif
-
   <%static:webpack entry="commons"/>
+
+  % if uses_bootstrap:
+    <%static:webpack entry="Popper"/>
+    <%static:webpack entry="Bootstrap"/>
+  % endif
 
   <script>
     window.baseUrl = "${settings.STATIC_URL | n, js_escaped_string}";

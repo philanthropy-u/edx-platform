@@ -3,6 +3,10 @@
 // Version 2 - introduces the Pattern Library
 
 
+// Bootstrap functions for compatibility
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/theme';
+
 // Configuration
 @import 'config';
 @import 'base/variables';

@@ -48,7 +48,7 @@
                 height: $profile-image-dimension;
                 border-radius: ($profile-image-dimension/2);
                 overflow: hidden;
-                border: 3px solid $gray-lightest;
+                border: 3px solid $gray-100;
                 margin-top: $baseline*-0.75;
                 background: $white;
             }
@@ -131,7 +131,7 @@
 
     .wrapper-profile {
         min-height: 200px;
-        background-color: $gray-lightest;
+        background-color: $gray-100;
 
         .ui-loading-indicator {
             margin-top: 100px;
@@ -247,7 +247,7 @@
 
             &:not(.u-field-readonly):not(:last-child) {
                 padding-bottom: $baseline/4;
-                border-bottom: 1px solid $gray-lighter;
+                border-bottom: 1px solid $gray-300;
 
                 &:hover.mode-placeholder {
                     padding-bottom: $baseline/5;
@@ -331,7 +331,7 @@
             display: inline-block;
             margin-top: 0;
             margin-bottom: ($baseline/4);
-            color: $gray-dark;
+            color: theme-color("dark");
             width: 100%;
         }
 
