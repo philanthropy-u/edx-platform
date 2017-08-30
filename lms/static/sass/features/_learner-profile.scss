@@ -88,6 +88,14 @@
             background-image: url('#{$static-path}/images/certificates/verified.png');
         }
     }
+
+    &.mode-professional {
+        border-color: $professional-certificate-color;
+
+        .card-logo {
+            background-image: url('#{$static-path}/images/certificates/professional.png');
+        }
+    }
 }
 
 .view-profile {

@@ -17,7 +17,7 @@ from openedx.core.djangoapps.user_api.errors import UserNotAuthorized, UserNotFo
 from openedx.core.djangoapps.user_api.preferences.api import get_user_preferences
 from student.models import User
 
-from ... import SHOW_ACHIEVEMENTS_FLAG
+from .. import SHOW_ACHIEVEMENTS_FLAG
 
 from learner_achievements import LearnerAchievementsFragmentView
 
@@ -77,7 +77,7 @@ def learner_profile_context(request, profile_username, user_is_staff):
     if SHOW_ACHIEVEMENTS_FLAG.is_enabled():
         achievements_fragment = LearnerAchievementsFragmentView().render_to_fragment(
             request,
-            user=profile_user,
+            username=profile_user.username,
             own_profile=own_profile,
         )
     else:
