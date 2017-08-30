@@ -29,12 +29,15 @@ def create_schedule(sender, **kwargs):
 
     current_site = get_current_site()
     if current_site is None:
-        log.debug('Schedules: Creation not enabled for this site')
+        log.debug('Schedules: No current site')
         return
 
     enrollment = kwargs['instance']
-    if not SCHEDULE_WAFFLE_FLAG.is_enabled(enrollment.course_id) and not ScheduleConfig.is_enabled(current_site):
-        log.debug('Schedules: Creation not enabled for this course')
+    if (
+        not ScheduleConfig.current(current_site).create_schedules and
+        not SCHEDULE_WAFFLE_FLAG.is_enabled(enrollment.course_id)
+    ):
+        log.debug('Schedules: Creation not enabled for this course or for this site')
         return
 
     delta = None

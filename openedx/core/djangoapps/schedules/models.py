@@ -34,5 +34,6 @@ class ScheduleConfig(ConfigurationModel):
     KEY_FIELDS = ('site',)
 
     site = models.ForeignKey(Site)
+    create_schedules = models.BooleanField(default=False)
     enqueue_recurring_nudge = models.BooleanField(default=False)
     deliver_recurring_nudge = models.BooleanField(default=False)

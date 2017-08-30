@@ -6,6 +6,8 @@ import pytz
 import ddt
 from django.conf import settings
 
+from edx_ace.utils.date import serialize
+
 from opaque_keys.edx.keys import CourseKey
 from openedx.core.djangoapps.schedules.management.commands import send_recurring_nudge as nudge
 from openedx.core.djangoapps.site_configuration.tests.factories import SiteFactory
@@ -47,11 +49,11 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         test_time = current_time - datetime.timedelta(days=21)
         self.assertFalse(mock_schedule_hour.called)
         mock_schedule_hour.apply_async.assert_any_call(
-            (self.site_config.site.id, 3, test_time, [], True),
+            (self.site_config.site.id, 3, serialize(test_time), [], True),
             retry=False,
         )
         mock_schedule_hour.apply_async.assert_any_call(
-            (self.site_config.site.id, 3, test_time + datetime.timedelta(hours=23), [], True),
+            (self.site_config.site.id, 3, serialize(test_time + datetime.timedelta(hours=23)), [], True),
             retry=False,
         )
         self.assertFalse(mock_ace.send.called)
@@ -65,9 +67,9 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
             for _ in range(schedule_count)
         ]
 
-        test_time = datetime.datetime(2017, 8, 1, 18, tzinfo=pytz.UTC)
+        test_time_str = serialize(datetime.datetime(2017, 8, 1, 18, tzinfo=pytz.UTC))
         with self.assertNumQueries(1):
-            nudge._schedule_hour(self.site_config.site, 3, test_time, [schedules[0].enrollment.course.org])
+            nudge._schedule_hour(self.site_config.site, 3, test_time_str, [schedules[0].enrollment.course.org])
         self.assertEqual(mock_schedule_send.apply_async.call_count, schedule_count)
         self.assertFalse(mock_ace.send.called)
 
@@ -86,9 +88,9 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         schedule.enrollment.course_id = CourseKey.from_string('edX/toy/Not_2012_Fall')
         schedule.enrollment.save()
 
-        test_time = datetime.datetime(2017, 8, 1, 20, tzinfo=pytz.UTC)
+        test_time_str = serialize(datetime.datetime(2017, 8, 1, 20, tzinfo=pytz.UTC))
         with self.assertNumQueries(1):
-            nudge._schedule_hour(self.site_config.site, 3, test_time, [schedule.enrollment.course.org])
+            nudge._schedule_hour(self.site_config.site, 3, test_time_str, [schedule.enrollment.course.org])
 
         # There is no database constraint that enforces that enrollment.course_id points
         # to a valid CourseOverview object. However, in that case, schedules isn't going
@@ -157,9 +159,9 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         print(unfiltered_scheds[1].enrollment.course)
         print(unfiltered_scheds[1].enrollment.course.org)
 
-        test_time = datetime.datetime(2017, 8, 2, 17, tzinfo=pytz.UTC)
+        test_time_str = serialize(datetime.datetime(2017, 8, 2, 17, tzinfo=pytz.UTC))
         with self.assertNumQueries(1):
-            nudge._schedule_hour(limited_config.site.id, 3, test_time, org_list=org_list, exclude_orgs=exclude_orgs)
+            nudge._schedule_hour(limited_config.site.id, 3, test_time_str, org_list=org_list, exclude_orgs=exclude_orgs)
 
         print(mock_schedule_send.mock_calls)
         self.assertEqual(mock_schedule_send.apply_async.call_count, expected_message_count)
