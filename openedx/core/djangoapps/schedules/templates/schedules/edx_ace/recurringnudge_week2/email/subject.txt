@@ -1,1 +1,2 @@
-What do you want to do to keep learning?
+{% load i18n %}
+{% blocktrans %}What do you want to do to keep learning?{% endblocktrans %}

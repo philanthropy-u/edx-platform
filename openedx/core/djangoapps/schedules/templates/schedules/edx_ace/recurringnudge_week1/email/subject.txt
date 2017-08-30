@@ -1,1 +1,3 @@
-What do you want to do to keep learning?
+{% load i18n %}
+
+{% blocktrans %} {{course_name}} has started on edX {% endblocktrans %}
