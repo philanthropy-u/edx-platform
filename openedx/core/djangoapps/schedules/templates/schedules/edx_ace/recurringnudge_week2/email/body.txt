@@ -1,1 +1,5 @@
-Many edX learners in {{course_name}} are watching videos every week. What do you want to do to keep learning?
+Many edX learners in {{course_name}} are completing problems every week.
+
+What do you want to do to keep learning?
+
+See my course <{{course_url}}>
