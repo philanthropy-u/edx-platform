@@ -18,6 +18,7 @@ from edx_ace.message import MessageType
 from edx_ace.recipient_resolver import RecipientResolver
 from edx_ace import ace
 from edx_ace.recipient import Recipient
+from edx_ace.utils.date import serialize, deserialize
 
 
 LOG = logging.getLogger(__name__)
@@ -61,11 +62,12 @@ class ScheduleStartResolver(RecipientResolver):
         target_date = self.current_date - datetime.timedelta(days=week * 7)
         for hour in range(24):
             target_hour = target_date + datetime.timedelta(hours=hour)
-            _schedule_hour.apply_async((self.site.id, week, target_hour, org_list, exclude_orgs, override_recipient_email), retry=False)
+            _schedule_hour.apply_async((self.site.id, week, serialize(target_hour), org_list, exclude_orgs, override_recipient_email), retry=False)
 
 
 @task(ignore_result=True, routing_key=ROUTING_KEY)
-def _schedule_hour(site_id, week, target_hour, org_list, exclude_orgs=False, override_recipient_email=None):
+def _schedule_hour(site_id, week, target_hour_str, org_list, exclude_orgs=False, override_recipient_email=None):
+    target_hour = deserialize(target_hour_str)
     msg_type = RecurringNudge(week)
 
     for (user, language, context) in _schedules_for_hour(target_hour, org_list, exclude_orgs=exclude_orgs):
