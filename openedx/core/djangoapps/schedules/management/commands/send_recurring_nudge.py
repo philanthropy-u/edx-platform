@@ -35,7 +35,7 @@ class ScheduleStartResolver(RecipientResolver):
         self.site = site
         self.current_date = current_date.replace(hour=0, minute=0, second=0)
 
-    def send(self, week):
+    def send(self, week, override_recipient_email=None):
         """
         Send a message to all users whose schedule starts at ``self.current_date`` - ``week`` weeks.
         """
@@ -61,18 +61,18 @@ class ScheduleStartResolver(RecipientResolver):
         target_date = self.current_date - datetime.timedelta(days=week * 7)
         for hour in range(24):
             target_hour = target_date + datetime.timedelta(hours=hour)
-            _schedule_hour.apply_async((self.site.id, week, target_hour, org_list, exclude_orgs), retry=False)
+            _schedule_hour.apply_async((self.site.id, week, target_hour, org_list, exclude_orgs, override_recipient_email), retry=False)
 
 
 @task(ignore_result=True, routing_key=ROUTING_KEY)
-def _schedule_hour(site_id, week, target_hour, org_list, exclude_orgs=False):
+def _schedule_hour(site_id, week, target_hour, org_list, exclude_orgs=False, override_recipient_email=None):
     msg_type = RecurringNudge(week)
 
     for (user, language, context) in _schedules_for_hour(target_hour, org_list, exclude_orgs=exclude_orgs):
         msg = msg_type.personalize(
             Recipient(
                 user.username,
-                user.email,
+                override_recipient_email or user.email,
             ),
             language,
             context,
@@ -82,15 +82,11 @@ def _schedule_hour(site_id, week, target_hour, org_list, exclude_orgs=False):
 
 @task(ignore_result=True, routing_key=ROUTING_KEY)
 def _schedule_send(site_id, msg):
-    try:
-        site = Site.objects.get(pk=site_id)
-        if not ScheduleConfig.current(site).deliver_recurring_nudge:
-            return
+    site = Site.objects.get(pk=site_id)
+    if not ScheduleConfig.current(site).deliver_recurring_nudge:
+        return
 
-        ace.send(msg)
-    except:
-        LOG.exception('')
-        raise
+    ace.send(msg)
 
 
 def _schedules_for_hour(target_hour, org_list, exclude_orgs=False):
@@ -144,6 +140,10 @@ class Command(BaseCommand):
             default=datetime.datetime.utcnow().date().isoformat(),
             help='The date to compute weekly messages relative to, in YYYY-MM-DD format',
         )
+        parser.add_argument(
+            '--override-recipient-email',
+            help='Send all emails to this address instead of the actual recipient'
+        )
         parser.add_argument('site_domain_name')
 
     def handle(self, *args, **options):
@@ -154,4 +154,4 @@ class Command(BaseCommand):
         site = Site.objects.get(domain__iexact=options['site_domain_name'])
         resolver = ScheduleStartResolver(site, current_date)
         for week in (1, 2):
-            resolver.send(week)
+            resolver.send(week, options.get('override_recipient_email'))
