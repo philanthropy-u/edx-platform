@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from django.utils.http import urlquote
 
 from edx_ace import ace
-from edx_ace.message import MessageType
+from edx_ace.message import MessageType, Message
 from edx_ace.recipient import Recipient
 from edx_ace.utils.date import deserialize
 from openedx.core.djangoapps.schedules.models import Schedule, ScheduleConfig
@@ -36,15 +36,16 @@ def recurring_nudge_schedule_hour(site_id, week, target_hour_str, org_list, excl
             language,
             context,
         )
-        _recurring_nudge_schedule_send.apply_async((site_id, msg), retry=False)
+        _recurring_nudge_schedule_send.apply_async((site_id, str(msg)), retry=False)
 
 
 @task(ignore_result=True, routing_key=ROUTING_KEY)
-def _recurring_nudge_schedule_send(site_id, msg):
+def _recurring_nudge_schedule_send(site_id, msg_str):
     site = Site.objects.get(pk=site_id)
     if not ScheduleConfig.current(site).deliver_recurring_nudge:
         return
 
+    msg = Message.from_string(msg_str)
     ace.send(msg)
 
 
