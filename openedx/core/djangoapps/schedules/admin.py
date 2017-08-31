@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
-from config_models.admin import ConfigurationModelAdmin
+from config_models.admin import KeyedConfigurationModelAdmin
 
 from . import models
 
@@ -28,4 +28,4 @@ class ScheduleAdmin(admin.ModelAdmin):
         qs = qs.select_related('enrollment', 'enrollment__user')
         return qs
 
-admin.site.register(models.ScheduleConfig, ConfigurationModelAdmin)
+admin.site.register(models.ScheduleConfig, KeyedConfigurationModelAdmin)
