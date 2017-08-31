@@ -26,6 +26,7 @@ class RecurringNudge(MessageType):
 def recurring_nudge_schedule_hour(site_id, week, target_hour_str, org_list, exclude_orgs=False, override_recipient_email=None):
     target_hour = deserialize(target_hour_str)
     msg_type = RecurringNudge(week)
+    msg_type.expiration_time = target_hour + datetime.timedelta(days=1)
 
     for (user, language, context) in _recurring_nudge_schedules_for_hour(target_hour, org_list, exclude_orgs):
         msg = msg_type.personalize(
