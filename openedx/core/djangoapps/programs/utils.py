@@ -463,7 +463,6 @@ class ProgramDataExtender(object):
         if is_learner_eligible_for_one_click_purchase:
             for course in self.data['courses']:
                 add_course_sku = False
-                applicable_seat = False
 
                 # Look at the course runs for a course and determine if the course SKU should be added.
                 for course_run in course['course_runs']:
@@ -471,6 +470,8 @@ class ProgramDataExtender(object):
                         self.user,
                         CourseKey.from_string(course_run['key'])
                     )
+                    applicable_seat = False
+
                     # Check all the applicable seat types
                     # this will also check for no-id-professional as professional
                     for seat_type in applicable_seat_types:
