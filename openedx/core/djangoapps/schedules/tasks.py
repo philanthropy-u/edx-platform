@@ -1,6 +1,6 @@
 import datetime
 
-from celery import shared_task
+from celery import task
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
@@ -22,7 +22,7 @@ class RecurringNudge(MessageType):
         self.name = "recurringnudge_week{}".format(week)
 
 
-@shared_task(ignore_result=True, routing_key=ROUTING_KEY)
+@task(ignore_result=True, routing_key=ROUTING_KEY)
 def recurring_nudge_schedule_hour(site_id, week, target_hour_str, org_list, exclude_orgs=False, override_recipient_email=None):
     target_hour = deserialize(target_hour_str)
     msg_type = RecurringNudge(week)
@@ -39,7 +39,7 @@ def recurring_nudge_schedule_hour(site_id, week, target_hour_str, org_list, excl
         _recurring_nudge_schedule_send.apply_async((site_id, msg), retry=False)
 
 
-@shared_task(ignore_result=True, routing_key=ROUTING_KEY)
+@task(ignore_result=True, routing_key=ROUTING_KEY)
 def _recurring_nudge_schedule_send(site_id, msg):
     site = Site.objects.get(pk=site_id)
     if not ScheduleConfig.current(site).deliver_recurring_nudge:
