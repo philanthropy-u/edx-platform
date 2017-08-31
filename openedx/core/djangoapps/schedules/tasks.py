@@ -1,6 +1,6 @@
 import datetime
 
-from celery import task
+from celery.task import task
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
