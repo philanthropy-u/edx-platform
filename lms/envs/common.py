@@ -2675,6 +2675,9 @@ OPTIONAL_APPS = (
     'enterprise',
     # Required by the Enterprise App
     'django_object_actions',  # https://github.com/crccheck/django-object-actions
+
+    # Global Survey
+    'global_survey'
 )
 
 for app_name in OPTIONAL_APPS:
