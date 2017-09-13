@@ -3,10 +3,8 @@ URL mappings for the Survey feature
 """
 
 from django.conf.urls import patterns, url
+from oef_survey.views import oef_survey
 
-
-urlpatterns = patterns(
-    'global_survey.views',
-
-    url(r'^oef_survey$', 'view_survey', name='view_survey'),
-)
+urlpatterns = [
+	url(r'$', oef_survey, name='oef_survey'),
+]
