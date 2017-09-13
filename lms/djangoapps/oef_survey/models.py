@@ -6,7 +6,7 @@ from django.db import models
 from student.models import User
 
 
-class GlobalSurvey(models.Model):
+class OefSurvey(models.Model):
     """
     Model to define an OEF survey
     """
@@ -14,30 +14,32 @@ class GlobalSurvey(models.Model):
         ('draft', 'draft'),
         ('submitted', 'submitted'),
     )
-    name = models.CharField(max_length=255, db_index=True, unique=True)
+    name = models.CharField(max_length=255, db_index=True)
     status = models.CharField(max_length=255, choices=STATUS_OPTIONS)
     create_date = models.DateTimeField(auto_now_add=True)
     submit_date = models.DateTimeField(auto_now_add=True, null=True)
+    version = models.AutoField(primary_key=True)
 
 
-class Catogery(models.Model):
+class CategoryPage(models.Model):
     """
     Model to define a category inside a Survey form
     """
-    survey = models.ForeignKey(GlobalSurvey, db_index=True)
+    survey = models.ForeignKey(OefSurvey, db_index=True)
     name = models.CharField(max_length=255, unique=True)
     description = models.CharField(max_length=1000)
 
 
 class SubCategory(models.Model):
-    category = models.ForeignKey(Catogery, db_index=True)
+    category = models.ForeignKey(CategoryPage, db_index=True)
     name = models.CharField(max_length=255, db_index=True)
     description = models.CharField(max_length=1000)
     
 
 class SurveyQuestion(models.Model):
+    sub_category = models.ForeignKey(SubCategory, db_index=True)
     name = models.CharField(max_length=255)
-    help_msg = models.CharField(max_length=255, db_index=True)
+    help_msg = models.CharField(max_length=1000)
 
 
 class SurveyQuestionAnswer(models.Model):
@@ -55,13 +57,11 @@ class SurveyQuestionAnswer(models.Model):
         unique_together = ('question', 'category')
 
 
-class GlobalSurveyUserFeedback(models.Model):
+class SurveyFeedback(models.Model):
     """
     Model to define an OEF survey
     """
-    survey = models.ForeignKey(GlobalSurvey, db_index=True)
+    survey = models.ForeignKey(OefSurvey, db_index=True)
     user = models.ForeignKey(User, db_index=True)
-
-class GlobalSurveyFeedback(models.Model):
-    question = models.ForeignKey(SurveyQuestion, db_index=True)
-    answer = models.ForeignKey(SurveyQuestionAnswer, db_index=True)
+    question = models.ForeignKey(SurveyQuestion, db_index=True, null=True)
+    answer = models.ForeignKey(SurveyQuestionAnswer, db_index=True, null=True)
