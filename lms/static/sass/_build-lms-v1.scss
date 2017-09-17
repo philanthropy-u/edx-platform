@@ -82,6 +82,10 @@
 @import 'developer'; // used for any developer-created scss that needs further polish/refactoring
 @import 'shame';     // used for any bad-form/orphaned scss
 
+@import 'overrides/variables';
+@import 'overrides/header';
+
+
 // POC dashboard
 @import 'poc-dashboard';
 @import 'learner-dashboard';

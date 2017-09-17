@@ -1,0 +1,177 @@
+//
+// Header / Navbar
+//
+.header-global {
+    box-shadow: none;
+    height: $navbar-height;
+    background: $greeny-blue;
+    @media(min-width: $screen-sm-min) {
+        height: $navbar-height-lg;
+    }
+    
+    nav.wrapper-header {
+        height: $navbar-height;
+        padding: 0;
+        @media(min-width: $screen-sm-min) {
+            height: $navbar-height-lg;
+        }
+        
+        .logo {
+            padding: 0;
+            position: absolute;
+            left: 0;
+            margin: 0;
+            
+            a {
+                display: block;
+                
+                img {
+                    width: 127px !important;
+                    @media(min-width: $screen-md-min) {
+                        width: auto !important;
+                    }
+                }
+                
+                &:hover {
+                    color: $marine;
+                }
+            }
+        }
+        
+        ol {
+            margin: 0;
+            padding: 0;
+            
+            li {
+                float: left;
+                margin: 0;
+                
+                a {
+                    padding: 32px 20px;
+                    color: $white;
+                    background: $turquoise;
+                    
+                    .btn-login {
+                    
+                    }
+                }
+            }
+            
+            &.nav-global {
+            
+            }
+            
+            &.nav-courseware {
+            
+            }
+            
+            &.user {
+                padding: 0;
+                
+                .user-link {
+                    position: relative;
+                    
+                    a.dropdown {
+                        background: transparent;
+                        color: #fff;
+                        padding: 0;
+                        @media screen and (max-width: $screen-sm-max) {
+                            margin-bottom: 10px;
+                        }
+                        @media screen and (min-width: $screen-md-min) {
+                            padding: 10px 11px;
+                        }
+                        @media screen and (min-width: $screen-lg-min) {
+                            padding: 10px 16px;
+                        }
+                        
+                        .sr {
+                            display: none;
+                        }
+                        
+                        .user-image-frame {
+                            width: 40px;
+                            height: 40px;
+                        }
+                        
+                        .label-username {
+                            float: none;
+                            display: inline-block;
+                            margin-top: 0;
+                            margin-bottom: 0;
+                            vertical-align: middle;
+                        }
+                        
+                        &.active {
+                            background: rgba(255, 255, 255, .15);
+                            color: $teal;
+                        }
+                        
+                        &:focus,
+                        &:hover,
+                        &:hover {
+                            text-decoration: none;
+                        }
+                    }
+                    
+                    .dropdown-menu {
+                        top: 100%;
+                        right: 0;
+                        left: auto;
+                        
+                        > li > a {
+                            color: $teal;
+                            margin: 0;
+                            
+                            &:hover {
+                                color: $gray-dark;
+                                background: transparent;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            &#menu-search {
+                
+                > li {
+                    @extend .clearfix;
+                    
+                    > a {
+                        font-size: 18px;
+                        display: none;
+                        @media screen and (min-width: $screen-md-min) {
+                            display: block;
+                        }
+                    }
+                    
+                    .dropdown-menu {
+                        display: block;
+                        left: auto;
+                        right: 0;
+                        margin: 0 10px 10px;
+                        @media screen and (max-width: $screen-sm-max) {
+                            position: static;
+                            opacity: 1;
+                            visibility: visible;
+                        }
+                        @media screen and (min-width: $screen-md-min) {
+                            padding: 20px;
+                        }
+                        
+                        .form-control {
+                            min-width: 150px;
+                            border: none;
+                            font-size: 12px;
+                        }
+                        
+                        .btn {
+                            border: none;
+                            padding: 9px 12px 6px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
