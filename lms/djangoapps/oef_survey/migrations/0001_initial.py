@@ -74,6 +74,14 @@ class Migration(migrations.Migration):
                 ('question', models.ForeignKey(to='oef_survey.SurveyQuestion')),
             ],
         ),
+        migrations.CreateModel(
+            name='UserSurveyFeedback',
+            fields=[
+                ('version', models.AutoField(serialize=False, primary_key=True)),
+                ('survey', models.ForeignKey(on_delete=django.db.models.deletion.SET_NULL, to='oef_survey.OefSurvey', null=True)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
         migrations.AddField(
             model_name='surveyfeedback',
             name='answer',
@@ -86,6 +94,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='surveyfeedback',
+            name='feedback',
+            field=models.ForeignKey(to='oef_survey.UserSurveyFeedback'),
+        ),
+        migrations.AddField(
+            model_name='surveyfeedback',
             name='question',
             field=models.ForeignKey(to='oef_survey.SurveyQuestion'),
         ),
@@ -93,16 +106,6 @@ class Migration(migrations.Migration):
             model_name='surveyfeedback',
             name='sub_category',
             field=models.ForeignKey(on_delete=django.db.models.deletion.SET_NULL, to='oef_survey.SubCategory', null=True),
-        ),
-        migrations.AddField(
-            model_name='surveyfeedback',
-            name='survey',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.SET_NULL, to='oef_survey.OefSurvey', null=True),
-        ),
-        migrations.AddField(
-            model_name='surveyfeedback',
-            name='user',
-            field=models.ForeignKey(to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
             model_name='categorypage',

@@ -40,7 +40,6 @@ class CategoryPage(models.Model):
 
     class Meta(object):
         unique_together = ('id', 'name', 'survey')
-        get_latest_by = 'page_no'
 
     def __str__(self):
         return self.name
@@ -89,13 +88,18 @@ class SurveyQuestionAnswer(models.Model):
     class Meta(object):
         unique_together = ('question', 'category')
 
+
+class UserSurveyFeedback(models.Model):
+    user = models.ForeignKey(User, db_index=True, on_delete=CASCADE)
+    survey = models.ForeignKey(OefSurvey, db_index=True, null=True,
+        on_delete=SET_NULL)
+    version = models.AutoField(primary_key=True)
+
 class SurveyFeedback(models.Model):
     """
     Model to define an OEF survey Feedback
     """
-    user = models.ForeignKey(User, db_index=True, on_delete=CASCADE)
-    survey = models.ForeignKey(OefSurvey, db_index=True, null=True,
-        on_delete=SET_NULL)
+    feedback = models.ForeignKey(UserSurveyFeedback, db_index=True, on_delete=CASCADE)
     category = models.ForeignKey(CategoryPage, db_index=True, null=True,
         on_delete=SET_NULL)
     sub_category = models.ForeignKey(SubCategory, db_index=True, null=True,
