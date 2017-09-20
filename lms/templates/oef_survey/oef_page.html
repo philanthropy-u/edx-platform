@@ -5,59 +5,135 @@
 <%namespace name='static' file='../static_content.html'/>
 
 <%!
-from django.utils.translation import ugettext as _
+    from django.utils.translation import ugettext as _
+    from django.core.urlresolvers import reverse
 %>
 
 <%block name="pagetitle">${_(page_title)}</%block>
 
+<meta name="csrf-token" content="{{ csrf_token }}">
+
 <main id="main" aria-label="Content" tabindex="-1">
-    
-    <div class="oef-survey-page">
+    <script>
+        $(document).ready(function(){
+
+            $.ajaxSetup({
+                headers:
+                { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
+            });
+        });
+
+        function redirect_to_oef_survey(page_no) {
+            var query_params = window.location.search;
+            var feedback = query_params.match("feedback=([0-9]*)");
+
+            if (feedback && feedback[1] != -1) {
+                window.location = '' + '?page=' + page_no + '&feedback=' + feedback[1]
+            }
+            else {
+                window.location = '' + '?page=' + page_no
+            }
+        }
+
+        function save_data(page_no) {
+            var questions_data = {};
+
+            $('.statement').each(function (index) {
+                questions_data[($(this).attr('value'))] = $(this).parent().closest('tr').children('.selected').attr('value')
+            });
+
+            var data = {
+                "page_id": $('.oef-survey-description').attr('value'),
+                "survey_id": $('.oef-survey-page').attr('value'),
+                "sub_category_id": $('.category').attr('value'),
+                "questions": questions_data,
+            };
+            $.post("/oef_survey/save" + window.location.search,
+                    JSON.stringify(data),
+                    true,
+                    'json',
+            )
+
+            if (page_no != -1) {
+                redirect_to_oef_survey(parseInt(page_no) + 1)
+            }
+        }
+    </script>
+    <div class="oef-survey-page" value=${survey_id}>
         <div class="container">
             <div class="oef-survey-header">
                 <div class="oef-survey-title">
                     <h1>
-                        Exygy's Organizational Effectiveness Framework
+                        ${survey_name}
                     </h1>
-                    <div class="date">(08/25/2017)</div>
+                    <div class="date">${survey_created.date()}</div>
                 </div>
-                
+
                 <div class="oef-survey-steps">
-                    <div class="step active">1</div>
-                    <div class="step">2</div>
-                    <div class="step">3</div>
-                    <div class="step">4</div>
-                    <div class="step">5</div>
-                    <div class="step">6</div>
-                    <div class="step">7</div>
-                    <div class="step">8</div>
+                    % for page_number in range(total_pages):
+                        <div class='${"step active" if page_number == page_no else "step"}'>
+                            <a onclick="redirect_to_oef_survey('${page_number}')"> ${page_number+1} </a>
+                        </div>
+                    % endfor
                 </div>
-                
-                <div class="oef-survey-description">
-                    <h2>1. LEADERSHIP</h2>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
+
+                <div class="oef-survey-description" value=${page_id}>
+                    <h2>${page_title}</h2>
+                    <p>${page_desc}</p>
                 </div>
             </div>
-            
+
             <div class="oef-survey-categories">
-                <div class="category">
-                    <h3>A. Strategic Planning</h3>
-                    <p>
-                        <button class="btn-expand">+</button>
-                        Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.
-                        Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.
-                        Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.
-                    </p>
-                    <!-- OEF Sub-category html -->
-                    <button class="btn-close">Close</button>
-                </div>
+                % for idx, category in enumerate(sub_categories):
+                    <div class="${'category' if idx==0 else 'category collapsed'}"
+                         value="${category['sub_category_id']}">
+
+                        <h3>${category['sub_category_title']} </h3>
+
+                        <div class="text">
+                            <button class="btn-expand" style="${'display: none;' if idx==0 else ''}">+</button>
+                            <p> ${category['sub_category_desc']} </p>
+                        </div>
+
+                        <%include file="${static.get_template_path('oef_subcategory.html')}" args="questions=category['questions']"/>
+
+                        <button class="btn-close">Close</button>
+                    </div>
+                % endfor
+
                 <div class="footer">
-                <a href="#NextProgram" class="next">Next: Programs &rarr;</a>
-                    <button class="btn-save">Save and Finish it Later</button>
+                    <a class="next" onclick="save_data('${page_no}')">Next: Programs &rarr;</a>
+                    <button class="btn-save">
+                        <a onclick="save_data(-1)" href="${reverse('dashboard')}">
+                            Save and Finish it Later
+                        </a>
+                    </button>
                 </div>
             </div>
-            
+
         </div>
     </div>
-    
+
 </main>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script>
+    $( document ).ready(function() {
+         if($('div.step').last().is($('div.step.active'))) {
+             $('.next').css({'display':'none'});
+         }
+    });
+
+    $(".btn-expand").click(function () {
+        $('.category').addClass('collapsed');
+        $(this).parents('.category').removeClass('collapsed');
+        $('.btn-expand').show();
+        $(this).hide();
+    });
+
+    $(".btn-close").click(function () {
+        $('.category').addClass('collapsed');
+        $('.btn-expand').show();
+    });
+</script>

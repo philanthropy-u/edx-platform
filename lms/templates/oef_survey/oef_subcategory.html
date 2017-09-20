@@ -1,110 +1,55 @@
 ## mako
 
-<%page args="sub_category_title, sub_category_desc, questions" expression_filter="h"/>
+<%page args="questions" expression_filter="h"/>
 
 <%!
-from django.utils.translation import ugettext as _
+    from django.utils.translation import ugettext as _
 %>
 
 <%namespace name='static' file='../static_content.html'/>
 
+
 <div class="sub-category-container">
     <table class="oef-subcategory-table" width="100%" cellspacing="0" cellpadding="0">
         <tbody>
-            <tr>
-                <td class="empty"></td>
-                <td>Low</td>
-                <td>Basic</td>
-                <td>Moderate</td>
-                <td>Strong</td>
-            </tr>
-            <tr>
-                <td class="empty"></td>
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-                <td>4</td>
-            </tr>
+        <tr>
+            <td class="empty"></td>
+            <td>Low</td>
+            <td>Basic</td>
+            <td>Moderate</td>
+            <td>Strong</td>
+        </tr>
+        <tr>
+            <td class="empty"></td>
+            <td>1</td>
+            <td>2</td>
+            <td>3</td>
+            <td>4</td>
+        </tr>
+
+        % for question in questions:
             <tr>
                 <td>
-                    <div class="statement">
-                        Mission Statement
-                        <span class="info">i</span>
+                    <div class="statement" value=${question['question_id']}>
+                        ${question['statement']}
+                        <span class="info" title=${question['help']}>i</span>
                     </div>
                 </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
+                <td class=${"selected" if question['is_selected'] == 'low' else ''} value=${question['low']['option_id']}>
+                    <p>${question['low']['option_desc']}</p>
                 </td>
-                <td class="selected">
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
+                <td class=${"selected" if question['is_selected'] == 'basic' else ''} value=${question['basic']['option_id']}>
+                    <p>${question['basic']['option_desc']}</p>
                 </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
+                <td class=${"selected" if question['is_selected'] == 'moderate' else ''} value=${question['moderate']['option_id']}>
+                    <p>${question['moderate']['option_desc']}</p>
                 </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="statement">
-                        Mission Statement
-                        <span class="info">i</span>
-                    </div>
-                </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
-                </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
-                </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
-                </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
+                <td class=${"selected" if question['is_selected'] == 'strong' else ''} value=${question['strong']['option_id']}>
+                    <p>${question['strong']['option_desc']}</p>
                 </td>
             </tr>
-            <tr>
-                <td>
-                    <div class="statement">
-                        Mission Statement
-                        <span class="info">i</span>
-                    </div>
-                </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
-                </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
-                </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
-                </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="statement">
-                        Mission Statement
-                        <span class="info">i</span>
-                    </div>
-                </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
-                </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
-                </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
-                </td>
-                <td>
-                    <p>Lorem ipsum dolar site amet, consectetur adipiscing elite, sed do eiusmod tempor incident ut labore et dolare mange aliques.</p>
-                </td>
-            </tr>
+        % endfor
+
         </tbody>
     </table>
-</div>>
+</div>

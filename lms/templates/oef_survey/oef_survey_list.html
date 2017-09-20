@@ -1,0 +1,106 @@
+## mako
+
+<%page expression_filter="h"/>
+<%inherit file="../main.html" />
+<%namespace name='static' file='../static_content.html'/>
+
+<%!
+    from django.utils.translation import ugettext as _
+%>
+
+<%block name="pagetitle">My Organization</%block>
+
+<main id="main" aria-label="Content" tabindex="-1">
+
+    <link rel="stylesheet" href="css/lms-main-v1.css"/>
+    <link rel="stylesheet" href="css/organization-oef.css"/>
+
+    <div class="organization-oef">
+        <div class="container">
+
+            <h1>My Organization</h1>
+
+            <div class="tabs-container">
+                <ul class="tabs clearfix" data-tabgroup="tab-group">
+                    <li><a href="#tab1">Organization Profile</a></li>
+                    <li><a href="#tab2" class="active">Organization OEF</a></li>
+                </ul>
+                <section id="tab-group" class="tabgroup">
+                    <div id="tab1">
+                        <h2>Organization Profile content here...</h2>
+                    </div>
+                    <div id="tab2">
+                        <h2>What is it?</h2>
+                        <p>Adipisci autem obcaecati velit natus quos beatae explicabo at tempora minima voluptates
+                            deserunt eum consectetur reiciendis placeat dolorem repellat in nam asperiores impedit
+                            voluptas iure repellendus unde eveniet accusamus
+                            ex.</p>
+                        <h2>How often should I create a new one?</h2>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nulla deserunt consectetur ratione
+                            id tempore laborum laudantium facilis reprehenderit beatae dolores ipsum nesciunt alias
+                            iusto dicta eius itaque blanditiis modi
+                            velit. Adipisci autem obcaecati velit natus quos beatae explicabo at tempora minima
+                            voluptates deserunt eum consectetur reiciendis placeat dolorem repellat in nam asperiores
+                            impedit voluptas iure repellendus unde eveniet accusamus
+                            ex.</p>
+                        <button class="btn-lg" style="${'' if button_enabled  else 'display: none;'}">
+                            <a href="/oef_survey/">
+                            + Create New OEF
+                            </a>
+                        </button>
+                        <h2 class="mt-30">Past OEFs</h2>
+                        <table class="past-oef" width="100%" cellspacing="0" cellpadding="0">
+                            <tbody>
+                                % for survey in surveys:
+                                    <tr>
+                                        <td>
+                                            <h3>Creation Date:</h3>
+                                            ${survey.created_at.date()}
+                                        </td>
+                                        <td>
+                                            <h3>Submission Date:</h3>
+                                            ${survey.submitted_at.date()}
+                                        </td>
+                                        <td>
+                                            <h3>Status:</h3>
+                                            ${survey.status.title()}
+                                        </td>
+                                        <td>
+                                            <span class="tick-icon"></span>
+                                        </td>
+                                        <td>
+                                            <button class="btn">
+                                                <a href=${"/oef_survey?feedback=" + str(survey.pk)}>
+                                                    See OEF
+                                                </a>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                % endfor
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+        $('.tabgroup > div').hide();
+        $('.tabgroup > div:last-of-type').show();
+        $('.tabs a').click(function (e) {
+            e.preventDefault();
+            var $this = $(this),
+                    tabgroup = '#' + $this.parents('.tabs').data('tabgroup'),
+                    others = $this.closest('li').siblings().children('a'),
+                    target = $this.attr('href');
+            others.removeClass('active');
+            $this.addClass('active');
+            $(tabgroup).children('div').hide();
+            $(target).show();
+
+        })
+    </script>
+
+</main>
