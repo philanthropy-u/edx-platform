@@ -960,6 +960,9 @@ INSTALLED_APPS = (
 
     # Unusual migrations
     'database_fixups',
+
+    # NodeBB app
+    'nodebb',
 )
 
 
