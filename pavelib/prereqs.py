@@ -31,6 +31,11 @@ PYTHON_REQ_FILES = [
     'requirements/edx/post.txt',
 ]
 
+# PhilU requirements
+PHILU_REQ_FILES = 'requirements/philu/base.txt'
+if os.path.exists(PHILU_REQ_FILES):
+    PYTHON_REQ_FILES.append(PHILU_REQ_FILES)
+
 # Developers can have private requirements, for local copies of github repos,
 # or favorite debugging tools, etc.
 PRIVATE_REQS = 'requirements/private.txt'
