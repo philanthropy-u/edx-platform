@@ -16,8 +16,7 @@ def create_category_on_nodebb(sender, instance, created, **kwargs):
         course_data = modulestore().get_course(instance.id)
         user_id = course_data._edited_by
 
-        status_code, response_body = NodeBBClient().categories.create(name=instance.display_name, private=True,
-                                                                      uid=user_id)
+        status_code, response_body = NodeBBClient().categories.create(name=instance.display_name)
 
         if status_code != 200:
             log.error(

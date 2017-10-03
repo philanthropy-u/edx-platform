@@ -19,8 +19,10 @@ class NodeBBClient(Client):
         """
         username = 'philu'
         password = 'wI86B42hfJR0,4H'
-        api_endpoint = 'http://{}:{}@community.philanthropyu.org'.format(username, password)
-        master_token = 'e5102aae-abe2-4598-a4bb-e7ba5c4a034c'
+        # api_endpoint = 'http://{}:{}@community.philanthropyu.org'.format(username, password)
+        api_endpoint = 'http://172.16.11.7'
+
+        master_token = '59c0f9c9-a087-4487-9a4e-470e3d065cad'
 
         self.configure(api_endpoint=api_endpoint, master_token=master_token, admin_uid=admin_uid)
         self.http_client = HttpClient()
