@@ -2164,6 +2164,9 @@ INSTALLED_APPS = (
 
     # Dynamic FAQ page
     'lms.djangoapps.faq',
+
+    # NodeBB App
+    'nodebb',
 )
 
 ######################### CSRF #########################################

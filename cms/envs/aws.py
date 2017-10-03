@@ -476,3 +476,9 @@ AFFILIATE_COOKIE_NAME = ENV_TOKENS.get('AFFILIATE_COOKIE_NAME', AFFILIATE_COOKIE
 ############## Settings for Studio Context Sensitive Help ##############
 
 DOC_LINK_BASE_URL = ENV_TOKENS.get('DOC_LINK_BASE_URL', DOC_LINK_BASE_URL)
+
+# NodeBB settings
+USERNAME = ENV_TOKENS.get('NODEBB_USERNAME', None)
+PASSWORD = ENV_TOKENS.get('NODEBB_PASSWORD', None)
+NODEBB_ENDPOINT = 'http://{}:{}@community.philanthropyu.org'.format(USERNAME, PASSWORD)
+NODEBB_MASTER_TOKEN = ENV_TOKENS.get('NODEBB_MASTER_TOKEN', None)
