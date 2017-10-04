@@ -3,7 +3,7 @@ from logging import getLogger
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from lms.lib.nodebb_client.client import NodeBBClient
+from common.lib.nodebb_client.client import NodeBBClient
 from xmodule.modulestore.django import modulestore
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from student.models import CourseEnrollment

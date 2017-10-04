@@ -7,8 +7,8 @@ from pynodebb.api.posts import Post
 from pynodebb.api.topics import Topic
 from pynodebb.http_client import HttpClient
 
-from lms.lib.nodebb_client.categories import PhiluCategory
-from lms.lib.nodebb_client.users import PhiluUser
+from common.lib.nodebb_client.categories import PhiluCategory
+from common.lib.nodebb_client.users import PhiluUser
 
 
 class NodeBBClient(Client):
