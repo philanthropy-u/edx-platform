@@ -1249,3 +1249,5 @@ USER_TASKS_MAX_AGE = timedelta(days=7)
 
 # NodeBB settings
 NODEBB_ENDPOINT = 'http://community.philanthropyu.org'
+NODEBB_TASK_DELAY = 600
+NODEBB_TASK_MAX_TRIES = 10
