@@ -1,7 +1,7 @@
 from pynodebb.api.categories import Category
 
 
-class PhiluCategory(Category):
+class ForumCategory(Category):
 
     def create(self, name, hidden=1, uid=1, **kwargs):
         payload = {'name': name, '_uid': uid, 'hidden': hidden}

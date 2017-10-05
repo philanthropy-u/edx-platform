@@ -1,7 +1,7 @@
 from pynodebb.api.users import User
 
 
-class PhiluUser(User):
+class ForumUser(User):
 
     def join(self, group_name, user_name, uid=1, **kwargs):
         payload = {'name': group_name, 'username': user_name, '_uid': uid}

@@ -18,10 +18,12 @@ def create_category_on_nodebb(sender, instance, created, **kwargs):
 
         if status_code != 200:
             log.error(
-                "Error: Can't create category for the given course {} due to {}".format(instance.id, response_body)
+                "Error: Can't create nodebb cummunity for the given course {} due to {}".format(
+                    instance.id, response_body
+                )
             )
-
-        log.info('Success: Community created for course {}'.format(instance.id))
+        else:
+            log.info('Success: Community created for course {}'.format(instance.id))
 
 
 @receiver(post_save, sender=CourseEnrollment, dispatch_uid="nodebb.signals.handlers.join_group_on_nodebb")
@@ -38,5 +40,5 @@ def join_group_on_nodebb(sender, instance, created, **kwargs):
                     course.display_name, user_name, response_body
                 )
             )
-
-        log.info('Success: User have joined the group {} successfully'.format(course.display_name))
+        else:
+            log.info('Success: User have joined the group {} successfully'.format(course.display_name))

@@ -7,8 +7,8 @@ from pynodebb.api.posts import Post
 from pynodebb.api.topics import Topic
 from pynodebb.http_client import HttpClient
 
-from common.lib.nodebb_client.categories import PhiluCategory
-from common.lib.nodebb_client.users import PhiluUser
+from common.lib.nodebb_client.categories import ForumCategory
+from common.lib.nodebb_client.users import ForumUser
 
 
 class NodeBBClient(Client):
@@ -25,8 +25,8 @@ class NodeBBClient(Client):
 
         self.http_client = HttpClient()
 
-        self.users = PhiluUser(self.http_client)
+        self.users = ForumUser(self.http_client)
         self.topics = Topic(self.http_client)
         self.posts = Post(self.http_client)
         self.groups = Group(self.http_client)
-        self.categories = PhiluCategory(self.http_client)
+        self.categories = ForumCategory(self.http_client)
