@@ -8,4 +8,4 @@ class NodebbConfig(AppConfig):
         """
         Connect signal handlers.
         """
-        from .signals import handlers
+        from nodebb.signals.handlers import create_category_on_nodebb, join_group_on_nodebb
