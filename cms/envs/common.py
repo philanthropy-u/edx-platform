@@ -88,6 +88,11 @@ from lms.envs.common import (
     # File upload defaults
     FILE_UPLOAD_STORAGE_BUCKET_NAME,
     FILE_UPLOAD_STORAGE_PREFIX,
+
+    # Node bb settings
+    NODEBB_ENDPOINT,
+    NODEBB_TASK_DELAY,
+    NODEBB_TASK_MAX_TRIES,
 )
 from path import Path as path
 from warnings import simplefilter
