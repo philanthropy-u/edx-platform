@@ -1246,8 +1246,3 @@ RETRY_ACTIVATION_EMAIL_TIMEOUT = 0.5
 
 # How long until database records about the outcome of a task and its artifacts get deleted?
 USER_TASKS_MAX_AGE = timedelta(days=7)
-
-# NodeBB settings
-NODEBB_ENDPOINT = 'http://community.philanthropyu.org'
-NODEBB_TASK_DELAY = 600
-NODEBB_TASK_MAX_TRIES = 10
