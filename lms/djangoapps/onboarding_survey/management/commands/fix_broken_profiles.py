@@ -3,7 +3,7 @@ from optparse import make_option
 from django.conf import settings
 from django.contrib.auth.models import User
 
-from lms.djangoapps.student import UserProfile
+from student.models import UserProfile
 from lms.djangoapps.onboarding_survey.models import (
     ExtendedProfile,
     OrganizationSurvey,
