@@ -8,7 +8,8 @@ from lms.djangoapps.onboarding_survey.models import (
     ExtendedProfile,
     OrganizationSurvey,
     InterestsSurvey,
-    UserInfoSurvey
+    UserInfoSurvey,
+    Organization
 )
 from track.management.tracked_command import TrackedCommand
 
@@ -103,11 +104,27 @@ class Command(TrackedCommand):
         extended_profile.user = user
         extended_profile.first_name = first_name
         extended_profile.last_name = last_name
-        extended_profile.organization = None
+        organization, created = Organization.objects.get_or_create(name='DummyOrg')
+        extended_profile.organization = organization
         extended_profile.org_admin_email = ''
         extended_profile.is_survey_completed = self.are_surveys_complete(user)
 
         extended_profile.save()
+
+    def create_user_profile(self, user):
+        """
+        Create edX's user profile for the user.
+
+        Many features in the edX depend upon some of the fields in this model.
+
+        Arguments:
+            user(User): Django auth user model instance corresponding
+                        the user of which to create the user profile.
+        """
+        user_profile = UserProfile()
+        user_profile.name = user.username
+        user_profile.user = user
+        user_profile.save()
 
     def handle(self, *args, **options):
 
@@ -119,3 +136,8 @@ class Command(TrackedCommand):
             except ExtendedProfile.DoesNotExist:
 
                 self.create_extended_profile(user)
+
+            try:
+                user.profile
+            except UserProfile.DoesNotExist:
+                self.create_user_profile(user)
