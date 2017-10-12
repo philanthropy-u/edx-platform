@@ -104,7 +104,7 @@ class Command(TrackedCommand):
         extended_profile.user = user
         extended_profile.first_name = first_name
         extended_profile.last_name = last_name
-        organization, created = Organization.objects.get_or_create(name='DummyOrg')
+        organization, created = Organization.objects.get_or_create(name='PhilU')
         extended_profile.organization = organization
         extended_profile.org_admin_email = ''
         extended_profile.is_survey_completed = self.are_surveys_complete(user)
