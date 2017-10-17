@@ -765,7 +765,10 @@ def dashboard(request):
     else:
         redirect_message = ''
 
-    courses = get_courses(user)
+    courses = []
+    for course_enrollment in course_enrollments:
+        courses.append(course_enrollment.course_overview)
+
 
     context = {
         'is_poc': user.extended_profile.is_poc,
