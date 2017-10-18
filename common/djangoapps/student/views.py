@@ -765,17 +765,11 @@ def dashboard(request):
     else:
         redirect_message = ''
 
-    courses = []
-    for course_enrollment in course_enrollments:
-        courses.append(course_enrollment.course_overview)
-
-
     context = {
         'is_poc': user.extended_profile.is_poc,
         'enrollment_message': enrollment_message,
         'redirect_message': redirect_message,
         'course_enrollments': course_enrollments,
-        'courses_list': courses,
         'course_optouts': course_optouts,
         'message': message,
         'staff_access': staff_access,
