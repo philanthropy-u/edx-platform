@@ -156,13 +156,13 @@ def courses(request):
                                        settings.FEATURES.get("DISPLAY_PROGRAMS_ON_MARKETING_PAGES")):
         programs_list = get_programs_data(request.user)
 
-    enrolled_courses = get_enrolled_courses(request.user)
-
-    for course in courses_list:
-        if course in enrolled_courses:
-            course.enrolled = True
-        else:
-            course.enrolled = False
+    if request.user.is_authenticated():
+        enrolled_courses = get_enrolled_courses(request.user)
+        for course in courses_list:
+            if course in enrolled_courses:
+                course.enrolled = True
+            else:
+                course.enrolled = False
 
     return render_to_response(
         "courseware/courses.html",
