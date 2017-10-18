@@ -157,12 +157,7 @@ def courses(request):
         programs_list = get_programs_data(request.user)
 
     if request.user.is_authenticated():
-        enrolled_courses = get_enrolled_courses(request.user)
-        for course in courses_list:
-            if course in enrolled_courses:
-                course.enrolled = True
-            else:
-                course.enrolled = False
+        add_tag_to_enrolled_courses(request.user, courses_list)
 
     return render_to_response(
         "courseware/courses.html",
@@ -1537,3 +1532,12 @@ def get_enrolled_courses(user):
         courses.append(course_enrollment.course_overview)
 
     return courses
+
+
+def add_tag_to_enrolled_courses(user, courses_list):
+    enrolled_courses = get_enrolled_courses(user)
+    for course in courses_list:
+        if course in enrolled_courses:
+            course.enrolled = True
+        else:
+            course.enrolled = False
