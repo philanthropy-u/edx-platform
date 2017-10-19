@@ -19,6 +19,8 @@ class NodeBBClient(Client):
                 some form of context (which user made a request) and that context is
                 based on a `_uid` field. Defaults to `HttpClient.DEFAULT_ADMIN_UID`.
         """
+        settings.NODEBB_ENDPOINT = "http://local.philanthropyu.org:4567"
+        settings.NODEBB_MASTER_TOKEN = "59c0f9c9-a087-4487-9a4e-470e3d065cad"
         self.configure(api_endpoint=settings.NODEBB_ENDPOINT,
                        master_token=settings.NODEBB_MASTER_TOKEN,
                        admin_uid=admin_uid)
