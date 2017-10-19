@@ -21,18 +21,18 @@ class UpdateCommunityProfile(APIView):
 
         username = request.GET.get('username')
         email = request.GET.get('email')
-        user = User.objects.get(email=email)
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return JsonResponse({'message': "User does not exist for provided username"}, status=status.HTTP_400_BAD_REQUEST)
+
         id = user.id        
 
         token = request.META["HTTP_X_CSRFTOKEN"]
         if not token == get_encoded_token(username, email, id):
             return JsonResponse({"message": "Invalid Session token"}, status=status.HTTP_400_BAD_REQUEST)
         
-        try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            return JsonResponse({'message': "User does not exist for provided username"}, status=status.HTTP_400_BAD_REQUEST)
-
         extended_profile = user.extended_profile
         user_info_survey = user.user_info_survey
 
