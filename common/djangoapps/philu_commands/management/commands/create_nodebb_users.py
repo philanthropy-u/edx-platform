@@ -9,6 +9,7 @@ from django.core.management.base import BaseCommand
 from common.lib.nodebb_client.client import NodeBBClient
 from nodebb.signals.handlers import create_user_on_nodebb
 from lms.djangoapps.onboarding_survey.models import ExtendedProfile
+from philu_commands.models import CreationFailedUsers
 
 log = getLogger(__name__)
 
@@ -83,6 +84,15 @@ class Command(BaseCommand):
         user_extended_profiles = ExtendedProfile.objects.all()
 
         for extended_profile in user_extended_profiles:
-            success = create_user(sender=ExtendedProfile, instance=extended_profile)
-            if success:
-                activate_user(sender=ExtendedProfile, instance=extended_profile.user)
+            is_created = create_user(sender=ExtendedProfile, instance=extended_profile)
+            is_activated = False
+            if is_created:
+                is_activated = activate_user(sender=ExtendedProfile, instance=extended_profile.user)
+
+            # If user creation or activation(or both) is failed then we make sure to record the instance
+            # in the database for future reference.
+            if not (is_created and is_activated):
+                failed_user = CreationFailedUsers(
+                    email=extended_profile.user.email, is_created=is_created, is_activated=is_activated
+                )
+                failed_user.save()
