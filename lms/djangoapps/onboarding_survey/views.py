@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse
+from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.shortcuts import render
@@ -28,6 +29,7 @@ from lms.djangoapps.onboarding_survey.signals import save_interests
 from lms.djangoapps.student_dashboard.views import get_recommended_xmodule_courses, get_recommended_communities
 from onboarding_survey import forms
 from lms.djangoapps.onboarding_survey.history import update_history
+from lms.djangoapps.onboarding_survey.models import ExtendedProfile
 
 log = logging.getLogger("edx.onboarding_survey")
 
@@ -144,6 +146,7 @@ def user_info(request):
     context.update(get_un_submitted_surveys(user))
     context['is_poc'] = extended_profile.is_poc
     context['is_first_user'] = is_first_signup_in_org(extended_profile.organization)
+    context['google_place_api_key'] = settings.GOOGLE_PLACE_API_KEY
     return render(request, 'onboarding_survey/tell_us_more_survey.html', context)
 
 
@@ -464,3 +467,35 @@ def recommendations(request):
     }
 
     return render_to_response('onboarding_survey/recommendations.html', context)
+
+@csrf_exempt
+def admin_activation(request, activation_key):
+    """
+    When clicked on link sent in email to make user admin.
+
+    """
+    user = None
+    try:
+        user = ExtendedProfile.objects.get(admin_activation_key=activation_key)
+    except ExtendedProfile.DoesNotExist:
+        pass
+    # activation_status can have values 1,2,3,4.
+    # 1 means 'activated',
+    # 2 means 'already active',
+    # 3 means 'Invalid key',
+    # 4 means 'to be activated'
+    context = {}
+    activation_status = 3
+    if user:
+        if user.is_admin_activated:
+            activation_status = 2
+        elif request.method == 'GET':
+            context['key'] = user.admin_activation_key
+            activation_status = 4
+        elif request.method == 'POST':
+            user.is_admin_activated = True
+            user.save()
+            activation_status = 1
+
+    context['activation_status'] = activation_status
+    return render_to_response('onboarding_survey/admin_activation.html', context)
