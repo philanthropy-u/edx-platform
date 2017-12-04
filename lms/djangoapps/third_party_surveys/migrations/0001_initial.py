@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, verbose_name='modified', editable=False)),
                 ('response', models.TextField()),
                 ('request_date', models.CharField(max_length=19)),
-                ('type', models.CharField(max_length=20, null=True, blank=True)),
+                ('survey_type', models.CharField(max_length=20, null=True, blank=True)),
                 ('user', models.ForeignKey(related_name='survey_user', to=settings.AUTH_USER_MODEL)),
             ],
             options={
