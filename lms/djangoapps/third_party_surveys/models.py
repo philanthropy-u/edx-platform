@@ -10,7 +10,7 @@ class ThirdPartySurvey(TimeStampedModel):
     response = models.TextField()
     request_date = models.CharField(max_length=19)
     user = models.ForeignKey(User, related_name='survey_user')
-    type = models.CharField(max_length=20, null=True, blank=True)
+    survey_type = models.CharField(max_length=20, null=True, blank=True)
 
     def __unicode__(self):
-        return "{} | {} | {}".format(self.user, self.type, self.request_date)
+        return "{} | {} | {}".format(self.user, self.survey_type, self.request_date)
