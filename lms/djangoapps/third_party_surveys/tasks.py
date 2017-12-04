@@ -2,12 +2,17 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from django.conf import settings
 from surveygizmo import SurveyGizmo
+from django.contrib.auth.models import User
 
 from lms.djangoapps.third_party_surveys.models import ThirdPartySurvey
 
 
 @periodic_task(run_every=crontab())
 def get_third_party_surveys():
+    """
+    Periodic Task that will run on daily basis and will sync the response data
+    of all surveys thorough Survey Gizmo APIs
+    """
     survey_client = SurveyGizmo(
         api_version='v4',
         api_token=settings.SURVEY_GIZMO_TOKEN,
@@ -23,6 +28,7 @@ def get_third_party_surveys():
     for survey in surveys['data']:
         survey_response_filter = survey_client.api.surveyresponse
         if last_survey:
+            # Increased the page size to decrease the no of requests hitting on Survey Gizmo servers
             survey_response_filter = survey_response_filter.resultsperpage('500').filter(
                 'datesubmitted', '>', last_survey.request_date
             )
