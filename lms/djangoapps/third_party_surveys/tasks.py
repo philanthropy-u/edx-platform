@@ -1,6 +1,5 @@
 from celery.schedules import crontab
 from celery.task import periodic_task
-from django.contrib.auth.models import User
 
 from common.lib.surveygizmo_client.client import SurveyGizmoClient
 from lms.djangoapps.third_party_surveys.models import ThirdPartySurvey
