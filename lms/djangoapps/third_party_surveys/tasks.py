@@ -6,7 +6,7 @@ from common.lib.surveygizmo_client.client import SurveyGizmoClient
 from lms.djangoapps.third_party_surveys.models import ThirdPartySurvey
 
 
-@periodic_task(run_every=crontab())
+@periodic_task(run_every=crontab(minute=1, hour=12))
 def get_third_party_surveys():
     """
     Periodic Task that will run on daily basis and will sync the response data
