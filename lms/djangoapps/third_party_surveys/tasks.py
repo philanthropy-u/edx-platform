@@ -12,32 +12,14 @@ def get_third_party_surveys():
     Periodic Task that will run on daily basis and will sync the response data
     of all surveys thorough Survey Gizmo APIs
     """
-    survey_client = SurveyGizmoClient()
-
-    surveys = survey_client.api.survey.list()
     try:
         last_survey = ThirdPartySurvey.objects.latest('request_date')
+        filters = [('datesubmitted', '>', last_survey.request_date)]
     except ThirdPartySurvey.DoesNotExist:
-        last_survey = ''
+        filters = []
 
-    for survey in surveys['data']:
-        survey_response_filter = survey_client.api.surveyresponse
-        if last_survey:
-            # Increased the page size to decrease the no of requests hitting on Survey Gizmo servers
-            survey_response_filter = survey_response_filter.resultsperpage('500').filter(
-                'datesubmitted', '>', last_survey.request_date
-            )
-
-        survey_responses = survey_response_filter.list(survey['id'])
-
-        # Pagination
-        total_pages = survey_responses['total_pages']
-
-        for page in range(survey_responses['page'] + 1, total_pages + 1):
-            survey_page_responses = survey_response_filter.page(page).list(survey['id'])
-            save_responses(survey_page_responses['data'])
-
-        save_responses(survey_responses['data'])
+    survey_responses = SurveyGizmoClient().get_filtered_survey_responses(survey_filters=filters)
+    save_responses(survey_responses)
 
 
 def save_responses(survey_responses):
