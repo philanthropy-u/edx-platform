@@ -1,3 +1,6 @@
+from datetime import datetime
+
+import pytz
 from celery.schedules import crontab
 from celery.task import periodic_task
 
@@ -26,9 +29,12 @@ def save_responses(survey_responses):
         if not response.get('[url("sguid")]'):
             continue
 
+        date = datetime.strptime(response['datesubmitted'], "%Y-%m-%d %H:%M:%S")
+        date = pytz.utc.localize(date)
+
         third_party_survey = ThirdPartySurvey(
             response=response,
             user_id=response['[url("sguid")]'],
-            request_date=response['datesubmitted']
+            request_date=date
         )
         third_party_survey.save()

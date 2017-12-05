@@ -8,7 +8,7 @@ class ThirdPartySurvey(TimeStampedModel):
     Model that stores third party surveys
     """
     response = models.TextField()
-    request_date = models.CharField(max_length=19)
+    request_date = models.DateTimeField()
     user = models.ForeignKey(User, related_name='survey_user')
     survey_type = models.CharField(max_length=20, null=True, blank=True)
 
