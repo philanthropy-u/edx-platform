@@ -1,9 +1,8 @@
 from celery.schedules import crontab
 from celery.task import periodic_task
-from django.conf import settings
-from surveygizmo import SurveyGizmo
 from django.contrib.auth.models import User
 
+from common.lib.surveygizmo_client.client import SurveyGizmoClient
 from lms.djangoapps.third_party_surveys.models import ThirdPartySurvey
 
 
@@ -13,11 +12,7 @@ def get_third_party_surveys():
     Periodic Task that will run on daily basis and will sync the response data
     of all surveys thorough Survey Gizmo APIs
     """
-    survey_client = SurveyGizmo(
-        api_version='v4',
-        api_token=settings.SURVEY_GIZMO_TOKEN,
-        api_token_secret=settings.SURVEY_GIZMO_TOKEN_SECRET
-    )
+    survey_client = SurveyGizmoClient()
 
     surveys = survey_client.api.survey.list()
     try:
