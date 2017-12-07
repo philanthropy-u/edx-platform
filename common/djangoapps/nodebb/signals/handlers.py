@@ -5,54 +5,57 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from common.lib.nodebb_client.client import NodeBBClient
-from lms.djangoapps.onboarding.models import ExtendedProfile, UserInfoSurvey, InterestsSurvey, OrganizationSurvey
-from lms.djangoapps.onboarding.signals import save_interests
+from lms.djangoapps.onboarding.models import UserExtendedProfile, Organization
 from nodebb.models import DiscussionCommunity
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
-from student.models import ENROLL_STATUS_CHANGE, EnrollStatusChange
+from student.models import ENROLL_STATUS_CHANGE, EnrollStatusChange, UserProfile
 from xmodule.modulestore.django import modulestore
 
 log = getLogger(__name__)
 
 
-@receiver(post_save, sender=UserInfoSurvey)
-@receiver(post_save, sender=ExtendedProfile)
-@receiver(post_save, sender=OrganizationSurvey)
-@receiver(save_interests, sender=InterestsSurvey)
+@receiver(post_save, sender=UserExtendedProfile)
+@receiver(post_save, sender=User)
+@receiver(post_save, sender=UserProfile)
+@receiver(post_save, sender=Organization)
 def sync_user_info_with_nodebb(sender, instance, **kwargs):  # pylint: disable=unused-argument, invalid-name
     """
     Sync information b/w NodeBB User Profile and Edx User Profile, Surveys
 
     """
-    user = instance.user
+    if sender in [UserProfile, UserExtendedProfile]:
+        user = instance.user
+    elif sender == User:
+        user = instance
+    else:
+        return
 
     if user:
-        if sender == ExtendedProfile:
+        if sender == User:
             data_to_sync = {
                 "first_name": instance.first_name,
                 "last_name": instance.last_name
+            }
+        elif sender == UserProfile:
+            data_to_sync = {
+                "city_of_residence": instance.city,
+                "country_of_residence": instance.country,
+                "birthday": "01/01/%s" % instance.year_of_birth,
+                "language": instance.language,
+            }
+        elif sender == UserExtendedProfile:
+            data_to_sync = {
+                "country_of_employment": instance.country_of_employment,
+                "city_of_employment": instance.city_of_employment,
+                'interests': instance.get_user_selected_interests()
             }
 
             if instance.organization:
                 data_to_sync["organization"] = instance.organization.name
 
-        elif sender == UserInfoSurvey:
-            data_to_sync = {
-                "city_of_residence": instance.city_of_residence,
-                "country_of_residence": instance.country_of_residence,
-                # "birthday": instance.dob,
-                "country_of_employment": instance.country_of_employment,
-                "city_of_employment": instance.city_of_employment,
-                "birthday": "01/01/%s" % instance.year_of_birth,
-                "language": instance.language,
-            }
-        elif sender == OrganizationSurvey:
+        elif sender == Organization:
             data_to_sync = {
                 "focus_area": instance.focus_area
-            }
-        elif sender == InterestsSurvey:
-            data_to_sync = {
-                'interests': [interest.label for interest in instance.capacity_areas.all()]
             }
         else:
             return
@@ -67,7 +70,7 @@ def sync_user_info_with_nodebb(sender, instance, **kwargs):  # pylint: disable=u
             log.info('Success: User(%s) has been updated on nodebb' % user.username)
 
 
-@receiver(post_save, sender=ExtendedProfile, dispatch_uid='create_user_on_nodebb')
+@receiver(post_save, sender=UserExtendedProfile, dispatch_uid='create_user_on_nodebb')
 def create_user_on_nodebb(sender, instance, created, **kwargs):
     """
     Create a new user on nodebb whenver a new user is created on edx platform
@@ -76,8 +79,8 @@ def create_user_on_nodebb(sender, instance, created, **kwargs):
         user_info = {
             'edx_user_id': instance.user.id,
             'email': instance.user.email,
-            'first_name': instance.first_name,
-            'last_name': instance.last_name,
+            'first_name': instance.user.first_name,
+            'last_name': instance.user.last_name,
             'username': instance.user.username,
             'organization': instance.organization.name,
             'date_joined': instance.user.date_joined.strftime('%d/%m/%Y'),

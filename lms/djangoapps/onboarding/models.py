@@ -1,4 +1,6 @@
 import logging
+import uuid
+
 import re
 
 from django.contrib.auth.models import User
@@ -135,17 +137,20 @@ class Organization(TimeStampedModelWithHistoryFields):
 
     label = models.CharField(max_length=255, db_index=True)
     admin = models.ForeignKey(User, related_name='organization', blank=True, null=True, on_delete=models.SET_NULL)
-    country = models.CharField(max_length=255)
-    city = models.CharField(max_length=255)
-    unclaimed_org_admin_email = models.EmailField(unique=True)
+    country = models.CharField(max_length=255, null=True)
+    city = models.CharField(max_length=255, null=True)
+    unclaimed_org_admin_email = models.EmailField(unique=True, null=True)
     url = models.URLField(max_length=255, blank=True, null=True, validators=[SchemaOrNoSchemaURLValidator])
     founding_year = models.PositiveSmallIntegerField(blank=True, null=True)
-    registration_number = models.CharField(max_length=30)
-    org_type = models.ForeignKey(OrgSector, related_name="organization")
-    level_of_operation = models.ForeignKey(OperationLevel, related_name='organization')
-    focus_area = models.ForeignKey(FocusArea, related_name='organization')
+    registration_number = models.CharField(max_length=30, null=True)
+    org_type = models.ForeignKey(OrgSector, related_name="organization", null=True)
+    level_of_operation = models.ForeignKey(OperationLevel, related_name='organization', null=True)
+    focus_area = models.ForeignKey(FocusArea, related_name='organization', null=True)
     total_employees = models.ForeignKey(TotalEmployee, related_name='organization', null=True)
     alternate_admin_email = models.EmailField(blank=True, null=True)
+
+    def is_first_signup_in_org(self):
+        return UserExtendedProfile.objects.filter(organization=self).count() == 1
 
 
 class OrganizationPartner(models.Model):
@@ -182,24 +187,39 @@ class OrganizationAdminHashKeys(TimeStampedModel):
     def __str__(self):
         return "%s-%s" % (self.suggested_admin_email, self.activation_key_for_admin)
 
+    @classmethod
+    def assign_hash(cls, organization, suggested_by, suggested_admin_email):
+        return cls.objects.create(organization=organization, suggested_by=suggested_by,
+                                  suggested_admin_email=suggested_admin_email, activation_hash=uuid.uuid4().hex)
 
 class UserExtendedProfile(TimeStampedModelWithHistoryFields):
     """
     Extra profile fields that we don't want to enter in user_profile to avoid code conflicts at edx updates
     """
 
+    INTERESTS_LABELS = {
+        "interest_strategy_planning": "Strategy and planning",
+        "interest_leadership_governance": "Leadership and governance",
+        "interest_program_design": "Program design and development",
+        "interest_measurement_eval": "Measurement, evaluation, and learning",
+        "interest_stakeholder_engagement": "Stakeholder engagement and partnerships",
+        "interest_human_resource": "Human resource management",
+        "interest_financial_management": "Financial management",
+        "interest_fundraising": "Fundraising and resource mobilization",
+        "interest_marketing_communication": "Marketing, communications, and PR",
+        "interest_system_tools": "Systems, tools, and processes",
+    }
+
     user = models.OneToOneField(User, unique=True, db_index=True, related_name='extended_profile')
     organization = models.ForeignKey(Organization, related_name='extended_profile', blank=True, null=True,
                                      on_delete=models.SET_NULL)
-    country_of_employment = models.CharField(max_length=255, blank=True)
-    city_of_employment = models.CharField(max_length=255, blank=True)
-    english_proficiency = models.CharField(max_length=10, choices=[(ep.code, ep.label) for ep in
-                                                                   EnglishProficiency.objects.filter(user=user)])
-    level_of_education = models.CharField(max_length=10, choices=[(ep.code, ep.label) for ep in
-                                                                  EducationLevel.objects.filter(user=user)])
-    start_month_year = models.CharField(max_length=100)
+    country_of_employment = models.CharField(max_length=255, null=True)
+    city_of_employment = models.CharField(max_length=255, null=True)
+    english_proficiency = models.CharField(max_length=10, null=True)
+    level_of_education = models.CharField(max_length=10, null=True)
+    start_month_year = models.CharField(max_length=100, null=True)
     role_in_org = models.ForeignKey(RoleInsideOrg, related_name='extended_profile', null=True)
-    hours_per_week = models.PositiveIntegerField(validators=[MaxValueValidator(168)])
+    hours_per_week = models.PositiveIntegerField(validators=[MaxValueValidator(168)], null=True)
 
     # hold the status if user has completed all on-boarding surveys
     is_all_surveys_completed = models.BooleanField(default=False)
@@ -217,16 +237,16 @@ class UserExtendedProfile(TimeStampedModelWithHistoryFields):
     function_system_tools = models.SmallIntegerField("Systems, tools, and processes", default=0)
 
     # User interests related fields
-    interest_strategy_planning = models.SmallIntegerField("Strategy and planning", default=0)
-    interest_leadership_governance = models.SmallIntegerField("Leadership and governance", default=0)
-    interest_program_design = models.SmallIntegerField("Program design and development", default=0)
-    interest_measurement_eval = models.SmallIntegerField("Measurement, evaluation, and learning", default=0)
-    interest_stakeholder_engagement = models.SmallIntegerField("Stakeholder engagement and partnerships", default=0)
-    interest_human_resource = models.SmallIntegerField("Human resource management", default=0)
-    interest_financial_management = models.SmallIntegerField("Financial management", default=0)
-    interest_fundraising = models.SmallIntegerField("Fundraising and resource mobilization", default=0)
-    interest_marketing_communication = models.SmallIntegerField("Marketing, communications, and PR", default=0)
-    interest_system_tools = models.SmallIntegerField("Systems, tools, and processes", default=0)
+    interest_strategy_planning = models.SmallIntegerField(INTERESTS_LABELS["interest_strategy_planning"], default=0)
+    interest_leadership_governance = models.SmallIntegerField(INTERESTS_LABELS["interest_leadership_governance"], default=0)
+    interest_program_design = models.SmallIntegerField(INTERESTS_LABELS["interest_program_design"], default=0)
+    interest_measurement_eval = models.SmallIntegerField(INTERESTS_LABELS["interest_measurement_eval"], default=0)
+    interest_stakeholder_engagement = models.SmallIntegerField(INTERESTS_LABELS["interest_stakeholder_engagement"], default=0)
+    interest_human_resource = models.SmallIntegerField(INTERESTS_LABELS["interest_human_resource"], default=0)
+    interest_financial_management = models.SmallIntegerField(INTERESTS_LABELS["interest_financial_management"], default=0)
+    interest_fundraising = models.SmallIntegerField(INTERESTS_LABELS["interest_fundraising"], default=0)
+    interest_marketing_communication = models.SmallIntegerField(INTERESTS_LABELS["interest_marketing_communication"], default=0)
+    interest_system_tools = models.SmallIntegerField(INTERESTS_LABELS["interest_system_tools"], default=0)
 
     # Learners related field
     learners_same_region = models.SmallIntegerField("Is learner interested in learners from same region", default=0)
@@ -244,6 +264,24 @@ class UserExtendedProfile(TimeStampedModelWithHistoryFields):
     goal_improve_job_prospect = models.SmallIntegerField("Is learner's goal is to improve job prospects", default=0)
     goal_relation_with_other = models.SmallIntegerField("Is learner's goal is to build relationship with other "
                                                         "learners", default=0)
+
+    def get_user_selected_interests(self):
+        return [label for field_name, label in self.INTERESTS_LABELS.items() if getattr(self, field_name) == 1]
+
+    @property
+    def attended_surveys(self):
+        """Return list of user's attended onboarding surveys"""
+        attended_list = []
+        if self.level_of_education and self.start_month_year and self.english_proficiency:
+           attended_list.append("first")
+        elif self.get_user_selected_interests():
+            attended_list.append("second")
+
+        return attended_list
+
+    @property
+    def is_organization_admin(self):
+        return self.user == self.organization.admin
 
 
 class OrganizationMetric(TimeStampedModel):
