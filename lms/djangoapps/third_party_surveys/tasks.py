@@ -3,6 +3,7 @@ from datetime import datetime
 import pytz
 from celery.schedules import crontab
 from celery.task import periodic_task
+from django.db import IntegrityError
 
 from common.lib.surveygizmo_client.client import SurveyGizmoClient
 from lms.djangoapps.third_party_surveys.models import ThirdPartySurvey
@@ -37,4 +38,9 @@ def save_responses(survey_responses):
             user_id=response['[url("sguid")]'],
             request_date=date
         )
-        third_party_survey.save()
+
+        # Pass the exception if the user=sguid doesn't exist in the Database
+        try:
+            third_party_survey.save()
+        except IntegrityError:
+            pass
