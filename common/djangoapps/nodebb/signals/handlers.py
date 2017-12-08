@@ -5,7 +5,8 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from common.lib.nodebb_client.client import NodeBBClient
-from lms.djangoapps.onboarding.models import UserExtendedProfile, Organization
+from lms.djangoapps.onboarding.models import UserExtendedProfile
+from nodebb.helpers import get_fields_to_sync_with_nodebb
 from nodebb.models import DiscussionCommunity
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from student.models import ENROLL_STATUS_CHANGE, EnrollStatusChange, UserProfile
@@ -29,6 +30,12 @@ def sync_user_info_with_nodebb(sender, instance, created, **kwargs):  # pylint: 
     Sync information b/w NodeBB User Profile and Edx User Profile, Surveys
 
     """
+
+    fields_to_sync_with_nodebb = get_fields_to_sync_with_nodebb()
+
+    if not kwargs['update_fields'] & set(fields_to_sync_with_nodebb):
+        return
+
     user = None
     if sender in [UserProfile, UserExtendedProfile]:
         user = instance.user

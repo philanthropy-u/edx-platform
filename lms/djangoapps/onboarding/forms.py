@@ -9,12 +9,13 @@ from itertools import chain
 from django import forms
 from django.utils.encoding import force_unicode
 from django.contrib.auth.models import User
+from django.utils.translation import ugettext_noop
 from rest_framework.compat import MinValueValidator, MaxValueValidator
 
 from lms.djangoapps.onboarding.models import (
     UserExtendedProfile,
     Organization,
-    OrganizationAdminHashKeys)
+    OrganizationAdminHashKeys, EducationLevel, EnglishProficiency, RoleInsideOrg)
 from lms.djangoapps.onboarding.email_utils import send_admin_activation_email
 from student.models import UserProfile
 
@@ -53,6 +54,13 @@ class UserInfoModelForm(forms.ModelForm):
     This will record some basic information about the user as modeled in
     'UserInfoSurvey' model
     """
+    GENDER_CHOICES = (
+        ('m', ugettext_noop('Male')),
+        ('f', ugettext_noop('Female')),
+        # Translators: 'Other' refers to the student's gender
+        ('o', ugettext_noop("I'd rather not say")),
+        ('nl', ugettext_noop('Not listed')),
+    )
 
     year_of_birth = forms.IntegerField(
         label="Year of Birth",
@@ -69,10 +77,8 @@ class UserInfoModelForm(forms.ModelForm):
             'required': EMPTY_FIELD_ERROR.format("Year of birth"),
         }
     )
-    gender = forms.ChoiceField(label='Gender', required=False, label_suffix="*", choices=UserProfile.GENDER_CHOICES,
+    gender = forms.ChoiceField(label='Gender', required=False, label_suffix="*", choices=GENDER_CHOICES,
                                widget=forms.RadioSelect)
-
-    is_gender_not_listed = forms.ChoiceField(required=False, choices=((0, "Not Listed"),), widget=forms.RadioSelect)
 
     language = forms.CharField(label="Native Language", label_suffix="*", required=True,
                                error_messages={"required": EMPTY_FIELD_ERROR.format('Language')})
@@ -81,7 +87,26 @@ class UserInfoModelForm(forms.ModelForm):
     })
     city = forms.CharField(label="City of Residence", required=False)
     is_emp_location_different = forms.BooleanField(label='Check here if your country and/or city of employment is '
-                                                         'different from your country and/or city of residence.')
+                                                         'different from your country and/or city of residence.',
+                                                   required=False)
+    level_of_education = forms.ChoiceField(label="Level of Education", label_suffix="*",
+                                           choices=((el.code, el.label) for el in EducationLevel.objects.all()),
+                                           error_messages={
+                                                'required': NO_OPTION_SELECT_ERROR.format(
+                                                    'Level of Education'),
+                                           })
+    english_proficiency = forms.ChoiceField(label="English Language Proficiency", label_suffix="*",
+                                            choices=((ep.code, ep.label) for ep in EnglishProficiency.objects.all()),
+                                            error_messages={
+                                                 'required': NO_OPTION_SELECT_ERROR.format(
+                                                     'English Language Proficiency'),
+                                            })
+    role_in_org = forms.ChoiceField(label="Role in the Organization", label_suffix="*",
+                                            choices=((r.code, r.label) for r in RoleInsideOrg.objects.all()),
+                                            error_messages={
+                                                 'required': NO_OPTION_SELECT_ERROR.format(
+                                                     'Role in the Organization'),
+                                            })
     # focus_area = forms.MultipleChoiceField(choices=())
 
     def __init__(self,  *args, **kwargs):
@@ -95,23 +120,16 @@ class UserInfoModelForm(forms.ModelForm):
 
     def clean_gender(self):
 
-        is_gender_not_listed = bool(self.data['is_gender_not_listed'])
+        not_listed_gender = self.data.get('not_listed_gender', None)
         gender = self.cleaned_data['gender']
 
-        if not is_gender_not_listed and not gender:
-            raise forms.ValidationError('Please select from gender.')
+        if not gender:
+            raise forms.ValidationError('Please select Gender.')
+
+        if gender == 'nl' and not not_listed_gender:
+            raise forms.ValidationError('Please specify Gender.')
 
         return gender
-
-    def clean_not_listed_gender(self):
-
-        is_gender_not_listed = bool(self.cleaned_data['is_gender_not_listed'])
-        not_listed_gender = self.data['not_listed_gender']
-
-        if is_gender_not_listed and not not_listed_gender:
-            raise forms.ValidationError('Please specify your gender.')
-
-        return not_listed_gender
 
     def clean_country(self):
 
@@ -147,9 +165,7 @@ class UserInfoModelForm(forms.ModelForm):
         labels = {
             'is_emp_location_different': 'Check here if your country and/or city of employment is different'
                                          ' from your country and/or city of residence.',
-            'level_of_education': 'Level of Education*',
             'start_month_year': "Start Month and Year*",
-            'english_proficiency': 'English Language Proficiency*',
             'role_in_org': 'Role in Organization*',
         }
         widgets = {
@@ -158,9 +174,6 @@ class UserInfoModelForm(forms.ModelForm):
             'not_listed_gender': forms.TextInput(attrs={'placeholder': 'Identify your gender here'}),
             'city': forms.TextInput,
             'language': forms.TextInput,
-            'level_of_education': forms.Select,
-            'english_proficiency': forms.Select,
-            'role_in_org': forms.Select,
             'start_month_year': forms.TextInput(attrs={'placeholder': 'mm/yy'}),
         }
 
@@ -170,15 +183,6 @@ class UserInfoModelForm(forms.ModelForm):
             },
             'start_month_year': {
                 'required': EMPTY_FIELD_ERROR.format('Start Month and Year'),
-            },
-            'role_in_org': {
-                'required': NO_OPTION_SELECT_ERROR.format('Role in the Organization'),
-            },
-            'level_of_education': {
-                'required': NO_OPTION_SELECT_ERROR.format('Level of Education'),
-            },
-            'english_proficiency': {
-                'required': NO_OPTION_SELECT_ERROR.format('English Language Proficiency'),
             }
         }
 
