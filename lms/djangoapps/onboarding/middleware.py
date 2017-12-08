@@ -77,9 +77,9 @@ class RedirectMiddleware(object):
     #                 return None
     #             return redirect(self.interests_survey_url)
     #
-    #         if is_first_signup_in_org(extended_profile.organization) or extended_profile.is_poc:
+    #         if is_first_signup_in_org(extended_profile.organization) or extended_profile.is_organization_admin:
     #             if not self.is_org_survey_complete(user):
-    #                 if is_first_signup_in_org(extended_profile.organization) or extended_profile.is_poc:
+    #                 if is_first_signup_in_org(extended_profile.organization) or extended_profile.is_organization_admin:
     #                     if self.organization_survey_url == request.get_full_path()\
     #                             or self.interests_survey_url == request.get_full_path()\
     #                             or self.user_info_survey_url == request.get_full_path():
@@ -92,7 +92,7 @@ class RedirectMiddleware(object):
     #                     return redirect(self.dashboard_url)
     #
     #             if not self.is_org_detail_survey_complete(user):
-    #                 if is_first_signup_in_org(extended_profile.organization) or extended_profile.is_poc:
+    #                 if is_first_signup_in_org(extended_profile.organization) or extended_profile.is_organization_admin:
     #                     if self.org_detail_survey_url == request.get_full_path()\
     #                             or self.organization_survey_url == request.get_full_path()\
     #                             or self.interests_survey_url == request.get_full_path()\

@@ -7,6 +7,9 @@ from lms.djangoapps.grades.new.course_grade import CourseGradeFactory
 from nodebb.models import DiscussionCommunity
 
 
+
+
+
 def get_course_related_tabs(request, course):
     """
         Return list of tabs data as dictionary

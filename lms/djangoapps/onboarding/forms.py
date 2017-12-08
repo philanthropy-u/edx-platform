@@ -16,10 +16,10 @@ from lms.djangoapps.onboarding.models import (
     Organization,
     OrganizationAdminHashKeys)
 from lms.djangoapps.onboarding.email_utils import send_admin_activation_email
+from student.models import UserProfile
 
-
-no_option_select_error = 'Please select an option for {}'
-empty_field_error = 'Please enter your {}'
+NO_OPTION_SELECT_ERROR = 'Please select an option for {}'
+EMPTY_FIELD_ERROR = 'Please enter your {}'
 
 
 def get_onboarding_autosuggesion_data(file_name):
@@ -54,20 +54,35 @@ class UserInfoModelForm(forms.ModelForm):
     'UserInfoSurvey' model
     """
 
-    # override auth_userprofile
-    year_of_birth = forms.IntegerField(validators=[
+    year_of_birth = forms.IntegerField(
+        label="Year of Birth",
+        label_suffix="*",
+        validators=[
             MinValueValidator(1900, message='Ensure year of birth is greater than or equal to 1900'),
             MaxValueValidator(
                 datetime.now().year, message='Ensure year of birth is less than or equal to {}'.format(
                     datetime.now().year
                 )
             )
-        ])
+        ],
+        error_messages={
+            'required': EMPTY_FIELD_ERROR.format("Year of birth"),
+        }
+    )
+    gender = forms.ChoiceField(label='Gender', required=False, label_suffix="*", choices=UserProfile.GENDER_CHOICES,
+                               widget=forms.RadioSelect)
 
-    language = forms.CharField()
-    city = forms.CharField(required=False)
-    country = forms.CharField()
-    is_emp_location_different = forms.BooleanField()
+    is_gender_not_listed = forms.ChoiceField(required=False, choices=((0, "Not Listed"),), widget=forms.RadioSelect)
+
+    language = forms.CharField(label="Native Language", label_suffix="*", required=True,
+                               error_messages={"required": EMPTY_FIELD_ERROR.format('Language')})
+    country = forms.CharField(label="Country of Residence", label_suffix="*",
+                              error_messages={"required": EMPTY_FIELD_ERROR.format("Country of Residence")
+    })
+    city = forms.CharField(label="City of Residence", required=False)
+    is_emp_location_different = forms.BooleanField(label='Check here if your country and/or city of employment is '
+                                                         'different from your country and/or city of residence.')
+    # focus_area = forms.MultipleChoiceField(choices=())
 
     def __init__(self,  *args, **kwargs):
         super(UserInfoModelForm, self).__init__( *args, **kwargs)
@@ -75,13 +90,28 @@ class UserInfoModelForm(forms.ModelForm):
         self.fields['english_proficiency'].empty_label = None
         self.fields['role_in_org'].empty_label = None
 
-    def clean_country_of_employment(self):
-        if self.cleaned_data['is_emp_location_different'] and self.cleaned_data.get('country', None):
-            if self.cleaned_data['country_of_employment'] == self.cleaned_data['country']:
-                raise forms.ValidationError(empty_field_error.format(
-                    "Country of Employment which is difference from Country of Residence")
-                )
-        return self.cleaned_data['country_of_employment']
+        # FOCUS_AREA_CHOICS = ((field_name, label) for field_name, label in UserExtendedProfile.FUNCTIONS_LABELS.items())
+        # self.fields['focus_area'] = forms.ChoiceField(choices=FOCUS_AREA_CHOICS, widget=forms.CheckboxSelectMultiple)
+
+    def clean_gender(self):
+
+        is_gender_not_listed = bool(self.data['is_gender_not_listed'])
+        gender = self.cleaned_data['gender']
+
+        if not is_gender_not_listed and not gender:
+            raise forms.ValidationError('Please select from gender.')
+
+        return gender
+
+    def clean_not_listed_gender(self):
+
+        is_gender_not_listed = bool(self.cleaned_data['is_gender_not_listed'])
+        not_listed_gender = self.data['not_listed_gender']
+
+        if is_gender_not_listed and not not_listed_gender:
+            raise forms.ValidationError('Please specify your gender.')
+
+        return not_listed_gender
 
     def clean_country(self):
 
@@ -109,71 +139,51 @@ class UserInfoModelForm(forms.ModelForm):
         """
         model = UserExtendedProfile
         fields = [
-            'year_of_birth', 'language', 'country', 'city', 'level_of_education',
-            'english_proficiency',
-            'is_emp_location_different', 'country_of_employment',
-            'city_of_employment', 'role_in_org', 'start_month_year', 'hours_per_week',
-            'function_strategy_planning', 'function_leadership_governance', 'function_program_design',
-            'function_measurement_eval', 'function_stakeholder_engagement', 'function_human_resource',
-            'function_financial_management', 'function_fundraising', 'function_marketing_communication',
-            'function_system_tools'
+            'year_of_birth', 'gender', 'not_listed_gender', 'not_listed_gender', 'level_of_education', 'language',
+            'english_proficiency', 'country', 'city', 'is_emp_location_different', 'role_in_org', 'start_month_year',
+            'hours_per_week'
         ]
 
         labels = {
             'is_emp_location_different': 'Check here if your country and/or city of employment is different'
                                          ' from your country and/or city of residence.',
             'level_of_education': 'Level of Education*',
-            'english_proficiency': 'English language proficiency*',
+            'start_month_year': "Start Month and Year*",
+            'english_proficiency': 'English Language Proficiency*',
             'role_in_org': 'Role in Organization*',
-            'function_area': 'Department or Function (Check all that apply.)'
         }
         widgets = {
-            'year_of_birth': forms.TextInput(attrs={'placeholder': 'Year of Birth*'}),
-            'country_of_employment': forms.TextInput(attrs={'placeholder': 'Country of Employment'}),
-            'city_of_employment': forms.TextInput(attrs={'placeholder': 'City of Employment'}),
-            'country': forms.TextInput(attrs={'placeholder': 'Country of Residence*'}),
-            'city': forms.TextInput(attrs={'placeholder': 'City of Residence'}),
-            'language': forms.TextInput(attrs={'placeholder': 'Native Language*'}),
-            'level_of_education': forms.RadioSelect,
-            'english_proficiency': forms.RadioSelect,
-            'role_in_org': forms.RadioSelect,
-            'start_month_year': forms.TextInput(attrs={'placeholder': 'Start Month and Year*'}),
-            'function_area': forms.CheckboxSelectMultiple(),
-            'weekly_work_hours': forms.NumberInput(attrs={'placeholder': 'Typical Number of Hours Worked Per Week*'}),
+            'year_of_birth': forms.TextInput,
+            'country': forms.TextInput,
+            'not_listed_gender': forms.TextInput(attrs={'placeholder': 'Identify your gender here'}),
+            'city': forms.TextInput,
+            'language': forms.TextInput,
+            'level_of_education': forms.Select,
+            'english_proficiency': forms.Select,
+            'role_in_org': forms.Select,
+            'start_month_year': forms.TextInput(attrs={'placeholder': 'mm/yy'}),
         }
 
         error_messages = {
-            'year_of_birth': {
-                'required': empty_field_error.format('Year of birth'),
-            },
-            'language': {
-                'required': empty_field_error.format('Language'),
-            },
-            'country': {
-                'required': empty_field_error.format('Country of residence'),
+            "hours_per_week": {
+                'required': EMPTY_FIELD_ERROR.format('Typical Number of Hours Worked per Week')
             },
             'start_month_year': {
-                'required': empty_field_error.format('Start month year'),
-            },
-            'weekly_work_hours': {
-                'required': empty_field_error.format('Weekly work hours'),
+                'required': EMPTY_FIELD_ERROR.format('Start Month and Year'),
             },
             'role_in_org': {
-                'required': no_option_select_error.format(' Role in the organization'),
+                'required': NO_OPTION_SELECT_ERROR.format('Role in the Organization'),
             },
             'level_of_education': {
-                'required': no_option_select_error.format('Level of Education'),
+                'required': NO_OPTION_SELECT_ERROR.format('Level of Education'),
             },
             'english_proficiency': {
-                'required': no_option_select_error.format('English Language Proficiency'),
+                'required': NO_OPTION_SELECT_ERROR.format('English Language Proficiency'),
             }
         }
 
     def save(self, commit=True):
         user_info_survey = super(UserInfoModelForm, self).save()
-        if not self.cleaned_data['is_emp_location_different']:
-            user_info_survey.country_of_employment = ""
-            user_info_survey.city_of_employment = ""
 
         if commit:
             user_info_survey.save()
@@ -319,7 +329,7 @@ class RadioSelectNotNull(forms.RadioSelect):
 #                 'required': required_error.format('Focus Area'),
 #             },
 #             'country': {
-#                 'required': empty_field_error.format('Country of Organization Headquarters'),
+#                 'required': EMPTY_FIELD_ERROR.format('Country of Organization Headquarters'),
 #             },
 #             'partner_network': {
 #                 'required': required_error.format('Partner Network'),
@@ -345,7 +355,7 @@ class RadioSelectNotNull(forms.RadioSelect):
 #         organization_website = self.cleaned_data['url']
 #
 #         if is_org_url_exist and not organization_website:
-#             raise forms.ValidationError(empty_field_error.format('Organization Website'))
+#             raise forms.ValidationError(EMPTY_FIELD_ERROR.format('Organization Website'))
 #
 #         return organization_website
 #
@@ -369,6 +379,26 @@ class RegModelForm(forms.ModelForm):
     """
     Model form for extra fields in registration model
     """
+
+    IS_POC_CHOICES = (
+        (1, 'Yes'),
+        (0, 'No')
+    )
+
+    first_name = forms.CharField(
+        label='First Name',
+        widget=forms.TextInput(
+            attrs={'placeholder': 'First Name'}
+        )
+    )
+
+    last_name = forms.CharField(
+        label='Last Name',
+        widget=forms.TextInput(
+            attrs={'placeholder': 'Last Name'}
+        )
+    )
+
     organization_name = forms.CharField(
         max_length=255,
         label='Organization Name',
@@ -392,7 +422,7 @@ class RegModelForm(forms.ModelForm):
     )
 
     is_poc = forms.ChoiceField(label='Are you the Admin of your organization?',
-                               choices=((1, 'Yes'), (0, 'No')),
+                               choices=IS_POC_CHOICES,
                                widget=forms.RadioSelect)
 
     org_admin_email = forms.CharField(required=False,
@@ -421,7 +451,7 @@ class RegModelForm(forms.ModelForm):
         }
 
     class Meta:
-        model = User
+        model = UserExtendedProfile
 
         fields = (
             'confirm_password', 'first_name', 'last_name',
@@ -444,10 +474,6 @@ class RegModelForm(forms.ModelForm):
             'org_admin_email': {'field_type': 'email'}
         }
 
-        initial = {
-            'first_name': 'First Name',
-            'last_name': 'Last Name'
-        }
 
     def clean_organization_name(self):
         organization_name = self.cleaned_data['organization_name']
@@ -459,14 +485,16 @@ class RegModelForm(forms.ModelForm):
 
     def save(self, user=None, commit=True):
         prev_org = None
-        user = super(RegModelForm, self).save(commit=False)
 
         organization_name = self.cleaned_data['organization_name']
         is_poc = self.cleaned_data['is_poc']
         org_admin_email = self.cleaned_data['org_admin_email']
+        first_name = self.cleaned_data['first_name']
+        last_name = self.cleaned_data['last_name']
 
         organization_to_assign, is_created = Organization.objects.get_or_create(label=organization_name)
         extended_profile, is_profile_created = UserExtendedProfile.objects.get_or_create(user=user)
+        user_obj = extended_profile.user
 
         if not is_profile_created:
             prev_org = extended_profile.organization
@@ -476,19 +504,21 @@ class RegModelForm(forms.ModelForm):
             organization_to_assign.save()
 
         if prev_org:
-            if organization_to_assign.name != prev_org.name:
+            if organization_to_assign.lable != prev_org.label:
                 prev_org.admin = None
                 prev_org.save()
 
         extended_profile.organization = organization_to_assign
+        user_obj.first_name = first_name
+        user_obj.last_name = last_name
 
         if org_admin_email:
             try:
-                admin_user = User.objects.get(email=org_admin_email)
+                User.objects.get(email=org_admin_email)
 
                 hash_key = OrganizationAdminHashKeys.assign_hash(organization_to_assign, user, org_admin_email)
                 org_id = extended_profile.organization_id
-                org_name = extended_profile.organization.name
+                org_name = extended_profile.organization.label
 
                 send_admin_activation_email(org_id, org_name, org_admin_email, user, hash_key)
             except User.DoesNotExist:
@@ -496,8 +526,7 @@ class RegModelForm(forms.ModelForm):
             except Exception:
                 pass
 
-        if user:
-            extended_profile.user = user
+        user.save()
 
         if commit:
             extended_profile.save()
@@ -610,7 +639,7 @@ class OrganizationDetailModelForm(forms.ModelForm):
     #     last_fiscal_year_end_date = self.cleaned_data['last_fiscal_year_end_date']
     #
     #     if can_provide_info and not last_fiscal_year_end_date:
-    #         raise forms.ValidationError(empty_field_error.format("End date for Last Fiscal Year"))
+    #         raise forms.ValidationError(EMPTY_FIELD_ERROR.format("End date for Last Fiscal Year"))
     #
     #     return last_fiscal_year_end_date
     #
@@ -619,7 +648,7 @@ class OrganizationDetailModelForm(forms.ModelForm):
     #     total_clients = self.cleaned_data['total_clients']
     #
     #     if can_provide_info and not total_clients:
-    #         raise forms.ValidationError(empty_field_error.format("Total Client"))
+    #         raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Client"))
     #
     #     return total_clients
     #
@@ -628,7 +657,7 @@ class OrganizationDetailModelForm(forms.ModelForm):
     #     total_employees = self.cleaned_data['total_employees']
     #
     #     if can_provide_info and not total_employees:
-    #         raise forms.ValidationError(empty_field_error.format("Total Employees"))
+    #         raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Employees"))
     #
     #     return total_employees
     #
@@ -637,7 +666,7 @@ class OrganizationDetailModelForm(forms.ModelForm):
     #     total_revenue = self.cleaned_data['total_revenue']
     #
     #     if can_provide_info and not total_revenue:
-    #         raise forms.ValidationError(empty_field_error.format("Total Revenue"))
+    #         raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Revenue"))
     #
     #     return total_revenue
     #
@@ -646,7 +675,7 @@ class OrganizationDetailModelForm(forms.ModelForm):
     #     total_expenses = self.cleaned_data['total_expenses']
     #
     #     if can_provide_info and not total_expenses:
-    #         raise forms.ValidationError(empty_field_error.format("Total Expenses"))
+    #         raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Expenses"))
     #
     #     return total_expenses
     #
@@ -655,7 +684,7 @@ class OrganizationDetailModelForm(forms.ModelForm):
     #     total_program_expenses = self.cleaned_data['total_program_expenses']
     #
     #     if can_provide_info and not total_program_expenses:
-    #         raise forms.ValidationError(empty_field_error.format("Total Program Expense"))
+    #         raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Program Expense"))
     #
     #     return total_program_expenses
     #

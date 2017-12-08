@@ -50,7 +50,7 @@ def user_info(request):
     user_extended_profile = request.user.extended_profile
     if request.method == 'POST':
 
-        if "first" in user_extended_profile.attended_surveys:
+        if user_extended_profile.SURVEYS_LIST[0] in user_extended_profile.attended_surveys:
             form = forms.UserInfoModelForm(request.POST, instance=user_extended_profile)
         else:
             form = forms.UserInfoModelForm(request.POST)
@@ -64,7 +64,7 @@ def user_info(request):
 
     else:
 
-        if user_extended_profile.is_first_survey_attended:
+        if user_extended_profile.SURVEYS_LIST[0] in user_extended_profile.attended_surveys:
             form = forms.UserInfoModelForm(instance=user_extended_profile)
         else:
             form = forms.UserInfoModelForm()
@@ -73,8 +73,8 @@ def user_info(request):
         'form': form, 'are_forms_complete': are_forms_complete, 'first_name': request.user.first_name
     }
 
-    context.update(get_un_submitted_surveys(user_extended_profile))
-    context['is_poc'] =  user_extended_profile.is_organization_admin
+    context.update(user_extended_profile.unattended_surveys())
+    context['is_poc'] = user_extended_profile.is_organization_admin
     context['is_first_user'] = user_extended_profile.organization.is_first_signup_in_org()
     context['google_place_api_key'] = settings.GOOGLE_PLACE_API_KEY
     return render(request, 'onboarding/tell_us_more_survey.html', context)
@@ -114,7 +114,7 @@ def interests(request):
     #
     #         save_interests.send(sender=InterestsSurvey, instance=interest_survey)
     #         update_user_history(request.user)
-    #         if extended_profile.is_poc or is_first_signup_in_org(
+    #         if extended_profile.is_organization_admin or is_first_signup_in_org(
     #                 request.user.extended_profile.organization):
     #             return redirect(reverse('organization'))
     #
@@ -137,8 +137,8 @@ def interests(request):
     #
     # user = request.user
     # extended_profile = user.extended_profile
-    # context.update(get_un_submitted_surveys(user))
-    # context['is_poc'] = extended_profile.is_poc
+    # context.update(extended_profile.un_attended_surveys())
+    # context['is_poc'] = extended_profile.is_organization_admin
     # context['is_first_user'] = is_first_signup_in_org(extended_profile.organization)
     return render(request, 'onboarding/interests_survey.html', context)
 
@@ -209,11 +209,11 @@ def organization(request):
     #
     # user = request.user
     # extended_profile = user.extended_profile
-    # context.update(get_un_submitted_surveys(user))
+    # context.update(extended_profile.un_attended_surveys())
     #
-    # context['is_poc'] = extended_profile.is_poc
+    # context['is_poc'] = extended_profile.is_organization_admin
     # context['is_first_user'] = is_first_signup_in_org(extended_profile.organization)
-    # context['organization_name'] = extended_profile.organization.name
+    # context['organization_name'] = extended_profile.organization.label
     # context['google_place_api_key'] = settings.GOOGLE_PLACE_API_KEY
 
     return render(request, 'onboarding/organization_survey.html', {})
@@ -290,10 +290,10 @@ def org_detail_survey(request):
     # context = {'form': form, 'are_forms_complete': are_forms_complete}
     # user = request.user
     # extended_profile = user.extended_profile
-    # context.update(get_un_submitted_surveys(user))
-    # context['is_poc'] = extended_profile.is_poc
+    # context.update(extended_profile.un_attended_surveys())
+    # context['is_poc'] = extended_profile.is_organization_admin
     # context['is_first_user'] = is_first_signup_in_org(extended_profile.organization)
-    # context['organization_name'] = extended_profile.organization.name
+    # context['organization_name'] = extended_profile.organization.label
     return render(request, 'onboarding/organization_detail_survey.html', {})
 
 
@@ -340,8 +340,8 @@ def update_account_settings(request):
         form = forms.UpdateRegModelForm(
             instance=user_extended_profile,
             initial={
-                'organization_name': user_extended_profile.organization.name,
-                'is_poc': 1 if user_extended_profile.is_poc else 0
+                'organization_name': user_extended_profile.organization.label,
+                'is_poc': 1 if user_extended_profile.is_organization_admin else 0
             }
         )
 
@@ -361,12 +361,12 @@ def get_user_organizations(request):
         query = request.GET.get('term', '')
         all_organizations = Organization.objects.filter(label__istartswith=query)
         for organization in all_organizations:
-            final_result[organization.name] = True if organization.admin else False
+            final_result[organization.label] = True if organization.admin else False
 
         if request.user.is_authenticated():
             user_extended_profile = request.user.extended_profile
             final_result['user_org_info'] = {
-                'org': user_extended_profile.organization.name,
+                'org': user_extended_profile.organization.label,
                 'admin_email': user_extended_profile.org_admin_email
             }
 
