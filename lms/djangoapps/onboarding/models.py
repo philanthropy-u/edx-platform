@@ -192,10 +192,26 @@ class OrganizationAdminHashKeys(TimeStampedModel):
         return cls.objects.create(organization=organization, suggested_by=suggested_by,
                                   suggested_admin_email=suggested_admin_email, activation_hash=uuid.uuid4().hex)
 
+
 class UserExtendedProfile(TimeStampedModelWithHistoryFields):
     """
     Extra profile fields that we don't want to enter in user_profile to avoid code conflicts at edx updates
     """
+
+    SURVEYS_LIST = ["user_info", "interests", "organization", "org_detail_survey"]
+
+    FUNCTIONS_LABELS = {
+        "function_strategy_planning": "Strategy and planning",
+        "function_leadership_governance": "Leadership and governance",
+        "function_program_design": "Program design and development",
+        "function_measurement_eval": "Measurement, evaluation, and learning",
+        "function_stakeholder_engagement": "Stakeholder engagement and partnerships",
+        "function_human_resource": "Human resource management",
+        "function_financial_management": "Financial management",
+        "function_fundraising": "Fundraising and resource mobilization",
+        "function_marketing_communication": "Marketing, communications, and PR",
+        "function_system_tools": "Systems, tools, and processes",
+    }
 
     INTERESTS_LABELS = {
         "interest_strategy_planning": "Strategy and planning",
@@ -214,27 +230,28 @@ class UserExtendedProfile(TimeStampedModelWithHistoryFields):
     organization = models.ForeignKey(Organization, related_name='extended_profile', blank=True, null=True,
                                      on_delete=models.SET_NULL)
     country_of_employment = models.CharField(max_length=255, null=True)
+    not_listed_gender = models.CharField(max_length=255, null=True)
     city_of_employment = models.CharField(max_length=255, null=True)
     english_proficiency = models.CharField(max_length=10, null=True)
     level_of_education = models.CharField(max_length=10, null=True)
     start_month_year = models.CharField(max_length=100, null=True)
     role_in_org = models.ForeignKey(RoleInsideOrg, related_name='extended_profile', null=True)
-    hours_per_week = models.PositiveIntegerField(validators=[MaxValueValidator(168)], null=True)
+    hours_per_week = models.PositiveIntegerField("Typical Number of Hours Worked per Week", validators=[MaxValueValidator(168)], null=True)
 
     # hold the status if user has completed all on-boarding surveys
     is_all_surveys_completed = models.BooleanField(default=False)
 
     # User functions related fields
-    function_strategy_planning = models.SmallIntegerField("Strategy and planning", default=0)
-    function_leadership_governance = models.SmallIntegerField("Leadership and governance", default=0)
-    function_program_design = models.SmallIntegerField("Program design and development", default=0)
-    function_measurement_eval = models.SmallIntegerField("Measurement, evaluation, and learning", default=0)
-    function_stakeholder_engagement = models.SmallIntegerField("Stakeholder engagement and partnerships", default=0)
-    function_human_resource = models.SmallIntegerField("Human resource management", default=0)
-    function_financial_management = models.SmallIntegerField("Financial management", default=0)
-    function_fundraising = models.SmallIntegerField("Fundraising and resource mobilization", default=0)
-    function_marketing_communication = models.SmallIntegerField("Marketing, communications, and PR", default=0)
-    function_system_tools = models.SmallIntegerField("Systems, tools, and processes", default=0)
+    function_strategy_planning = models.SmallIntegerField(FUNCTIONS_LABELS["function_strategy_planning"], default=0)
+    function_leadership_governance = models.SmallIntegerField(FUNCTIONS_LABELS["function_leadership_governance"], default=0)
+    function_program_design = models.SmallIntegerField(FUNCTIONS_LABELS["function_program_design"], default=0)
+    function_measurement_eval = models.SmallIntegerField(FUNCTIONS_LABELS["function_measurement_eval"], default=0)
+    function_stakeholder_engagement = models.SmallIntegerField(FUNCTIONS_LABELS["function_stakeholder_engagement"], default=0)
+    function_human_resource = models.SmallIntegerField(FUNCTIONS_LABELS["function_human_resource"], default=0)
+    function_financial_management = models.SmallIntegerField(FUNCTIONS_LABELS["function_financial_management"], default=0)
+    function_fundraising = models.SmallIntegerField(FUNCTIONS_LABELS["function_fundraising"], default=0)
+    function_marketing_communication = models.SmallIntegerField(FUNCTIONS_LABELS["function_strategy_planning"], default=0)
+    function_system_tools = models.SmallIntegerField(FUNCTIONS_LABELS["function_system_tools"], default=0)
 
     # User interests related fields
     interest_strategy_planning = models.SmallIntegerField(INTERESTS_LABELS["interest_strategy_planning"], default=0)
@@ -265,19 +282,38 @@ class UserExtendedProfile(TimeStampedModelWithHistoryFields):
     goal_relation_with_other = models.SmallIntegerField("Is learner's goal is to build relationship with other "
                                                         "learners", default=0)
 
+    def get_user_selected_functions(self):
+        return [label for field_name, label in self.FUNCTIONS_LABELS.items() if getattr(self, field_name) == 1]
+
     def get_user_selected_interests(self):
         return [label for field_name, label in self.INTERESTS_LABELS.items() if getattr(self, field_name) == 1]
 
+    def get_organization_data(self):
+        pass
+
+    def get_organization_details(self):
+        pass
+
     @property
     def attended_surveys(self):
-        """Return list of user's attended onboarding surveys"""
+        """Return list of user's attended on-boarding surveys"""
         attended_list = []
+
         if self.level_of_education and self.start_month_year and self.english_proficiency:
-           attended_list.append("first")
+            attended_list.append(self.SURVEYS_LIST[0])
         elif self.get_user_selected_interests():
-            attended_list.append("second")
+            attended_list.append(self.SURVEYS_LIST[1])
+        elif self.get_organization_data():
+            attended_list.append(self.SURVEYS_LIST[2])
+        elif self.get_organization_details():
+            attended_list.append(self.SURVEYS_LIST[3])
 
         return attended_list
+
+    def unattended_surveys(self):
+        """Return maping of user's unattended on-boarding surveys"""
+
+        return {s: True if s in self.attended_surveys else False for s in self.SURVEYS_LIST }
 
     @property
     def is_organization_admin(self):

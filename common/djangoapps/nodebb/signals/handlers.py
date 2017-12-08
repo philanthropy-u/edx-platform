@@ -14,23 +14,29 @@ from xmodule.modulestore.django import modulestore
 log = getLogger(__name__)
 
 
+def log_action_response(user, status_code, response_body):
+    if status_code != 200:
+        log.error("Error: Can not update user(%s) on nodebb due to %s" % (user.username, response_body))
+    else:
+        log.info('Success: User(%s) has been created on nodebb' % user.username)
+
+
 @receiver(post_save, sender=UserExtendedProfile)
 @receiver(post_save, sender=User)
 @receiver(post_save, sender=UserProfile)
-@receiver(post_save, sender=Organization)
-def sync_user_info_with_nodebb(sender, instance, **kwargs):  # pylint: disable=unused-argument, invalid-name
+def sync_user_info_with_nodebb(sender, instance, created, **kwargs):  # pylint: disable=unused-argument, invalid-name
     """
     Sync information b/w NodeBB User Profile and Edx User Profile, Surveys
 
     """
+    user = None
     if sender in [UserProfile, UserExtendedProfile]:
         user = instance.user
     elif sender == User:
         user = instance
-    else:
-        return
 
-    if user:
+    if not created and user:
+        # handle model update case
         if sender == User:
             data_to_sync = {
                 "first_name": instance.first_name,
@@ -47,51 +53,31 @@ def sync_user_info_with_nodebb(sender, instance, **kwargs):  # pylint: disable=u
             data_to_sync = {
                 "country_of_employment": instance.country_of_employment,
                 "city_of_employment": instance.city_of_employment,
-                'interests': instance.get_user_selected_interests()
+                "interests": instance.get_user_selected_interests(),
+                "focus_area": instance.get_user_selected_functions()
             }
 
             if instance.organization:
-                data_to_sync["organization"] = instance.organization.name
-
-        elif sender == Organization:
-            data_to_sync = {
-                "focus_area": instance.focus_area
-            }
-        else:
-            return
+                data_to_sync["organization"] = instance.organization.label
 
         status_code, response_body = NodeBBClient().users.update_profile(user.username, kwargs=data_to_sync)
+        log_action_response(user, status_code, response_body)
 
-        if status_code != 200:
-            log.error(
-                "Error: Can not update user(%s) on nodebb due to %s" % (user.username, response_body)
-            )
-        else:
-            log.info('Success: User(%s) has been updated on nodebb' % user.username)
-
-
-@receiver(post_save, sender=UserExtendedProfile, dispatch_uid='create_user_on_nodebb')
-def create_user_on_nodebb(sender, instance, created, **kwargs):
-    """
-    Create a new user on nodebb whenver a new user is created on edx platform
-    """
-    if created:
-        user_info = {
+    elif created and sender == UserExtendedProfile:
+        # handle user creation case
+        data_to_sync = {
             'edx_user_id': instance.user.id,
             'email': instance.user.email,
             'first_name': instance.user.first_name,
             'last_name': instance.user.last_name,
             'username': instance.user.username,
-            'organization': instance.organization.name,
             'date_joined': instance.user.date_joined.strftime('%d/%m/%Y'),
         }
+        if instance.organization:
+            data_to_sync["organization"] = instance.organization.label
 
-        status_code, response_body = NodeBBClient().users.create(username=instance.user.username, kwargs=user_info)
-
-        if status_code != 200:
-            log.error("Error: Can not create user(%s) on nodebb due to %s" % (instance.user.username, response_body))
-        else:
-            log.info('Success: User(%s) has been created on nodebb' % instance.user.username)
+        status_code, response_body = NodeBBClient().users.create(username=instance.user.username, kwargs=data_to_sync)
+        log_action_response(user, status_code, response_body)
 
         return status_code
 

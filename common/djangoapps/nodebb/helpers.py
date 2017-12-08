@@ -4,6 +4,9 @@ from lms.djangoapps.grades.new.course_grade import CourseGradeFactory
 from django.core.urlresolvers import reverse
 
 
+
+
+
 def get_course_related_tabs(request, course):
     """
         Return list of tabs data as dictionary
