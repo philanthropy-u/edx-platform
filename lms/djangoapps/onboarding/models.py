@@ -230,13 +230,13 @@ class UserExtendedProfile(TimeStampedModelWithHistoryFields):
     organization = models.ForeignKey(Organization, related_name='extended_profile', blank=True, null=True,
                                      on_delete=models.SET_NULL)
     country_of_employment = models.CharField(max_length=255, null=True)
-    not_listed_gender = models.CharField(max_length=255, null=True)
+    not_listed_gender = models.CharField(max_length=255, null=True, blank=True)
     city_of_employment = models.CharField(max_length=255, null=True)
     english_proficiency = models.CharField(max_length=10, null=True)
     level_of_education = models.CharField(max_length=10, null=True)
     start_month_year = models.CharField(max_length=100, null=True)
-    role_in_org = models.ForeignKey(RoleInsideOrg, related_name='extended_profile', null=True)
-    hours_per_week = models.PositiveIntegerField("Typical Number of Hours Worked per Week", validators=[MaxValueValidator(168)], null=True)
+    role_in_org = models.CharField(max_length=10, null=True)
+    hours_per_week = models.PositiveIntegerField("Typical Number of Hours Worked per Week*", validators=[MaxValueValidator(168)])
 
     # hold the status if user has completed all on-boarding surveys
     is_all_surveys_completed = models.BooleanField(default=False)
