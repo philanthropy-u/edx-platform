@@ -29,11 +29,6 @@ from lms.djangoapps.onboarding.models import UserExtendedProfile
 log = logging.getLogger("edx.onboarding")
 
 
-def set_survey_complete(extended_profile):
-        extended_profile.is_all_surveys_completed = True
-        extended_profile.save()
-
-
 @login_required
 @transaction.atomic
 def user_info(request):
@@ -46,28 +41,32 @@ def user_info(request):
     next survey namely, interests survey.
     """
 
-    are_forms_complete = request.user.extended_profile.is_all_surveys_completed
     user_extended_profile = request.user.extended_profile
+    are_forms_complete = not (bool(user_extended_profile.unattended_surveys()))
+    userprofile = request.user.profile
+
+    initial = {
+        'year_of_birth': userprofile.year_of_birth,
+        'gender': userprofile.gender,
+        'language': userprofile.language,
+        'country': userprofile.country,
+        'city': userprofile.city,
+        "function_areas": user_extended_profile.get_user_selected_functions(_type="fields")
+    }
+
     if request.method == 'POST':
 
-        if user_extended_profile.SURVEYS_LIST[0] in user_extended_profile.attended_surveys:
-            form = forms.UserInfoModelForm(request.POST, instance=user_extended_profile)
-        else:
-            form = forms.UserInfoModelForm(request.POST)
+        form = forms.UserInfoModelForm(request.POST, instance=user_extended_profile, initial=initial)
 
         if form.is_valid():
-            form.save()
+            form.save(request)
 
             if not are_forms_complete:
                 return redirect(reverse('interests'))
             return redirect(reverse('user_info'))
 
     else:
-
-        if user_extended_profile.SURVEYS_LIST[0] in user_extended_profile.attended_surveys:
-            form = forms.UserInfoModelForm(instance=user_extended_profile)
-        else:
-            form = forms.UserInfoModelForm()
+        form = forms.UserInfoModelForm(instance=user_extended_profile, initial=initial)
 
     context = {
         'form': form, 'are_forms_complete': are_forms_complete, 'first_name': request.user.first_name
@@ -91,68 +90,42 @@ def interests(request):
     saved. After saving the form, user is redirected to the next survey
     namely, organization survey.
     """
-    are_forms_complete = request.user.extended_profile.is_all_surveys_completed
-    extended_profile = request.user.extended_profile
-    # if request.method == 'POST':
-    #     existing_survey = None
-    #     try:
-    #         existing_survey = request.user.interest_survey
-    #     except InterestsSurvey.DoesNotExist:
-    #         pass
-    #
-    #     if existing_survey:
-    #         form = forms.InterestModelForm(request.POST, instance=existing_survey)
-    #     else:
-    #         form = forms.InterestModelForm(request.POST)
-    #
-    #     if form.is_valid():
-    #         interest_survey = form.save()
-    #
-    #         if not existing_survey:
-    #             interest_survey.user = request.user
-    #             interest_survey.save()
-    #
-    #         save_interests.send(sender=InterestsSurvey, instance=interest_survey)
-    #         update_user_history(request.user)
-    #         if extended_profile.is_organization_admin or is_first_signup_in_org(
-    #                 request.user.extended_profile.organization):
-    #             return redirect(reverse('organization'))
-    #
-    #         if not are_forms_complete:
-    #             set_survey_complete(extended_profile)
-    #             return redirect(reverse('recommendations'))
-    #
-    #         return redirect(reverse('interests'))
+    user_extended_profile = request.user.extended_profile
+    are_forms_complete = not(bool(user_extended_profile.unattended_surveys()))
+    is_first_signup_in_org = user_extended_profile.organization.is_first_signup_in_org()
 
-    # else:
-    #     user_interest_survey_instance = InterestsSurvey.objects.filter(user=request.user).first()
-    #     if user_interest_survey_instance:
-    #         form = forms.InterestModelForm(label_suffix="", instance=user_interest_survey_instance)
-    #     else:
-    #         form = forms.InterestModelForm(label_suffix="")
-    #
-    # context = {'form': form, 'are_forms_complete': are_forms_complete}
+    initial = {
+        "interests": user_extended_profile.get_user_selected_interests(_type="fields"),
+        "interested_learners": user_extended_profile.get_user_selected_interested_learners(_type="fields"),
+        "personal_goals": user_extended_profile.get_user_selected_personal_goal(_type="fields")
+    }
 
-    context = {}
-    #
-    # user = request.user
-    # extended_profile = user.extended_profile
-    # context.update(extended_profile.un_attended_surveys())
-    # context['is_poc'] = extended_profile.is_organization_admin
-    # context['is_first_user'] = is_first_signup_in_org(extended_profile.organization)
+    if request.method == 'POST':
+        form = forms.InterestsForm(request.POST, initial=initial)
+
+        interest_survey = form.save(request, user_extended_profile)
+
+        # save_interests.send(sender=InterestsSurvey, instance=interest_survey)
+
+        if user_extended_profile.is_organization_admin or is_first_signup_in_org:
+            return redirect(reverse('organization'))
+
+        if are_forms_complete:
+            return redirect(reverse('recommendations'))
+
+        return redirect(reverse('interests'))
+
+    else:
+        form = forms.InterestsForm(initial=initial)
+
+    context = {'form': form, 'are_forms_complete': are_forms_complete}
+
+    user = request.user
+    extended_profile = user.extended_profile
+    context.update(extended_profile.unattended_surveys())
+    context['is_poc'] = extended_profile.is_organization_admin
+    context['is_first_user'] = is_first_signup_in_org
     return render(request, 'onboarding/interests_survey.html', context)
-
-
-def mark_partner_network(organization_survey):
-    """
-    Marks partner as affiliated if not already.
-    """
-    partner_network_manager = organization_survey.partner_network
-    if partner_network_manager.exists():
-        for partner_network in partner_network_manager.all():
-            if not partner_network.is_partner_affiliated:
-                partner_network.is_partner_affiliated = True
-                partner_network.save()
 
 
 @login_required
@@ -165,58 +138,32 @@ def organization(request):
     otherwise, a form is populated form the POST request and then is
     saved. After saving the form, user is redirected to recommendations page.
     """
+    user_extended_profile = request.user.extended_profile
+    _organization = user_extended_profile.organization
+    are_forms_complete = not(bool(user_extended_profile.unattended_surveys()))
+    if request.method == 'POST':
+        form = forms.OrganizationInfoForm(request.POST, instance=_organization)
 
-    # are_forms_complete = request.user.extended_profile.is_all_surveys_completed
-    # if request.method == 'POST':
-    #     existing_survey = None
-    #
-    #     try:
-    #         existing_survey = request.user.organization_survey
-    #     except OrganizationSurvey.DoesNotExist:
-    #         pass
-    #
-    #     if existing_survey:
-    #         form = forms.OrganizationInfoModelForm(request.POST, instance=request.user.organization_survey)
-    #     else:
-    #         form = forms.OrganizationInfoModelForm(request.POST)
-    #
-    #     if form.is_valid():
-    #         organization_survey = form.save()
-    #
-    #         if not existing_survey:
-    #             organization_survey.user = request.user
-    #             organization_survey.save()
-    #
-    #         mark_partner_network(organization_survey)
-    #
-    #         update_user_history(request.user)
-    #
-    #         if not are_forms_complete:
-    #             return redirect(reverse('org_detail_survey'))
-    #
-    #         return redirect(reverse('organization'))
-    #
-    # else:
-    #     org_survey_instance = OrganizationSurvey.objects.filter(user=request.user).first()
-    #     if org_survey_instance:
-    #         form = forms.OrganizationInfoModelForm(instance=org_survey_instance, initial={
-    #             'is_org_url_exist': '1' if org_survey_instance.is_org_url_exist else '0'
-    #         })
-    #     else:
-    #         form = forms.OrganizationInfoModelForm()
-    #
-    # context = {'form': form, 'are_forms_complete': are_forms_complete}
-    #
-    # user = request.user
-    # extended_profile = user.extended_profile
-    # context.update(extended_profile.un_attended_surveys())
-    #
-    # context['is_poc'] = extended_profile.is_organization_admin
-    # context['is_first_user'] = is_first_signup_in_org(extended_profile.organization)
-    # context['organization_name'] = extended_profile.organization.label
-    # context['google_place_api_key'] = settings.GOOGLE_PLACE_API_KEY
+        if form.is_valid():
+            form.save()
 
-    return render(request, 'onboarding/organization_survey.html', {})
+            if not are_forms_complete:
+                return redirect(reverse('org_detail_survey'))
+
+            return redirect(reverse('organization'))
+
+    else:
+        form = forms.OrganizationInfoForm(instance=_organization)
+
+    context = {'form': form, 'are_forms_complete': are_forms_complete}
+
+    context.update(user_extended_profile.unattended_surveys())
+    context['is_poc'] = user_extended_profile.is_organization_admin
+    context['is_first_user'] = user_extended_profile.organization.is_first_signup_in_org()
+    context['organization_name'] = _organization.label
+    context['google_place_api_key'] = settings.GOOGLE_PLACE_API_KEY
+
+    return render(request, 'onboarding/organization_survey.html', context)
 
 
 @csrf_exempt
@@ -247,7 +194,7 @@ def get_country_names(request):
 @transaction.atomic
 def org_detail_survey(request):
 
-    # are_forms_complete = request.user.extended_profile.is_all_surveys_completed
+    # are_forms_complete = not(bool(user_extended_profile.unattended_surveys()))
     #
     # if request.method == 'POST':
     #     existing_survey = None
@@ -290,7 +237,7 @@ def org_detail_survey(request):
     # context = {'form': form, 'are_forms_complete': are_forms_complete}
     # user = request.user
     # extended_profile = user.extended_profile
-    # context.update(extended_profile.un_attended_surveys())
+    # context.update(extended_profile.unattended_surveys())
     # context['is_poc'] = extended_profile.is_organization_admin
     # context['is_first_user'] = is_first_signup_in_org(extended_profile.organization)
     # context['organization_name'] = extended_profile.organization.label

@@ -21,7 +21,7 @@ class SchemaOrNoSchemaURLValidator(URLValidator):
     )
 
 
-class TimeStampedModelWithHistoryFields(TimeStampedModel):
+class TimeStampedModelWithHistoryFields:
     """
     Maintain history for a model each field
     """
@@ -34,9 +34,6 @@ class TimeStampedModelWithHistoryFields(TimeStampedModel):
 
     def _history_end_date(self):
         return self.__history_end_date
-
-    def __str__(self):
-        return self.label
 
 
 class OrgSector(models.Model):
@@ -87,7 +84,8 @@ class PartnerNetwork(models.Model):
     """
     Specifies about the partner network being used in an organization.
     """
-    name = models.CharField(max_length=255)
+    code = models.CharField(max_length=10, unique=True)
+    label = models.CharField(max_length=255)
 
     is_partner_affiliated = models.BooleanField(default=False)
 
@@ -130,27 +128,42 @@ class FunctionArea(models.Model):
         return self.label
 
 
-class Organization(TimeStampedModelWithHistoryFields):
+class Organization(TimeStampedModel):
     """
     Represents an organization.
     """
 
     label = models.CharField(max_length=255, db_index=True)
     admin = models.ForeignKey(User, related_name='organization', blank=True, null=True, on_delete=models.SET_NULL)
-    country = models.CharField(max_length=255, null=True)
-    city = models.CharField(max_length=255, null=True)
-    unclaimed_org_admin_email = models.EmailField(unique=True, null=True)
+    country = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=255, blank=True, null=True)
+    unclaimed_org_admin_email = models.EmailField(unique=True, blank=True, null=True)
     url = models.URLField(max_length=255, blank=True, null=True, validators=[SchemaOrNoSchemaURLValidator])
     founding_year = models.PositiveSmallIntegerField(blank=True, null=True)
-    registration_number = models.CharField(max_length=30, null=True)
-    org_type = models.ForeignKey(OrgSector, related_name="organization", null=True)
-    level_of_operation = models.ForeignKey(OperationLevel, related_name='organization', null=True)
-    focus_area = models.ForeignKey(FocusArea, related_name='organization', null=True)
-    total_employees = models.ForeignKey(TotalEmployee, related_name='organization', null=True)
+    registration_number = models.CharField(max_length=30, blank=True, null=True)
+
+    org_type = models.CharField(max_length=10, blank=True, null=True)
+    level_of_operation = models.CharField(max_length=10, blank=True, null=True)
+    focus_area = models.CharField(max_length=10, blank=True, null=True)
+    total_employees = models.CharField(max_length=10, blank=True, null=True)
+
     alternate_admin_email = models.EmailField(blank=True, null=True)
+
+    history = HistoricalRecords()
+    __history_start_date = None
+    __history_end_date = None
+
+    def _history_start_date(self):
+        return self.__history_start_date
+
+    def _history_end_date(self):
+        return self.__history_end_date
 
     def is_first_signup_in_org(self):
         return UserExtendedProfile.objects.filter(organization=self).count() == 1
+
+    def __str__(self):
+        return self.label
 
 
 class OrganizationPartner(models.Model):
@@ -193,7 +206,7 @@ class OrganizationAdminHashKeys(TimeStampedModel):
                                   suggested_admin_email=suggested_admin_email, activation_hash=uuid.uuid4().hex)
 
 
-class UserExtendedProfile(TimeStampedModelWithHistoryFields):
+class UserExtendedProfile(TimeStampedModel):
     """
     Extra profile fields that we don't want to enter in user_profile to avoid code conflicts at edx updates
     """
@@ -226,6 +239,20 @@ class UserExtendedProfile(TimeStampedModelWithHistoryFields):
         "interest_system_tools": "Systems, tools, and processes",
     }
 
+    INTERESTED_LEARNERS_LABELS = {
+        "learners_same_region": "Learners from my region or country",
+        "learners_similar_oe_interest": "Learners interested in same areas of organization effectiveness",
+        "learners_similar_org": "Learners working for similar organizations",
+        "learners_diff_who_are_different": "Learners who are different from me"
+    }
+
+    GOALS_LABELS = {
+        "goal_contribute_to_org": "Help improve my organization",
+        "goal_gain_new_skill": "Develop new skills",
+        "goal_improve_job_prospect": "Get a job",
+        "goal_relation_with_other": "Build relantionships with other nonprofit leaders"
+    }
+
     user = models.OneToOneField(User, unique=True, db_index=True, related_name='extended_profile')
     organization = models.ForeignKey(Organization, related_name='extended_profile', blank=True, null=True,
                                      on_delete=models.SET_NULL)
@@ -236,10 +263,8 @@ class UserExtendedProfile(TimeStampedModelWithHistoryFields):
     level_of_education = models.CharField(max_length=10, null=True)
     start_month_year = models.CharField(max_length=100, null=True)
     role_in_org = models.CharField(max_length=10, null=True)
-    hours_per_week = models.PositiveIntegerField("Typical Number of Hours Worked per Week*", validators=[MaxValueValidator(168)])
-
-    # hold the status if user has completed all on-boarding surveys
-    is_all_surveys_completed = models.BooleanField(default=False)
+    hours_per_week = models.PositiveIntegerField("Typical Number of Hours Worked per Week*", default=0,
+                                                 validators=[MaxValueValidator(168)])
 
     # User functions related fields
     function_strategy_planning = models.SmallIntegerField(FUNCTIONS_LABELS["function_strategy_planning"], default=0)
@@ -266,33 +291,101 @@ class UserExtendedProfile(TimeStampedModelWithHistoryFields):
     interest_system_tools = models.SmallIntegerField(INTERESTS_LABELS["interest_system_tools"], default=0)
 
     # Learners related field
-    learners_same_region = models.SmallIntegerField("Is learner interested in learners from same region", default=0)
-    learners_similar_oe_interest = models.SmallIntegerField("Is learner interested in learners with similar org eff "
-                                                            "interests", default=0)
-    learners_similar_org = models.SmallIntegerField("Is learner interested in learners from similar organizations",
+    learners_same_region = models.SmallIntegerField(INTERESTED_LEARNERS_LABELS["learners_same_region"],
                                                     default=0)
-    learners_diff_who_are_different = models.SmallIntegerField("Is learner interested in learners who are different",
-                                                               default=0)
+    learners_similar_oe_interest = models.SmallIntegerField(INTERESTED_LEARNERS_LABELS["learners_similar_oe_interest"],
+                                                            default=0)
+    learners_similar_org = models.SmallIntegerField(INTERESTED_LEARNERS_LABELS["learners_similar_org"], default=0)
+    learners_diff_who_are_different = models.SmallIntegerField(
+        INTERESTED_LEARNERS_LABELS["learners_diff_who_are_different"], default=0)
 
     # User goals related fields
-    goal_contribute_to_org = models.SmallIntegerField("Is learner's goal is to contribute to his organization's "
-                                                      "capacity", default=0)
-    goal_gain_new_skill = models.SmallIntegerField("Is learner's goal is to gain new skill", default=0)
-    goal_improve_job_prospect = models.SmallIntegerField("Is learner's goal is to improve job prospects", default=0)
-    goal_relation_with_other = models.SmallIntegerField("Is learner's goal is to build relationship with other "
-                                                        "learners", default=0)
+    goal_contribute_to_org = models.SmallIntegerField(GOALS_LABELS["goal_contribute_to_org"], default=0)
+    goal_gain_new_skill = models.SmallIntegerField(GOALS_LABELS["goal_gain_new_skill"], default=0)
+    goal_improve_job_prospect = models.SmallIntegerField(GOALS_LABELS["goal_improve_job_prospect"], default=0)
+    goal_relation_with_other = models.SmallIntegerField(GOALS_LABELS["goal_relation_with_other"], default=0)
 
-    def get_user_selected_functions(self):
-        return [label for field_name, label in self.FUNCTIONS_LABELS.items() if getattr(self, field_name) == 1]
+    history = HistoricalRecords()
+    __history_start_date = None
+    __history_end_date = None
 
-    def get_user_selected_interests(self):
-        return [label for field_name, label in self.INTERESTS_LABELS.items() if getattr(self, field_name) == 1]
+    def __str__(self):
+        return self.user
 
-    def get_organization_data(self):
+    def _history_start_date(self):
+        return self.__history_start_date
+
+    def _history_end_date(self):
+        return self.__history_end_date
+
+    def get_user_selected_functions(self, _type="labels"):
+        if _type == "labels":
+            return [label for field_name, label in self.FUNCTIONS_LABELS.items() if getattr(self, field_name) == 1]
+        else:
+            return [field_name for field_name, label in self.FUNCTIONS_LABELS.items() if getattr(self, field_name) == 1]
+
+    def get_user_selected_interests(self, _type="labels"):
+        if _type == "labels":
+            return [label for field_name, label in self.INTERESTS_LABELS.items() if getattr(self, field_name) == 1]
+        else:
+            return [field_name for field_name, label in self.INTERESTS_LABELS.items() if getattr(self, field_name) == 1]
+
+    def get_user_selected_interested_learners(self, _type="labels"):
+        if _type == "labels":
+            return [label for field_name, label in self.INTERESTED_LEARNERS_LABELS.items() if getattr(self, field_name) == 1]
+        else:
+            return [field_name for field_name, label in self.INTERESTED_LEARNERS_LABELS.items() if getattr(self, field_name) == 1]
+
+    def get_user_selected_personal_goal(self, _type="labels"):
+        if _type == "labels":
+            return [label for field_name, label in self.GOALS_LABELS.items() if getattr(self, field_name) == 1]
+        else:
+            return [field_name for field_name, label in self.GOALS_LABELS.items() if getattr(self, field_name) == 1]
+
+    def save_user_function_areas(self, selected_values):
+        for function_area_field, label in self.FUNCTIONS_LABELS.items():
+            if function_area_field in selected_values:
+                _updated_value = 1
+            else:
+                _updated_value = 0
+
+            self.__setattr__(function_area_field, _updated_value)
+
+    def save_user_interests(self, selected_values):
+        for interest_field, label in self.INTERESTS_LABELS.items():
+            if interest_field in selected_values:
+                _updated_value = 1
+            else:
+                _updated_value = 0
+
+            self.__setattr__(interest_field, _updated_value)
+
+    def save_user_interested_learners(self, selected_values):
+        for interested_learner_field, label in self.INTERESTED_LEARNERS_LABELS.items():
+            if interested_learner_field in selected_values:
+                _updated_value = 1
+            else:
+                _updated_value = 0
+
+            self.__setattr__(interested_learner_field, _updated_value)
+
+    def is_organization_data_filled(self):
+        return self.organization.org_type and self.organization.focus_area and self.organization.level_of_operation \
+               and self.organization.total_employees
+
+    def is_organization_details_filled(self):
         pass
 
-    def get_organization_details(self):
-        pass
+    def save_user_personal_goals(self, selected_values):
+        for goal_field, label in self.GOALS_LABELS.items():
+            if goal_field in selected_values:
+                _updated_value = 1
+            else:
+                _updated_value = 0
+
+            self.__setattr__(goal_field, _updated_value)
+
+
 
     @property
     def attended_surveys(self):
@@ -303,9 +396,9 @@ class UserExtendedProfile(TimeStampedModelWithHistoryFields):
             attended_list.append(self.SURVEYS_LIST[0])
         elif self.get_user_selected_interests():
             attended_list.append(self.SURVEYS_LIST[1])
-        elif self.get_organization_data():
+        elif self.is_organization_data_filled():
             attended_list.append(self.SURVEYS_LIST[2])
-        elif self.get_organization_details():
+        elif self.is_organization_details_filled():
             attended_list.append(self.SURVEYS_LIST[3])
 
         return attended_list

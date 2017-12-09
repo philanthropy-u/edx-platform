@@ -33,7 +33,8 @@ def sync_user_info_with_nodebb(sender, instance, created, **kwargs):  # pylint: 
 
     fields_to_sync_with_nodebb = get_fields_to_sync_with_nodebb()
 
-    if not kwargs['update_fields'] & set(fields_to_sync_with_nodebb):
+    if not kwargs.get('update_fields') or (not kwargs['update_fields'] & set(fields_to_sync_with_nodebb)) \
+            and not created:
         return
 
     user = None
