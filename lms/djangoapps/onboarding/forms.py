@@ -15,9 +15,10 @@ from rest_framework.compat import MinValueValidator, MaxValueValidator
 from lms.djangoapps.onboarding.models import (
     UserExtendedProfile,
     Organization,
-    OrganizationAdminHashKeys, EducationLevel, EnglishProficiency, RoleInsideOrg)
+    OrganizationAdminHashKeys, EducationLevel, EnglishProficiency, RoleInsideOrg, OperationLevel,
+    FocusArea, TotalEmployee, OrgSector)
 from lms.djangoapps.onboarding.email_utils import send_admin_activation_email
-from student.models import UserProfile
+
 
 NO_OPTION_SELECT_ERROR = 'Please select an option for {}'
 EMPTY_FIELD_ERROR = 'Please enter your {}'
@@ -62,6 +63,12 @@ class UserInfoModelForm(forms.ModelForm):
         ('nl', ugettext_noop('Not listed')),
     )
 
+    NO_SELECT_CHOICE = [('', '- Select -')]
+
+    LEVEL_OF_EDUCAION_CHOICES = NO_SELECT_CHOICE  + [(el.code, el.label) for el in EducationLevel.objects.all()]
+    ENLISHP_ROFICIENCY_CHOICES = NO_SELECT_CHOICE + [(ep.code, ep.label) for ep in EnglishProficiency.objects.all()]
+    ROLE_IN_ORG_CHOICES = NO_SELECT_CHOICE + [(r.code, r.label) for r in RoleInsideOrg.objects.all()]
+
     year_of_birth = forms.IntegerField(
         label="Year of Birth",
         label_suffix="*",
@@ -90,33 +97,38 @@ class UserInfoModelForm(forms.ModelForm):
                                                          'different from your country and/or city of residence.',
                                                    required=False)
     level_of_education = forms.ChoiceField(label="Level of Education", label_suffix="*",
-                                           choices=((el.code, el.label) for el in EducationLevel.objects.all()),
+                                           choices=LEVEL_OF_EDUCAION_CHOICES,
                                            error_messages={
                                                 'required': NO_OPTION_SELECT_ERROR.format(
                                                     'Level of Education'),
                                            })
     english_proficiency = forms.ChoiceField(label="English Language Proficiency", label_suffix="*",
-                                            choices=((ep.code, ep.label) for ep in EnglishProficiency.objects.all()),
+                                            choices=ENLISHP_ROFICIENCY_CHOICES,
                                             error_messages={
                                                  'required': NO_OPTION_SELECT_ERROR.format(
                                                      'English Language Proficiency'),
                                             })
-    role_in_org = forms.ChoiceField(label="Role in the Organization", label_suffix="*",
-                                            choices=((r.code, r.label) for r in RoleInsideOrg.objects.all()),
-                                            error_messages={
-                                                 'required': NO_OPTION_SELECT_ERROR.format(
-                                                     'Role in the Organization'),
-                                            })
-    # focus_area = forms.MultipleChoiceField(choices=())
+    role_in_org = forms.ChoiceField(label="Role in the Organization",
+                                    label_suffix="*",
+                                    choices=ROLE_IN_ORG_CHOICES,
+                                    error_messages={
+                                         'required': NO_OPTION_SELECT_ERROR.format(
+                                             'Role in the Organization'),
+                                    })
 
     def __init__(self,  *args, **kwargs):
         super(UserInfoModelForm, self).__init__( *args, **kwargs)
-        self.fields['level_of_education'].empty_label = None
-        self.fields['english_proficiency'].empty_label = None
-        self.fields['role_in_org'].empty_label = None
 
-        # FOCUS_AREA_CHOICS = ((field_name, label) for field_name, label in UserExtendedProfile.FUNCTIONS_LABELS.items())
-        # self.fields['focus_area'] = forms.ChoiceField(choices=FOCUS_AREA_CHOICS, widget=forms.CheckboxSelectMultiple)
+        FUNCTION_AREA_CHOICS = ((field_name, label) for field_name, label in
+                                UserExtendedProfile.FUNCTIONS_LABELS.items())
+        self.fields['function_areas'] = forms.ChoiceField(choices=FUNCTION_AREA_CHOICS,
+            label='Department of Function (Check all that apply.)',
+            widget=forms.CheckboxSelectMultiple)
+
+
+    def clean(self):
+        if self.errors.get('function_areas'):
+            del self.errors['function_areas']
 
     def clean_gender(self):
 
@@ -186,9 +198,19 @@ class UserInfoModelForm(forms.ModelForm):
             }
         }
 
-    def save(self, commit=True):
+    def save(self, request, commit=True):
         user_info_survey = super(UserInfoModelForm, self).save()
 
+        userprofile = user_info_survey.user.profile
+        userprofile.year_of_birth = self.cleaned_data['year_of_birth']
+        userprofile.language = self.cleaned_data['language']
+        userprofile.country = self.cleaned_data['country']
+        userprofile.city = self.cleaned_data['city']
+        if self.cleaned_data['gender']:
+            userprofile.gender = self.cleaned_data['gender']
+        userprofile.save()
+
+        user_info_survey.user.extended_profile.save_user_function_areas(request.POST.getlist('function_areas'))
         if commit:
             user_info_survey.save()
 
@@ -212,171 +234,163 @@ class RadioSelectNotNull(forms.RadioSelect):
             choices.pop(0)
         return self.renderer(name, str_value, final_attrs, choices)
 
+
+class InterestsForm(forms.Form):
+    """
+    Model from to be used in the second step of survey.
+
+    This will record user's interests information as modeled in
+    'InterestsSurvey' model.
+    """
+
+    def __init__(self,  *args, **kwargs):
+        super(InterestsForm, self).__init__( *args, **kwargs)
+        INTEREST_CHOICS = ((field_name, label) for field_name, label in UserExtendedProfile.INTERESTS_LABELS.items())
+        self.fields['interests'] = forms.ChoiceField(
+            label='Which of these areas of organizational effectiveness are you most interested '
+                  'to learn more about? (Check all that apply)',
+            choices=INTEREST_CHOICS, widget=forms.CheckboxSelectMultiple,
+            required=False)
+
+        INTERESTED_LEARNERS_CHOICS = ((field_name, label)
+                                for field_name, label in UserExtendedProfile.INTERESTED_LEARNERS_LABELS.items())
+        self.fields['interested_learners'] = forms.ChoiceField(
+            label='Which type of other Philanthropy University learners are interesting to you? (Check all that apply)',
+            choices=INTERESTED_LEARNERS_CHOICS, widget=forms.CheckboxSelectMultiple,
+            required=False)
+
+        PERSONAL_GOAL_CHOICS = ((field_name, label) for field_name, label in UserExtendedProfile.GOALS_LABELS.items())
+        self.fields['personal_goals'] = forms.ChoiceField(
+            label='What is your most important personal goals in joining Philanthropy University? (Check all that apply)',
+            choices=PERSONAL_GOAL_CHOICS, widget=forms.CheckboxSelectMultiple,
+            required=False)
+
+    def save(self, request, user_exended_profile):
+        user_exended_profile.save_user_interests(request.POST.getlist('interests'))
+        user_exended_profile.save_user_interested_learners(request.POST.getlist('interested_learners'))
+        user_exended_profile.save_user_personal_goals(request.POST.getlist('personal_goals'))
+
+        user_exended_profile.save()
+
+
+class OrganizationInfoForm(forms.ModelForm):
+    """
+    Model from to be used in the third step of survey.
+
+    This will record information about user's organization as modeled in
+    'OrganizationSurvey' model.
+    """
+    is_org_url_exist = forms.ChoiceField(label="Does your organization have a website?",
+                                         label_suffix="*",
+                                         widget=forms.RadioSelect(choices=((0, "Yes"), (1, "No"))),
+                                         initial=1,
+                                         error_messages={
+                                            'required': 'Please select an option for "Does your organization have a'
+                                                        ' webpage?"',
+                                         })
+
+    org_type = forms.ChoiceField(label="Organization Type", label_suffix="*",
+                                 choices=((os.code, os.label) for os in OrgSector.objects.all()),
+                                 error_messages={
+                                     'required': NO_OPTION_SELECT_ERROR.format(
+                                         'Organization Type'),
+                                 })
+
+    level_of_operation = forms.ChoiceField(label="Level of Operation", label_suffix="*",
+                                           choices=((ol.code, ol.label) for ol in OperationLevel.objects.all()),
+                                           error_messages={
+                                               'required': NO_OPTION_SELECT_ERROR.format(
+                                                   'Level of Operation'),
+                                           })
+
+    focus_area = forms.ChoiceField(label="Primary Focus Area", label_suffix="*",
+                                   choices=((fa.code, fa.label) for fa in FocusArea.objects.all()),
+                                   error_messages={
+                                       'required': NO_OPTION_SELECT_ERROR.format(
+                                           'Primary Focus Areas'),
+                                   })
+
+    total_employees = forms.ChoiceField(label="Total Employees", label_suffix="*",
+                                        choices=((ep.code, ep.label) for ep in TotalEmployee.objects.all()),
+                                        error_messages={
+                                            'required': NO_OPTION_SELECT_ERROR.format('Total Employees'),
+                                        })
+
+    def __init__(self,  *args, **kwargs):
+        super(OrganizationInfoForm, self).__init__( *args, **kwargs)
+        self.fields['level_of_operation'].empty_label = "- Select -"
+        self.fields['focus_area'].empty_label = "- Select -"
+        self.fields['total_employees'].empty_label = "- Select -"
+        self.fields['org_type'].empty_label = "- Select -"
+
+    class Meta:
+        """
+        The meta class used to customize the default behaviour of form fields
+        """
+        model = Organization
+        fields = ['country', 'city', 'is_org_url_exist', 'url', 'founding_year', 'org_type', 'level_of_operation',
+                  'focus_area', 'total_employees', 'alternate_admin_email']
+
+        widgets = {
+            'country': forms.TextInput,
+            'city': forms.TextInput,
+            'url': forms.TextInput,
+            'founding_year': forms.NumberInput,
+            'alternate_admin_email': forms.TextInput,
+        }
+
+        labels = {
+            'country': "Country of Organization Headquarters*",
+            'city': "City of Organization Headquarters*",
+            'is_org_url_exist': "Does your organization have a webpage?",
+            'url': "Website Address*",
+            'alternate_admin_email': 'Primary Focus Area*',
+        }
+
+        required_error = 'Please select an option for {}'
+
+        error_messages = {
+            'founding_year': {
+                'required': required_error.format('Founding Year'),
+            },
+            'country': {
+                'required': EMPTY_FIELD_ERROR.format('Country of Organization Headquarters'),
+            }
+        }
+
+    def clean_country(self):
+
+        all_countries = get_onboarding_autosuggesion_data('world_countries.json')
+        country = self.cleaned_data['country']
+
+        if is_selected_from_autocomplete(all_countries, country):
+            return country
+
+        raise forms.ValidationError('Please select country of Organization Headquarters.')
 #
-# class InterestModelForm(forms.ModelForm):
-#     """
-#     Model from to be used in the second step of survey.
-#
-#     This will record user's interests information as modeled in
-#     'InterestsSurvey' model.
-#     """
-#     def __init__(self,  *args, **kwargs):
-#         super(InterestModelForm, self).__init__( *args, **kwargs)
-#         self.fields['capacity_areas'].empty_label = None
-#
-#     class Meta:
-#         """
-#         The meta class used to customize the default behaviour of form fields
-#         """
-#         model = InterestsSurvey
-#         fields = ['capacity_areas', 'interested_communities', 'personal_goal']
-#
-#         widgets = {
-#             'capacity_areas': forms.CheckboxSelectMultiple(),
-#             'interested_communities': forms.CheckboxSelectMultiple(),
-#             'personal_goal': forms.CheckboxSelectMultiple(),
-#         }
-#
-#         labels = {
-#             'capacity_areas': 'Which of these areas of organizational effectiveness are you most interested'
-#                               ' to learn more about? (Check all that apply.)',
-#             'interested_communities': 'What types of other Philanthropy University'
-#                                       ' learners are interesting to you? (Check all that apply.)',
-#             'personal_goal': 'What is your most important personal goal in joining'
-#                              ' Philanthropy University? (Check all that apply.)'
-#         }
-#
-#         required_error = 'Please select an option for {}'
-#
-#         error_messages = {
-#             'capacity_areas': {
-#                 'required': required_error.format('Organization capacity area you are interested in.'),
-#             },
-#             'interested_communities': {
-#                 'required': required_error.format('Community type you are interested in.'),
-#             },
-#             'personal_goal': {
-#                 'required': required_error.format('Personal goal.'),
-#             },
-#
-#         }
-#
-#
-# class OrganizationInfoModelForm(forms.ModelForm):
-#     """
-#     Model from to be used in the third step of survey.
-#
-#     This will record information about user's organization as modeled in
-#     'OrganizationSurvey' model.
-#     """
-#
-#     def __init__(self,  *args, **kwargs):
-#         super(OrganizationInfoModelForm, self).__init__( *args, **kwargs)
-#         self.fields['sector'].empty_label = None
-#         self.fields['level_of_operation'].empty_label = None
-#         self.fields['focus_area'].empty_label = None
-#         self.fields['total_employees'].empty_label = "Total Employees*"
-#         self.fields['partner_network'].empty_label = None
-#         self.fields['is_org_url_exist'].required = True
-#
-#     class Meta:
-#         """
-#         The meta class used to customize the default behaviour of form fields
-#         """
-#         model = OrganizationSurvey
-#         fields = ['country', 'city', 'is_org_url_exist', 'url', 'founding_year', 'sector', 'level_of_operation',
-#                   'focus_area', 'total_employees', 'partner_network', 'alternate_admin_email']
-#
-#         widgets = {
-#             'country': forms.TextInput(attrs={'placeholder': 'Country of Organization Headquarters*'}),
-#             'city': forms.TextInput(attrs={'placeholder': 'City of Organization Headquarters'}),
-#             'url': forms.TextInput(attrs={'placeholder': 'Website address*'}),
-#             'is_org_url_exist': forms.RadioSelect(choices=((1, 'Yes'), (0, 'No'))),
-#             'founding_year': forms.NumberInput(attrs={'placeholder': 'Founding Year'}),
-#             'sector': forms.RadioSelect,
-#             'level_of_operation': forms.RadioSelect,
-#             'focus_area': forms.RadioSelect,
-#             'partner_network': forms.CheckboxSelectMultiple,
-#             'alternate_admin_email': forms.EmailInput(attrs=({'placeholder': 'Organization Admin Email'}))
-#         }
-#
-#         labels = {
-#             'alternate_admin_email': 'Please provide the email address for an alternative'
-#                                      ' Admin contact at your organization if we are unable to reach you.',
-#             'is_org_url_exist': 'Does your organization have a website?*',
-#             'sector': 'Sector*',
-#             'level_of_operation': 'Level of Operation*',
-#             'total_employees': 'Total Employees*',
-#             'focus_area': 'Focus Area*',
-#             'country': 'Country*',
-#             'partner_network': "Are you currently working with any of Philanthropy University's"
-#                                " partners? (Check all that apply.)*"
-#         }
-#
-#         initial = {
-#             "is_org_url_exist": 1
-#         }
-#
-#         required_error = 'Please select an option for {}'
-#
-#         error_messages = {
-#             'sector': {
-#                 'required': required_error.format('Sector'),
-#             },
-#             'level_of_operation': {
-#                 'required': required_error.format('Level of Operation'),
-#             },
-#             'total_employees': {
-#                 'required': required_error.format('Total Employees'),
-#             },
-#             'focus_area': {
-#                 'required': required_error.format('Focus Area'),
-#             },
-#             'country': {
-#                 'required': EMPTY_FIELD_ERROR.format('Country of Organization Headquarters'),
-#             },
-#             'partner_network': {
-#                 'required': required_error.format('Partner Network'),
-#             },
-#             'is_org_url_exist': {
-#                 'required': required_error.format('Is org url exist'),
-#             },
-#
-#         }
-#
-#     def clean_country(self):
-#
-#         all_countries = get_onboarding_autosuggesion_data('world_countries.json')
-#         country = self.cleaned_data['country']
-#
-#         if is_selected_from_autocomplete(all_countries, country):
-#             return country
-#
-#         raise forms.ValidationError('Please select country of Organization Headquarters.')
-#
-#     def clean_url(self):
-#         is_org_url_exist = int(self.data.get('is_org_url_exist')) if self.data.get('is_org_url_exist') else None
-#         organization_website = self.cleaned_data['url']
-#
-#         if is_org_url_exist and not organization_website:
-#             raise forms.ValidationError(EMPTY_FIELD_ERROR.format('Organization Website'))
-#
-#         return organization_website
-#
-#     def clean(self):
-#         """
-#         Clean the form after submission and ensure that year is 4 digit positive number.
-#         """
-#         cleaned_data = super(OrganizationInfoModelForm, self).clean()
-#
-#         year = cleaned_data['founding_year']
-#
-#         if year:
-#             if len("{}".format(year)) < 4 or year < 0 or len("{}".format(year)) > 4:
-#                 self.add_error(
-#                     'founding_year',
-#                     "You entered an invalid year format. Please enter a valid year with 4 digits."
-#                 )
+    def clean_url(self):
+        is_org_url_exist = int(self.data.get('is_org_url_exist')) if self.data.get('is_org_url_exist') else None
+        organization_website = self.cleaned_data['url']
+
+        if is_org_url_exist and not organization_website:
+            raise forms.ValidationError(EMPTY_FIELD_ERROR.format('Organization Website'))
+
+        return organization_website
+
+    def clean(self):
+        """
+        Clean the form after submission and ensure that year is 4 digit positive number.
+        """
+        cleaned_data = super(OrganizationInfoForm, self).clean()
+
+        year = cleaned_data['founding_year']
+
+        if year:
+            if len("{}".format(year)) < 4 or year < 0 or len("{}".format(year)) > 4:
+                self.add_error(
+                    'founding_year',
+                    "You entered an invalid year format. Please enter a valid year with 4 digits."
+                )
 
 
 class RegModelForm(forms.ModelForm):
