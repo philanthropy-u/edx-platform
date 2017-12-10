@@ -6,8 +6,10 @@ import logging
 import base64
 
 import os
+from django.contrib.auth import logout
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse
@@ -19,6 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 from path import Path as path
 
 from edxmako.shortcuts import render_to_response
+from lms.djangoapps.onboarding.helpers import calculate_age_years
 from lms.djangoapps.onboarding.models import (
     Organization,
     Currency, OrganizationMetric)
@@ -44,6 +47,7 @@ def user_info(request):
     user_extended_profile = request.user.extended_profile
     are_forms_complete = not (bool(user_extended_profile.unattended_surveys()))
     userprofile = request.user.profile
+    is_under_age = False
 
     initial = {
         'year_of_birth': userprofile.year_of_birth,
@@ -54,11 +58,24 @@ def user_info(request):
         "function_areas": user_extended_profile.get_user_selected_functions(_type="fields")
     }
 
-    if request.method == 'POST':
+    context = {
+        'are_forms_complete': are_forms_complete, 'first_name': request.user.first_name
+    }
 
+    year_of_birth = userprofile.year_of_birth
+
+    if request.method == 'POST':
+        year_of_birth = request.POST.get('year_of_birth')
+
+    if year_of_birth:
+        years = calculate_age_years(int(year_of_birth))
+        if years < 18:
+            is_under_age = True
+
+    if request.method == 'POST':
         form = forms.UserInfoModelForm(request.POST, instance=user_extended_profile, initial=initial)
 
-        if form.is_valid():
+        if form.is_valid() and not is_under_age:
             form.save(request)
 
             if not are_forms_complete:
@@ -68,14 +85,15 @@ def user_info(request):
     else:
         form = forms.UserInfoModelForm(instance=user_extended_profile, initial=initial)
 
-    context = {
-        'form': form, 'are_forms_complete': are_forms_complete, 'first_name': request.user.first_name
-    }
+    context.update({
+        'form': form,
+        'is_under_age': is_under_age,
+        'is_poc': user_extended_profile.is_organization_admin,
+        'is_first_user': user_extended_profile.organization.is_first_signup_in_org(),
+        'google_place_api_key': settings.GOOGLE_PLACE_API_KEY
+    })
 
     context.update(user_extended_profile.unattended_surveys())
-    context['is_poc'] = user_extended_profile.is_organization_admin
-    context['is_first_user'] = user_extended_profile.organization.is_first_signup_in_org()
-    context['google_place_api_key'] = settings.GOOGLE_PLACE_API_KEY
     return render(request, 'onboarding/tell_us_more_survey.html', context)
 
 
@@ -164,6 +182,26 @@ def organization(request):
     context['google_place_api_key'] = settings.GOOGLE_PLACE_API_KEY
 
     return render(request, 'onboarding/organization_survey.html', context)
+
+@login_required
+def delete_my_account(request):
+    user = request.user
+    user_extended_profile = user.extended_profile
+
+    surveys_to_attend = user_extended_profile.surveys_to_attend()
+
+    if user.is_active and len(user_extended_profile.unattended_surveys(_type='list')) == len(surveys_to_attend):
+        logout(request)
+
+        User.objects.filter(id=user.id).delete()
+
+        data = json.dumps({"status": 200})
+    else:
+        data = json.dumps({"status": 400})
+
+    mime_type = 'application/json'
+    return HttpResponse(data, mime_type)
+
 
 
 @csrf_exempt

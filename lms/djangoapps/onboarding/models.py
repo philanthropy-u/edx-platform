@@ -422,6 +422,13 @@ class UserExtendedProfile(TimeStampedModel):
 
         return attended_list
 
+    def surveys_to_attend(self):
+        surveys_to_attend = self.SURVEYS_LIST
+        if not (self.is_organization_admin or self.organization.is_first_signup_in_org()):
+            surveys_to_attend = self.SURVEYS_LIST[:2]
+
+        return surveys_to_attend
+
     def attended_surveys(self):
         """Return list of user's attended on-boarding surveys"""
 
@@ -435,9 +442,7 @@ class UserExtendedProfile(TimeStampedModel):
     def unattended_surveys(self, _type="map"):
         """Return maping of user's unattended on-boarding surveys"""
 
-        surveys_to_attend = self.SURVEYS_LIST
-        if not (self.is_organization_admin or self.organization.is_first_signup_in_org()):
-            surveys_to_attend = self.SURVEYS_LIST[:2]
+        surveys_to_attend = self.surveys_to_attend()
 
         if _type == "list":
             return [s for s in surveys_to_attend if s not in self.attended_surveys()]
