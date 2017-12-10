@@ -2,7 +2,8 @@ import logging
 import uuid
 
 import re
-
+from dateutil.relativedelta import relativedelta
+from datetime import datetime
 from django.contrib.auth.models import User
 from model_utils.models import TimeStampedModel
 from simple_history.models import HistoricalRecords
@@ -171,9 +172,25 @@ class OrganizationPartner(models.Model):
     The model to save the organization partners.
     """
     organization = models.ForeignKey(Organization, related_name='organization_partners')
-    partner = models.ManyToManyField(PartnerNetwork)
+    partner = models.ForeignKey(PartnerNetwork, related_name='organization_partners')
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
+
+    @classmethod
+    def update_organization_partners(cls, organization, partners):
+        cls.objects.filter(organization=organization).delete()
+
+        _partners = PartnerNetwork.objects.filter(code__in=partners)
+
+        lst_to_create = []
+        for partner in _partners:
+            start_date = datetime.now()
+            end_date = start_date + relativedelta(years=100)
+            obj = cls(organization=organization, partner=partner, start_date=start_date, end_date=end_date)
+            lst_to_create.append(obj)
+
+        cls.objects.bulk_create(lst_to_create)
+        _partners.update(is_partner_affiliated=True)
 
 
 class RoleInsideOrg(models.Model):
@@ -309,14 +326,14 @@ class UserExtendedProfile(TimeStampedModel):
     __history_start_date = None
     __history_end_date = None
 
-    def __str__(self):
-        return self.user
-
     def _history_start_date(self):
         return self.__history_start_date
 
     def _history_end_date(self):
         return self.__history_end_date
+
+    def __str__(self):
+        return self.user
 
     def get_user_selected_functions(self, _type="labels"):
         if _type == "labels":
@@ -385,28 +402,48 @@ class UserExtendedProfile(TimeStampedModel):
 
             self.__setattr__(goal_field, _updated_value)
 
-
-
-    @property
-    def attended_surveys(self):
-        """Return list of user's attended on-boarding surveys"""
+    def get_normal_user_attend_surveys(self):
         attended_list = []
 
         if self.level_of_education and self.start_month_year and self.english_proficiency:
             attended_list.append(self.SURVEYS_LIST[0])
-        elif self.get_user_selected_interests():
+        if self.get_user_selected_interests():
             attended_list.append(self.SURVEYS_LIST[1])
-        elif self.is_organization_data_filled():
+
+        return attended_list
+
+    def get_admin_or_first_user_attend_surveys(self):
+        attended_list = self.get_normal_user_attend_surveys()
+
+        if self.is_organization_data_filled():
             attended_list.append(self.SURVEYS_LIST[2])
-        elif self.is_organization_details_filled():
+        if self.is_organization_details_filled():
             attended_list.append(self.SURVEYS_LIST[3])
 
         return attended_list
 
-    def unattended_surveys(self):
+    def attended_surveys(self):
+        """Return list of user's attended on-boarding surveys"""
+
+        if not (self.is_organization_admin or self.organization.is_first_signup_in_org()):
+            attended_list = self.get_normal_user_attend_surveys()
+        else:
+            attended_list = self.get_admin_or_first_user_attend_surveys()
+
+        return attended_list
+
+    def unattended_surveys(self, _type="map"):
         """Return maping of user's unattended on-boarding surveys"""
 
-        return {s: True if s in self.attended_surveys else False for s in self.SURVEYS_LIST }
+        surveys_to_attend = self.SURVEYS_LIST
+        if not (self.is_organization_admin or self.organization.is_first_signup_in_org()):
+            surveys_to_attend = self.SURVEYS_LIST[:2]
+
+        if _type == "list":
+            return [s for s in surveys_to_attend if s not in self.attended_surveys()]
+
+        return {s: True if s not in self.attended_surveys() else False for s in surveys_to_attend}
+
 
     @property
     def is_organization_admin(self):
@@ -429,8 +466,7 @@ class OrganizationMetric(TimeStampedModel):
     effective_date = models.DateField(blank=True, null=True)
     total_clients = models.PositiveIntegerField(blank=True, null=True)
     total_employees = models.PositiveIntegerField(blank=True, null=True)
-    local_currency = models.ForeignKey(Currency, on_delete=models.SET_NULL, blank=True, null=True,
-                                       related_name='organization_metics')
+    local_currency = models.CharField(max_length=10, null=True)
     total_revenue = models.BigIntegerField(blank=True, null=True)
     total_donations = models.BigIntegerField(blank=True, null=True)
     total_expenses = models.BigIntegerField(blank=True, null=True)
