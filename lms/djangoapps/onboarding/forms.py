@@ -16,7 +16,7 @@ from lms.djangoapps.onboarding.models import (
     UserExtendedProfile,
     Organization,
     OrganizationAdminHashKeys, EducationLevel, EnglishProficiency, RoleInsideOrg, OperationLevel,
-    FocusArea, TotalEmployee, OrgSector)
+    FocusArea, TotalEmployee, OrgSector, PartnerNetwork, OrganizationPartner, OrganizationMetric, Currency)
 from lms.djangoapps.onboarding.email_utils import send_admin_activation_email
 
 
@@ -124,7 +124,6 @@ class UserInfoModelForm(forms.ModelForm):
         self.fields['function_areas'] = forms.ChoiceField(choices=FUNCTION_AREA_CHOICS,
             label='Department of Function (Check all that apply.)',
             widget=forms.CheckboxSelectMultiple)
-
 
     def clean(self):
         if self.errors.get('function_areas'):
@@ -248,20 +247,23 @@ class InterestsForm(forms.Form):
         INTEREST_CHOICS = ((field_name, label) for field_name, label in UserExtendedProfile.INTERESTS_LABELS.items())
         self.fields['interests'] = forms.ChoiceField(
             label='Which of these areas of organizational effectiveness are you most interested '
-                  'to learn more about? (Check all that apply)',
+                  'to learn more about?',
+            label_suffix="(Check all that apply.)",
             choices=INTEREST_CHOICS, widget=forms.CheckboxSelectMultiple,
             required=False)
 
         INTERESTED_LEARNERS_CHOICS = ((field_name, label)
                                 for field_name, label in UserExtendedProfile.INTERESTED_LEARNERS_LABELS.items())
         self.fields['interested_learners'] = forms.ChoiceField(
-            label='Which type of other Philanthropy University learners are interesting to you? (Check all that apply)',
+            label='Which type of other Philanthropy University learners are interesting to you?',
+            label_suffix="(Check all that apply.)",
             choices=INTERESTED_LEARNERS_CHOICS, widget=forms.CheckboxSelectMultiple,
             required=False)
 
         PERSONAL_GOAL_CHOICS = ((field_name, label) for field_name, label in UserExtendedProfile.GOALS_LABELS.items())
         self.fields['personal_goals'] = forms.ChoiceField(
-            label='What is your most important personal goals in joining Philanthropy University? (Check all that apply)',
+            label='What is your most important personal goals in joining Philanthropy University?',
+            label_suffix="(Check all that apply.)",
             choices=PERSONAL_GOAL_CHOICS, widget=forms.CheckboxSelectMultiple,
             required=False)
 
@@ -281,8 +283,9 @@ class OrganizationInfoForm(forms.ModelForm):
     'OrganizationSurvey' model.
     """
     is_org_url_exist = forms.ChoiceField(label="Does your organization have a website?",
+                                         choices=((0, "Yes"), (1, "No")),
                                          label_suffix="*",
-                                         widget=forms.RadioSelect(choices=((0, "Yes"), (1, "No"))),
+                                         widget=forms.RadioSelect,
                                          initial=1,
                                          error_messages={
                                             'required': 'Please select an option for "Does your organization have a'
@@ -316,12 +319,18 @@ class OrganizationInfoForm(forms.ModelForm):
                                             'required': NO_OPTION_SELECT_ERROR.format('Total Employees'),
                                         })
 
+    partner_networks = forms.ChoiceField(label="Is your organization currently working with any of the Philanthropy "
+                                               "University's partners? ",
+                                         label_suffix="(Check all that apply.)",
+                                         choices=((pn.code, pn.label) for pn in PartnerNetwork.objects.all()),
+                                         widget=forms.CheckboxSelectMultiple,
+                                         required=False,
+                                         error_messages={
+                                             'required': NO_OPTION_SELECT_ERROR.format("Partner's"),
+                                         })
+
     def __init__(self,  *args, **kwargs):
         super(OrganizationInfoForm, self).__init__( *args, **kwargs)
-        self.fields['level_of_operation'].empty_label = "- Select -"
-        self.fields['focus_area'].empty_label = "- Select -"
-        self.fields['total_employees'].empty_label = "- Select -"
-        self.fields['org_type'].empty_label = "- Select -"
 
     class Meta:
         """
@@ -329,7 +338,7 @@ class OrganizationInfoForm(forms.ModelForm):
         """
         model = Organization
         fields = ['country', 'city', 'is_org_url_exist', 'url', 'founding_year', 'org_type', 'level_of_operation',
-                  'focus_area', 'total_employees', 'alternate_admin_email']
+                  'focus_area', 'total_employees', 'alternate_admin_email', 'partner_networks']
 
         widgets = {
             'country': forms.TextInput,
@@ -344,7 +353,8 @@ class OrganizationInfoForm(forms.ModelForm):
             'city': "City of Organization Headquarters*",
             'is_org_url_exist': "Does your organization have a webpage?",
             'url': "Website Address*",
-            'alternate_admin_email': 'Primary Focus Area*',
+            'alternate_admin_email': 'Please provide the email address for an alternative Administrator contact at '
+                                     'your organization if we are unable to reach you.',
         }
 
         required_error = 'Please select an option for {}'
@@ -367,7 +377,7 @@ class OrganizationInfoForm(forms.ModelForm):
             return country
 
         raise forms.ValidationError('Please select country of Organization Headquarters.')
-#
+
     def clean_url(self):
         is_org_url_exist = int(self.data.get('is_org_url_exist')) if self.data.get('is_org_url_exist') else None
         organization_website = self.cleaned_data['url']
@@ -383,6 +393,9 @@ class OrganizationInfoForm(forms.ModelForm):
         """
         cleaned_data = super(OrganizationInfoForm, self).clean()
 
+        if self.errors.get('partner_networks'):
+            del self.errors['partner_networks']
+
         year = cleaned_data['founding_year']
 
         if year:
@@ -391,6 +404,13 @@ class OrganizationInfoForm(forms.ModelForm):
                     'founding_year',
                     "You entered an invalid year format. Please enter a valid year with 4 digits."
                 )
+
+    def save(self, request, commit=True):
+        organization = super(OrganizationInfoForm, self).save()
+        partners = request.POST.getlist('partner_networks')
+
+        if partners:
+            OrganizationPartner.update_organization_partners(organization, partners)
 
 
 class RegModelForm(forms.ModelForm):
@@ -492,7 +512,6 @@ class RegModelForm(forms.ModelForm):
             'org_admin_email': {'field_type': 'email'}
         }
 
-
     def clean_organization_name(self):
         organization_name = self.cleaned_data['organization_name']
 
@@ -561,162 +580,153 @@ class UpdateRegModelForm(RegModelForm):
         self.fields.pop('confirm_password')
 
 
-class OrganizationDetailModelForm(forms.ModelForm):
+class OrganizationMetricModelForm(forms.ModelForm):
+    can_provide_info = forms.ChoiceField(label="Are you able to provide information requested bellow?",
+                                         choices=((1, "Yes"), (0, "No")),
+                                         label_suffix="*",
+                                         widget=forms.RadioSelect,
+                                         initial=1,
+                                         error_messages={
+                                             'required': 'Please select an option for Are you able to provide '
+                                                         'information',
+                                         })
+    registration_number = forms.CharField(max_length=30, required=False)
 
-    currency_input = forms.CharField(
-        max_length=255,
-        label='Local currency code*',
-        widget=forms.TextInput(
-            attrs={'placeholder': 'Local currency code*'}
-        ),
-        required=False
-    )
+    def __init__(self,  *args, **kwargs):
+        super(OrganizationMetricModelForm, self).__init__(*args, **kwargs)
+        self.fields['actual_data'].empty_label = None
+        self.fields['actual_data'].required = False
 
-    # def __init__(self,  *args, **kwargs):
-    #     super(OrganizationDetailModelForm, self).__init__(*args, **kwargs)
-    #     self.fields['can_provide_info'].empty_label = None
-    #     self.fields['info_accuracy'].empty_label = None
-    #     self.fields['can_provide_info'].required = True
-    #
-    #     self.fields['info_accuracy'].required = False
-    #     self.fields['last_fiscal_year_end_date'].required = False
-    #     self.fields['total_clients'].required = False
-    #     self.fields['total_employees'].required = False
-    #     self.fields['currency_input'].required = False
-    #     self.fields['total_revenue'].required = False
-    #     self.fields['total_expenses'].required = False
-    #     self.fields['total_program_expenses'].required = False
-    #
-    # class Meta:
-    #     model = OrganizationDetailSurvey
-    #
-    #     fields = [
-    #         'can_provide_info', 'info_accuracy', 'last_fiscal_year_end_date', 'total_clients',
-    #         'total_employees', 'currency_input', 'total_revenue', 'total_expenses', 'total_program_expenses'
-    #     ]
-    #
-    #
-    #     widgets = {
-    #         'can_provide_info': forms.RadioSelect,
-    #         'info_accuracy': RadioSelectNotNull,
-    #         'last_fiscal_year_end_date': forms.TextInput(attrs={'placeholder': 'End Date of Last Fiscal Year*'}),
-    #         'total_clients': forms.NumberInput(
-    #             attrs={'placeholder': 'Total Annual Clients or Direct Beneficiaries for Last Fiscal Year*'}
-    #         ),
-    #         'total_employees': forms.NumberInput(attrs={'placeholder': 'Total Employees at End of Last Fiscal Year*'}),
-    #
-    #         'total_revenue': forms.NumberInput(
-    #             attrs={'placeholder': 'Total Annual Revenue for Last Fiscal Year (local currency)*'}
-    #         ),
-    #         'total_expenses': forms.NumberInput(
-    #             attrs={'placeholder': 'Total Annual Expenses for Last Fiscal Year (local currency)*'}
-    #         ),
-    #         'total_program_expenses': forms.NumberInput(
-    #             attrs={'placeholder': 'Total Annual Program Expenses for Last Fiscal Year (local currency)*'}
-    #         )
-    #     }
-    #
-    #     labels = {
-    #         'can_provide_info': 'Are you able to provide the information requested below?',
-    #         'info_accuracy': 'Is the information you will provide on this page estimated or actual?'
-    #     }
-    #
-    #     help_texts = {
-    #         'last_fiscal_year_end_date': "If the data you are providing below is for the last 12 months,"
-    #                                      " please enter today's date."
-    #     }
-    #
-    #     error_messages = {
-    #         'can_provide_info': {
-    #             'required': "Please select an option for providing information.",
-    #         },
-    #     }
-    #
-    # def clean_currency_input(self):
-    #     can_provide_info = int(self.data['can_provide_info']) if self.data.get('can_provide_info') else False
-    #     all_currency_codes = Currency.objects.values_list('alphabetic_code', flat=True)
-    #     currency_input = self.cleaned_data['currency_input']
-    #
-    #     if can_provide_info and not is_selected_from_autocomplete(all_currency_codes, currency_input):
-    #         raise forms.ValidationError('Please select currency code.')
-    #
-    #     return currency_input
-    #
-    #
-    # def clean_info_accuracy(self):
-    #     can_provide_info = int(self.data['can_provide_info']) if self.data.get('can_provide_info') else False
-    #     info_accuracy = self.cleaned_data['info_accuracy']
-    #
-    #     if can_provide_info and info_accuracy not in [True, False]:
-    #         raise forms.ValidationError("Please select an option for Estimated or Actual Information")
-    #
-    #     return info_accuracy
-    #
-    # def clean_last_fiscal_year_end_date(self):
-    #     can_provide_info = int(self.data.get('can_provide_info')) if self.data.get('can_provide_info') else False
-    #     last_fiscal_year_end_date = self.cleaned_data['last_fiscal_year_end_date']
-    #
-    #     if can_provide_info and not last_fiscal_year_end_date:
-    #         raise forms.ValidationError(EMPTY_FIELD_ERROR.format("End date for Last Fiscal Year"))
-    #
-    #     return last_fiscal_year_end_date
-    #
-    # def clean_total_clients(self):
-    #     can_provide_info = int(self.data.get('can_provide_info')) if self.data.get('can_provide_info') else False
-    #     total_clients = self.cleaned_data['total_clients']
-    #
-    #     if can_provide_info and not total_clients:
-    #         raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Client"))
-    #
-    #     return total_clients
-    #
-    # def clean_total_employees(self):
-    #     can_provide_info = int(self.data.get('can_provide_info')) if self.data.get('can_provide_info') else False
-    #     total_employees = self.cleaned_data['total_employees']
-    #
-    #     if can_provide_info and not total_employees:
-    #         raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Employees"))
-    #
-    #     return total_employees
-    #
-    # def clean_total_revenue(self):
-    #     can_provide_info = int(self.data.get('can_provide_info')) if self.data.get('can_provide_info') else False
-    #     total_revenue = self.cleaned_data['total_revenue']
-    #
-    #     if can_provide_info and not total_revenue:
-    #         raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Revenue"))
-    #
-    #     return total_revenue
-    #
-    # def clean_total_expenses(self):
-    #     can_provide_info = int(self.data.get('can_provide_info')) if self.data.get('can_provide_info') else False
-    #     total_expenses = self.cleaned_data['total_expenses']
-    #
-    #     if can_provide_info and not total_expenses:
-    #         raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Expenses"))
-    #
-    #     return total_expenses
-    #
-    # def clean_total_program_expenses(self):
-    #     can_provide_info = int(self.data.get('can_provide_info')) if self.data.get('can_provide_info') else False
-    #     total_program_expenses = self.cleaned_data['total_program_expenses']
-    #
-    #     if can_provide_info and not total_program_expenses:
-    #         raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Program Expense"))
-    #
-    #     return total_program_expenses
-    #
-    #
-    # def save(self, user=None, commit=True):
-    #     org_detail = super(OrganizationDetailModelForm, self).save(commit=False)
-    #     if user:
-    #         org_detail.user = user
-    #
-    #     can_provide_info = int(self.data['can_provide_info'])
-    #     if can_provide_info:
-    #         org_detail.currency = Currency.objects.filter(alphabetic_code=self.cleaned_data['currency_input']).first()
-    #
-    #     if commit:
-    #         org_detail.save()
-    #
-    #     return org_detail
+    class Meta:
+        model = OrganizationMetric
+
+        fields = [
+            'can_provide_info', 'actual_data', 'effective_date', 'total_clients', 'total_employees', 'local_currency',
+            'total_revenue', 'total_donations', 'total_expenses', 'total_program_expenses', 'registration_number'
+        ]
+
+        widgets = {
+            'can_provide_info': forms.RadioSelect,
+            'actual_data': RadioSelectNotNull,
+            'effective_date': forms.TextInput,
+            'total_clients': forms.NumberInput,
+            'total_employees': forms.NumberInput,
+            'local_currency': forms.TextInput,
+
+            'total_revenue': forms.NumberInput,
+            'total_donations': forms.NumberInput,
+            'total_expenses': forms.NumberInput,
+            'total_program_expenses': forms.NumberInput,
+            'registration_number': forms.TextInput
+        }
+
+        labels = {
+            'actual_data': 'Is the information you will provide on this page estimated or actual?*',
+            'effective_date': 'End date of lat Fiscal Year*',
+            'total_clients': 'Total Annual Clients or Direct Beneficiaries for Last Fiscal Year*',
+            'total_employees': 'Total Employees at the end of Last Fiscal Year*',
+            'local_currency': 'Local Currency Code*',
+            'total_revenue': 'Total Annual Revenue for Last Fiscal Year* (Local Currency)*',
+            'total_donations': 'Total Donations and Grants Received Last Fiscal Year (Local Currency)*',
+            'total_expenses': 'Total Annual Expenses for Last Fiscal Year (Local Currency)*',
+            'total_program_expenses': 'Total Annual Program Expenses for Last Fiscal Year (Local Currency)*',
+            'registration_number': "Organization's Publicly Available Registration or Tax Identification Number "
+                                   "(If Applicable)" ,
+        }
+
+        help_texts = {
+            'effective_date': "If the data you are providing below is for the last 12 months,"
+                                         " please enter today's date."
+        }
+
+    def clean_actual_data(self):
+        can_provide_info = int(self.data['can_provide_info']) if self.data.get('can_provide_info') else False
+        info_accuracy = self.cleaned_data['actual_data']
+
+        if can_provide_info and info_accuracy not in [True, False]:
+            raise forms.ValidationError("Please select an option for Estimated or Actual Information")
+
+        return info_accuracy
+
+    def clean_effective_date(self):
+        can_provide_info = int(self.data.get('can_provide_info')) if self.data.get('can_provide_info') else False
+        last_fiscal_year_end_date = self.cleaned_data['effective_date']
+
+        if can_provide_info and not last_fiscal_year_end_date:
+            raise forms.ValidationError(EMPTY_FIELD_ERROR.format("End date for Last Fiscal Year"))
+
+        return last_fiscal_year_end_date
+
+    def clean_total_clients(self):
+        can_provide_info = int(self.data.get('can_provide_info')) if self.data.get('can_provide_info') else False
+        total_clients = self.cleaned_data['total_clients']
+
+        if can_provide_info and not total_clients:
+            raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Client"))
+
+        return total_clients
+
+    def clean_total_employees(self):
+        can_provide_info = int(self.data.get('can_provide_info')) if self.data.get('can_provide_info') else False
+        total_employees = self.cleaned_data['total_employees']
+
+        if can_provide_info and not total_employees:
+            raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Employees"))
+
+        return total_employees
+
+    def clean_local_currency(self):
+        can_provide_info = int(self.data['can_provide_info']) if self.data.get('can_provide_info') else False
+        all_currency_codes = Currency.objects.values_list('alphabetic_code', flat=True)
+        currency_input = self.cleaned_data['local_currency']
+
+        if can_provide_info and not is_selected_from_autocomplete(all_currency_codes, currency_input):
+            raise forms.ValidationError('Please select currency code.')
+
+        return currency_input
+
+    def clean_total_revenue(self):
+        can_provide_info = int(self.data.get('can_provide_info')) if self.data.get('can_provide_info') else False
+        total_revenue = self.cleaned_data['total_revenue']
+
+        if can_provide_info and not total_revenue:
+            raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Revenue"))
+
+        return total_revenue
+
+    def clean_total_expenses(self):
+        can_provide_info = int(self.data.get('can_provide_info')) if self.data.get('can_provide_info') else False
+        total_expenses = self.cleaned_data['total_expenses']
+
+        if can_provide_info and not total_expenses:
+            raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Expenses"))
+
+        return total_expenses
+
+    def clean_total_program_expenses(self):
+        can_provide_info = int(self.data.get('can_provide_info')) if self.data.get('can_provide_info') else False
+        total_program_expenses = self.cleaned_data['total_program_expenses']
+
+        if can_provide_info and not total_program_expenses:
+            raise forms.ValidationError(EMPTY_FIELD_ERROR.format("Total Program Expense"))
+
+        return total_program_expenses
+
+    def save(self, user=None, commit=True):
+        org_detail = super(OrganizationDetailModelForm, self).save(commit=False)
+        if user:
+            org_detail.user = user
+
+        can_provide_info = int(self.data['can_provide_info'])
+        if can_provide_info:
+            org_detail.local_currency = Currency.objects.filter(
+                alphabetic_code=self.cleaned_data['currency_input']).first().alphabetic_code
+
+            if self.data['registration_number']:
+                org_detail.organization.registration_number = self.data['registration_number']
+                org_detail.organization.save()
+
+        if commit:
+            org_detail.save()
+
+        return org_detail

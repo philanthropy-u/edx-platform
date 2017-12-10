@@ -21,7 +21,7 @@ from path import Path as path
 from edxmako.shortcuts import render_to_response
 from lms.djangoapps.onboarding.models import (
     Organization,
-    Currency)
+    Currency, OrganizationMetric)
 from lms.djangoapps.student_dashboard.views import get_recommended_xmodule_courses, get_recommended_communities
 from onboarding import forms
 from lms.djangoapps.onboarding.models import UserExtendedProfile
@@ -145,7 +145,7 @@ def organization(request):
         form = forms.OrganizationInfoForm(request.POST, instance=_organization)
 
         if form.is_valid():
-            form.save()
+            form.save(request)
 
             if not are_forms_complete:
                 return redirect(reverse('org_detail_survey'))
@@ -193,55 +193,50 @@ def get_country_names(request):
 @login_required
 @transaction.atomic
 def org_detail_survey(request):
+    user_extended_profile = request.user.extended_profile
+    are_forms_complete = not(bool(user_extended_profile.unattended_surveys()))
 
-    # are_forms_complete = not(bool(user_extended_profile.unattended_surveys()))
-    #
-    # if request.method == 'POST':
-    #     existing_survey = None
-    #
-    #     try:
-    #         existing_survey = request.user.org_detail_survey
-    #     except OrganizationDetailSurvey.DoesNotExist:
-    #         pass
-    #
-    #     if existing_survey:
-    #         form = forms.OrganizationDetailModelForm(request.POST, instance=request.user.org_detail_survey)
-    #     else:
-    #         form = forms.OrganizationDetailModelForm(request.POST)
-    #
-    #     if form.is_valid():
-    #         org_detail = form.save()
-    #
-    #         if not existing_survey:
-    #             org_detail.user = request.user
-    #             org_detail.save()
-    #
-    #         update_user_history(request.user)
-    #         if not are_forms_complete:
-    #             set_survey_complete(request.user.extended_profile)
-    #             return redirect(reverse('oef_instructions'))
-    #
-    #         return redirect(reverse('org_detail_survey'))
-    #
-    # else:
-    #     org_detail_instance = OrganizationDetailSurvey.objects.filter(user=request.user).first()
-    #     if org_detail_instance:
-    #         form = forms.OrganizationDetailModelForm(instance=org_detail_instance, initial={
-    #             'can_provide_info': '1' if org_detail_instance.can_provide_info else '0',
-    #             'info_accuracy': '1' if org_detail_instance.info_accuracy else '0',
-    #             'currency_input': org_detail_instance.currency.alphabetic_code if org_detail_instance.currency else ""
-    #         })
-    #     else:
-    #         form = forms.OrganizationDetailModelForm()
-    #
-    # context = {'form': form, 'are_forms_complete': are_forms_complete}
-    # user = request.user
-    # extended_profile = user.extended_profile
-    # context.update(extended_profile.unattended_surveys())
-    # context['is_poc'] = extended_profile.is_organization_admin
-    # context['is_first_user'] = is_first_signup_in_org(extended_profile.organization)
-    # context['organization_name'] = extended_profile.organization.label
-    return render(request, 'onboarding/organization_detail_survey.html', {})
+    if request.method == 'POST':
+        existing_survey = None
+
+        try:
+            existing_survey = request.user.organization_metrics
+        except OrganizationMetric.DoesNotExist:
+            pass
+
+        if existing_survey:
+            form = forms.OrganizationMetricModelForm(request.POST, instance=existing_survey)
+        else:
+            form = forms.OrganizationMetricModelForm(request.POST)
+
+        if form.is_valid():
+            org_detail = form.save()
+
+            if not existing_survey:
+                org_detail.user = request.user
+                org_detail.save()
+
+            if not are_forms_complete:
+                return redirect(reverse('oef_instructions'))
+
+            return redirect(reverse('org_detail_survey'))
+
+    else:
+        org_detail_instance = OrganizationMetric.objects.filter(user=request.user).first()
+        if org_detail_instance:
+            form = forms.OrganizationMetricModelForm(instance=org_detail_instance, initial={
+                'can_provide_info': '1' if org_detail_instance.can_provide_info else '0',
+                'actual_data': '1' if org_detail_instance.info_accuracy else '0',
+            })
+        else:
+            form = forms.OrganizationMetricModelForm()
+
+    context = {'form': form, 'are_forms_complete': are_forms_complete}
+    context.update(user_extended_profile.unattended_surveys())
+    context['is_poc'] = user_extended_profile.is_organization_admin
+    context['is_first_user'] = user_extended_profile.organization.is_first_signup_in_org()
+    context['organization_name'] = user_extended_profile.organization.label
+    return render(request, 'onboarding/organization_detail_survey.html', context)
 
 
 @csrf_exempt
