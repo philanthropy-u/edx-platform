@@ -151,14 +151,6 @@ class Organization(TimeStampedModel):
     alternate_admin_email = models.EmailField(blank=True, null=True)
 
     history = HistoricalRecords()
-    __history_start_date = None
-    __history_end_date = None
-
-    def _history_start_date(self):
-        return self.__history_start_date
-
-    def _history_end_date(self):
-        return self.__history_end_date
 
     def is_first_signup_in_org(self):
         return UserExtendedProfile.objects.filter(organization=self).count() == 1
@@ -322,15 +314,10 @@ class UserExtendedProfile(TimeStampedModel):
     goal_improve_job_prospect = models.SmallIntegerField(GOALS_LABELS["goal_improve_job_prospect"], default=0)
     goal_relation_with_other = models.SmallIntegerField(GOALS_LABELS["goal_relation_with_other"], default=0)
 
+    is_interests_data_submitted = models.BooleanField(default=False)
+    is_organization_metrics_submitted = models.BooleanField(default=False)
+
     history = HistoricalRecords()
-    __history_start_date = None
-    __history_end_date = None
-
-    def _history_start_date(self):
-        return self.__history_start_date
-
-    def _history_end_date(self):
-        return self.__history_end_date
 
     def __str__(self):
         return self.user
@@ -391,7 +378,7 @@ class UserExtendedProfile(TimeStampedModel):
                and self.organization.total_employees
 
     def is_organization_details_filled(self):
-        pass
+        return self.is_organization_metrics_submitted
 
     def save_user_personal_goals(self, selected_values):
         for goal_field, label in self.GOALS_LABELS.items():
@@ -407,7 +394,7 @@ class UserExtendedProfile(TimeStampedModel):
 
         if self.level_of_education and self.start_month_year and self.english_proficiency:
             attended_list.append(self.SURVEYS_LIST[0])
-        if self.get_user_selected_interests():
+        if self.is_interests_data_submitted:
             attended_list.append(self.SURVEYS_LIST[1])
 
         return attended_list
@@ -449,7 +436,6 @@ class UserExtendedProfile(TimeStampedModel):
 
         return {s: True if s not in self.attended_surveys() else False for s in surveys_to_attend}
 
-
     @property
     def is_organization_admin(self):
         return self.user == self.organization.admin
@@ -471,7 +457,7 @@ class OrganizationMetric(TimeStampedModel):
     effective_date = models.DateField(blank=True, null=True)
     total_clients = models.PositiveIntegerField(blank=True, null=True)
     total_employees = models.PositiveIntegerField(blank=True, null=True)
-    local_currency = models.CharField(max_length=10, null=True)
+    local_currency = models.CharField(max_length=10, blank=True, null=True)
     total_revenue = models.BigIntegerField(blank=True, null=True)
     total_donations = models.BigIntegerField(blank=True, null=True)
     total_expenses = models.BigIntegerField(blank=True, null=True)

@@ -21,7 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 from path import Path as path
 
 from edxmako.shortcuts import render_to_response
-from lms.djangoapps.onboarding.helpers import calculate_age_years
+from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES
 from lms.djangoapps.onboarding.models import (
     Organization,
     Currency, OrganizationMetric)
@@ -45,7 +45,7 @@ def user_info(request):
     """
 
     user_extended_profile = request.user.extended_profile
-    are_forms_complete = not (bool(user_extended_profile.unattended_surveys()))
+    are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
     userprofile = request.user.profile
     is_under_age = False
 
@@ -53,7 +53,7 @@ def user_info(request):
         'year_of_birth': userprofile.year_of_birth,
         'gender': userprofile.gender,
         'language': userprofile.language,
-        'country': userprofile.country,
+        'country': COUNTRIES.get(userprofile.country),
         'city': userprofile.city,
         "function_areas": user_extended_profile.get_user_selected_functions(_type="fields")
     }
@@ -77,6 +77,8 @@ def user_info(request):
 
         if form.is_valid() and not is_under_age:
             form.save(request)
+
+            are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
 
             if not are_forms_complete:
                 return redirect(reverse('interests'))
@@ -158,12 +160,19 @@ def organization(request):
     """
     user_extended_profile = request.user.extended_profile
     _organization = user_extended_profile.organization
-    are_forms_complete = not(bool(user_extended_profile.unattended_surveys()))
+    are_forms_complete = not(bool(user_extended_profile.unattended_surveys(_type='list')))
+
+    initial = {
+        'country': COUNTRIES.get(_organization.country),
+    }
+
     if request.method == 'POST':
-        form = forms.OrganizationInfoForm(request.POST, instance=_organization)
+        form = forms.OrganizationInfoForm(request.POST, instance=_organization, initial=initial)
 
         if form.is_valid():
             form.save(request)
+
+            are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
 
             if not are_forms_complete:
                 return redirect(reverse('org_detail_survey'))
@@ -171,7 +180,7 @@ def organization(request):
             return redirect(reverse('organization'))
 
     else:
-        form = forms.OrganizationInfoForm(instance=_organization)
+        form = forms.OrganizationInfoForm(instance=_organization, initial=initial)
 
     context = {'form': form, 'are_forms_complete': are_forms_complete}
 
@@ -210,13 +219,10 @@ def get_country_names(request):
     Returns country names.
     """
     if request.is_ajax():
-        file_path = path(os.path.join(
-            'lms', 'djangoapps', 'onboarding', 'data', 'world_countries.json'
-        )).abspath()
-        with open(file_path) as json_data:
-            q = request.GET.get('term', '')
-            all_countries = json.load(json_data)
-            filtered_countries = [country for country in all_countries if country.lower().startswith(q.lower())]
+        q = request.GET.get('term', '')
+        all_countries = COUNTRIES.values()
+
+        filtered_countries = [country for country in all_countries if country.lower().startswith(q.lower())]
 
         data = json.dumps(filtered_countries)
 
@@ -232,39 +238,33 @@ def get_country_names(request):
 @transaction.atomic
 def org_detail_survey(request):
     user_extended_profile = request.user.extended_profile
-    are_forms_complete = not(bool(user_extended_profile.unattended_surveys()))
+    are_forms_complete = not(bool(user_extended_profile.unattended_surveys(_type='list')))
+
+    latest_survey = OrganizationMetric.objects.filter(org=user_extended_profile.organization,
+                                                      user=request.user).last()
 
     if request.method == 'POST':
-        existing_survey = None
 
-        try:
-            existing_survey = request.user.organization_metrics
-        except OrganizationMetric.DoesNotExist:
-            pass
-
-        if existing_survey:
-            form = forms.OrganizationMetricModelForm(request.POST, instance=existing_survey)
+        if latest_survey:
+            form = forms.OrganizationMetricModelForm(request.POST, instance=latest_survey)
         else:
             form = forms.OrganizationMetricModelForm(request.POST)
 
         if form.is_valid():
-            org_detail = form.save()
+            form.save(request)
 
-            if not existing_survey:
-                org_detail.user = request.user
-                org_detail.save()
+            are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
 
-            if not are_forms_complete:
+            if are_forms_complete:
                 return redirect(reverse('oef_instructions'))
 
             return redirect(reverse('org_detail_survey'))
 
     else:
-        org_detail_instance = OrganizationMetric.objects.filter(user=request.user).first()
-        if org_detail_instance:
-            form = forms.OrganizationMetricModelForm(instance=org_detail_instance, initial={
-                'can_provide_info': '1' if org_detail_instance.can_provide_info else '0',
-                'actual_data': '1' if org_detail_instance.info_accuracy else '0',
+        if latest_survey:
+            form = forms.OrganizationMetricModelForm(instance=latest_survey, initial={
+                'can_provide_info': '1' if latest_survey else '0',
+                'actual_data': '1' if latest_survey.actual_data else '0',
             })
         else:
             form = forms.OrganizationMetricModelForm()
