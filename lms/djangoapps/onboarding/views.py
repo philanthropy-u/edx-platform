@@ -21,6 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 from path import Path as path
 
 from edxmako.shortcuts import render_to_response
+from lms.djangoapps.onboarding.decorators import can_save_org_data
 from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES
 from lms.djangoapps.onboarding.models import (
     Organization,
@@ -53,8 +54,11 @@ def user_info(request):
         'year_of_birth': userprofile.year_of_birth,
         'gender': userprofile.gender,
         'language': userprofile.language,
-        'country': COUNTRIES.get(userprofile.country),
+        'country': COUNTRIES.get(userprofile.country) if not request.POST.get('country') else request.POST.get('country'),
+        'country_of_employment': COUNTRIES.get(user_extended_profile.country_of_employment, '') if not request.POST.get('country_of_employment') else request.POST.get('country_of_employment') ,
         'city': userprofile.city,
+        'hours_per_week': user_extended_profile.hours_per_week if user_extended_profile.hours_per_week else '',
+        'is_emp_location_different': True if user_extended_profile.country_of_employment else False,
         "function_areas": user_extended_profile.get_user_selected_functions(_type="fields")
     }
 
@@ -69,7 +73,7 @@ def user_info(request):
 
     if year_of_birth:
         years = calculate_age_years(int(year_of_birth))
-        if years < 18:
+        if years < 13:
             is_under_age = True
 
     if request.method == 'POST':
@@ -149,6 +153,7 @@ def interests(request):
 
 
 @login_required
+@can_save_org_data
 @transaction.atomic
 def organization(request):
     """
@@ -192,25 +197,20 @@ def organization(request):
 
     return render(request, 'onboarding/organization_survey.html', context)
 
+
 @login_required
 def delete_my_account(request):
     user = request.user
-    user_extended_profile = user.extended_profile
 
-    surveys_to_attend = user_extended_profile.surveys_to_attend()
-
-    if user.is_active and len(user_extended_profile.unattended_surveys(_type='list')) == len(surveys_to_attend):
+    try:
         logout(request)
-
         User.objects.filter(id=user.id).delete()
-
         data = json.dumps({"status": 200})
-    else:
+    except User.DoesNotExist:
         data = json.dumps({"status": 400})
 
     mime_type = 'application/json'
     return HttpResponse(data, mime_type)
-
 
 
 @csrf_exempt
@@ -235,6 +235,7 @@ def get_country_names(request):
 
 
 @login_required
+@can_save_org_data
 @transaction.atomic
 def org_detail_survey(request):
     user_extended_profile = request.user.extended_profile
