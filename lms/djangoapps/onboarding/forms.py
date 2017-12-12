@@ -120,9 +120,9 @@ class UserInfoModelForm(forms.ModelForm):
     def __init__(self,  *args, **kwargs):
         super(UserInfoModelForm, self).__init__( *args, **kwargs)
 
-        FUNCTION_AREA_CHOICS = ((field_name, label) for field_name, label in
+        focus_area_choices = ((field_name, label) for field_name, label in
                                 UserExtendedProfile.FUNCTIONS_LABELS.items())
-        self.fields['function_areas'] = forms.ChoiceField(choices=FUNCTION_AREA_CHOICS,
+        self.fields['function_areas'] = forms.ChoiceField(choices=focus_area_choices,
             label='Department of Function (Check all that apply.)',
             widget=forms.CheckboxSelectMultiple)
 
@@ -152,8 +152,21 @@ class UserInfoModelForm(forms.ModelForm):
 
         raise forms.ValidationError('Please select country of residence.')
 
-    def clean_language(self):
+    def clean_country_of_employment(self):
+        all_countries = COUNTRIES.values()
+        is_emp_location_different = self.cleaned_data['is_emp_location_different']
+        country = self.cleaned_data['country']
+        country_of_employment = self.cleaned_data['country_of_employment']
 
+        if is_emp_location_different and (not country or not country in all_countries):
+            raise forms.ValidationError('Please select country of employment.')
+
+        if is_emp_location_different and country == country_of_employment:
+            raise forms.ValidationError('Country of Residence should be different from Country of Employment.')
+
+        return country
+
+    def clean_language(self):
         all_languages = get_onboarding_autosuggesion_data('world_languages.json')
         submitted_language = self.cleaned_data['language']
 
@@ -169,14 +182,16 @@ class UserInfoModelForm(forms.ModelForm):
         model = UserExtendedProfile
         fields = [
             'year_of_birth', 'gender', 'not_listed_gender', 'not_listed_gender', 'level_of_education', 'language',
-            'english_proficiency', 'country', 'city', 'is_emp_location_different', 'role_in_org', 'start_month_year',
-            'hours_per_week'
+            'english_proficiency', 'country', 'city', 'is_emp_location_different', 'country_of_employment',
+            'city_of_employment', 'role_in_org', 'start_month_year', 'hours_per_week'
         ]
 
         labels = {
             'is_emp_location_different': 'Check here if your country and/or city of employment is different'
                                          ' from your country and/or city of residence.',
             'start_month_year': "Start Month and Year*",
+            'country_of_employment': 'Country of Employment*',
+            'city_of_employment': 'City of Employment',
             'role_in_org': 'Role in Organization*',
         }
         widgets = {
@@ -185,6 +200,8 @@ class UserInfoModelForm(forms.ModelForm):
             'not_listed_gender': forms.TextInput(attrs={'placeholder': 'Identify your gender here'}),
             'city': forms.TextInput,
             'language': forms.TextInput,
+            'country_of_employment': forms.TextInput,
+            'city_of_employment': forms.TextInput,
             'start_month_year': forms.TextInput(attrs={'placeholder': 'mm/yy'}),
         }
 
@@ -204,11 +221,15 @@ class UserInfoModelForm(forms.ModelForm):
         userprofile.year_of_birth = self.cleaned_data['year_of_birth']
         userprofile.language = self.cleaned_data['language']
 
-        userprofile.country = get_country_iso(self.cleaned_data['country'])
+        userprofile.country = get_country_iso(request.POST['country'])
         userprofile.city = self.cleaned_data['city']
         if self.cleaned_data['gender']:
             userprofile.gender = self.cleaned_data['gender']
         userprofile.save()
+
+        if request.POST.get('country_of_employment'):
+            user_info_survey.country_of_employment = get_country_iso(request.POST.get('country_of_employment'))
+        user_info_survey.city_of_employment = self.cleaned_data['city_of_employment']
 
         user_info_survey.user.extended_profile.save_user_function_areas(request.POST.getlist('function_areas'))
         if commit:
@@ -245,27 +266,27 @@ class InterestsForm(forms.Form):
 
     def __init__(self,  *args, **kwargs):
         super(InterestsForm, self).__init__( *args, **kwargs)
-        INTEREST_CHOICS = ((field_name, label) for field_name, label in UserExtendedProfile.INTERESTS_LABELS.items())
+        interest_choices = ((field_name, label) for field_name, label in UserExtendedProfile.INTERESTS_LABELS.items())
         self.fields['interests'] = forms.ChoiceField(
             label='Which of these areas of organizational effectiveness are you most interested '
                   'to learn more about?',
             label_suffix="(Check all that apply.)",
-            choices=INTEREST_CHOICS, widget=forms.CheckboxSelectMultiple,
+            choices=interest_choices, widget=forms.CheckboxSelectMultiple,
             required=False)
 
-        INTERESTED_LEARNERS_CHOICS = ((field_name, label)
+        interested_learners_choices = ((field_name, label)
                                 for field_name, label in UserExtendedProfile.INTERESTED_LEARNERS_LABELS.items())
         self.fields['interested_learners'] = forms.ChoiceField(
             label='Which type of other Philanthropy University learners are interesting to you?',
             label_suffix="(Check all that apply.)",
-            choices=INTERESTED_LEARNERS_CHOICS, widget=forms.CheckboxSelectMultiple,
+            choices=interested_learners_choices, widget=forms.CheckboxSelectMultiple,
             required=False)
 
-        PERSONAL_GOAL_CHOICS = ((field_name, label) for field_name, label in UserExtendedProfile.GOALS_LABELS.items())
+        personal_goal_choices = ((field_name, label) for field_name, label in UserExtendedProfile.GOALS_LABELS.items())
         self.fields['personal_goals'] = forms.ChoiceField(
             label='What is your most important personal goals in joining Philanthropy University?',
             label_suffix="(Check all that apply.)",
-            choices=PERSONAL_GOAL_CHOICS, widget=forms.CheckboxSelectMultiple,
+            choices=personal_goal_choices, widget=forms.CheckboxSelectMultiple,
             required=False)
 
     def save(self, request, user_exended_profile):
@@ -480,8 +501,11 @@ class RegModelForm(forms.ModelForm):
                                choices=IS_POC_CHOICES,
                                widget=forms.RadioSelect)
 
-    org_admin_email = forms.CharField(required=False,
-                                      widget=forms.EmailInput(attrs=({'placeholder': 'Organization Admin Email'})))
+    org_admin_email = forms.CharField(
+        label='If you know who should be the Admin for [Organization name],'
+              ' please provide their email address and we will invite them to sign up.*',
+        required=False,
+        widget=forms.EmailInput(attrs=({'placeholder': 'Organization Admin Email'})))
 
     def __init__(self, *args, **kwargs):
         super(RegModelForm, self).__init__(*args, **kwargs)
@@ -513,15 +537,9 @@ class RegModelForm(forms.ModelForm):
             'organization_name', 'is_currently_employed', 'is_poc', 'org_admin_email',
         )
 
-        labels = {
-            'org_admin_email': 'If you know who should be the Admin for [Organization name],'
-                               ' please provide their email address and we will invite them to sign up.',
-        }
-
         widgets = {
             'first_name': forms.TextInput(attrs={'placeholder': 'First Name'}),
-            'last_name': forms.TextInput(attrs={'placeholder': 'Last Name'}),
-            'org_admin_email': forms.EmailInput(attrs=({'placeholder': 'Organization Admin Email'}))
+            'last_name': forms.TextInput(attrs={'placeholder': 'Last Name'})
         }
 
         serialization_options = {
