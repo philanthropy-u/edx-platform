@@ -26,7 +26,9 @@ class RedirectMiddleware(object):
     def skip_redirection(request, user):
         skip_redirect = False
 
-        if request.is_ajax() or request.get_full_path() == '/logout' or user.is_superuser:
+        if request.is_ajax() or request.get_full_path() == '/logout' or user.is_superuser or \
+            '/activate/' in request.get_full_path() or '/onboarding/admin_activate/' in request.get_full_path() \
+                or "/register/" in request.get_full_path() or "login" in request.get_full_path():
             skip_redirect = True
 
         return skip_redirect

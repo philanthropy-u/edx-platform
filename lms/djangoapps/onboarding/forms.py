@@ -586,16 +586,15 @@ class RegModelForm(forms.ModelForm):
 
         if org_admin_email:
             try:
-                User.objects.get(email=org_admin_email)
 
                 hash_key = OrganizationAdminHashKeys.assign_hash(organization_to_assign, user, org_admin_email)
                 org_id = extended_profile.organization_id
                 org_name = extended_profile.organization.label
 
-                send_admin_activation_email(org_id, org_name, org_admin_email, user, hash_key)
+                send_admin_activation_email(org_id, org_name, org_admin_email, hash_key)
             except User.DoesNotExist:
                 pass
-            except Exception:
+            except Exception as ex:
                 pass
 
         user.save()

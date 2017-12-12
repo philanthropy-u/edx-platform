@@ -12,7 +12,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import redirect
@@ -25,7 +25,7 @@ from lms.djangoapps.onboarding.decorators import can_save_org_data
 from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES
 from lms.djangoapps.onboarding.models import (
     Organization,
-    Currency, OrganizationMetric)
+    Currency, OrganizationMetric, OrganizationAdminHashKeys)
 from lms.djangoapps.student_dashboard.views import get_recommended_xmodule_courses, get_recommended_communities
 from onboarding import forms
 from lms.djangoapps.onboarding.models import UserExtendedProfile
@@ -384,42 +384,52 @@ def recommendations(request):
 @csrf_exempt
 def admin_activation(request, org_id, activation_key):
     """
-    When clicked on link sent in email to make user admin.
+        When clicked on link sent in email to make user admin.
+
+        activation_status can have values 1, 2, 3, 4, 5.
+        1 = Activated
+        2 = Already Active
+        3 = Invalid Hash
+        4 = To be Activated
+        5 = User not exist in platform
 
     """
-    extended_profile = None
-    try:
-        extended_profile = UserExtendedProfile.objects.get(admin_activation_key=activation_key)
-    except UserExtendedProfile.DoesNotExist:
-        pass
-    # activation_status can have values 1,2,3,4.
-    # 1 means 'activated',
-    # 2 means 'already active',
-    # 3 means 'Invalid key',
-    # 4 means 'to be activated'
     context = {}
-    activation_status = 3
-    if extended_profile:
-        if extended_profile.is_admin_activated:
+
+    # query_dictionary = QueryDict('', mutable=True)
+    # query_dictionary.update(
+    #     {
+    #         'tag': 'food'
+    #     }
+    # )
+    hash_key_obj = None
+    try:
+        hash_key_obj = OrganizationAdminHashKeys.objects.get(activation_hash=activation_key)
+        user_extended_profile = UserExtendedProfile.objects.get(user__email=hash_key_obj.suggested_admin_email)
+
+        context['key'] = hash_key_obj.activation_hash
+        if hash_key_obj.is_hash_consumed:
             activation_status = 2
-        elif request.method == 'GET':
-            context['key'] = extended_profile.admin_activation_key
+        else:
             activation_status = 4
-        elif request.method == 'POST':
-            try:
-                decoded_org_id = base64.b64decode(org_id)
-                organization = Organization.objects.get(pk=decoded_org_id)
-                extended_profile.is_admin_activated = True
-                extended_profile.is_poc = True
-                extended_profile.organization = organization
-                organization.admin = extended_profile.user
-                extended_profile.save()
-                activation_status = 1
-                organization.save()
-            except Organization.DoesNotExist:
-                activation_status = 3
-            except Exception:
-                activation_status = 3
+
+        if request.method == "POST":
+            organization = hash_key_obj.organization
+            organization.admin = user_extended_profile.user
+            organization.save()
+            activation_status = 1
+
+    except OrganizationAdminHashKeys.DoesNotExist:
+        activation_status = 3
+
+    except UserExtendedProfile.DoesNotExist:
+        logout(request)
+        url = reverse('register_user', kwargs={
+            'initial_mode': 'register',
+            'org_name': base64.b64encode(str(hash_key_obj.organization.label)),
+            'admin_email': base64.b64encode(str(hash_key_obj.suggested_admin_email))})
+
+        return HttpResponseRedirect(url)
 
     context['activation_status'] = activation_status
     return render_to_response('onboarding/admin_activation.html', context)
