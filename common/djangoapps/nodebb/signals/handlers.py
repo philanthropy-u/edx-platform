@@ -31,13 +31,13 @@ def sync_user_info_with_nodebb(sender, instance, created, **kwargs):  # pylint: 
 
     """
 
-    return
+
 
     fields_to_sync_with_nodebb = get_fields_to_sync_with_nodebb()
-
-    if not kwargs.get('update_fields') or (not kwargs['update_fields'] & set(fields_to_sync_with_nodebb)) \
-            and not created:
-        return
+    #
+    # if not kwargs.get('update_fields') or (not kwargs['update_fields'] & set(fields_to_sync_with_nodebb)) \
+    #         and not created:
+    #     return
 
     user = None
     if sender in [UserProfile, UserExtendedProfile]:
@@ -55,7 +55,7 @@ def sync_user_info_with_nodebb(sender, instance, created, **kwargs):  # pylint: 
         elif sender == UserProfile:
             data_to_sync = {
                 "city_of_residence": instance.city,
-                "country_of_residence": instance.country,
+                "country_of_residence": instance.country.name,
                 "birthday": "01/01/%s" % instance.year_of_birth,
                 "language": instance.language,
             }
