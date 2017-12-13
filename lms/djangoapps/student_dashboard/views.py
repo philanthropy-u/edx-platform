@@ -54,11 +54,10 @@ def get_recommended_xmodule_courses(user):
     """
     recommended_courses = []
     all_courses = get_courses(user)
-    user_interests = InterestsSurvey.objects.get(user=user)
+    user_interests = user.extended_profile.get_user_selected_interests()
     if not user_interests:
         return []
 
-    user_interests = user_interests.capacity_areas.all().values_list('label', flat=True)
     for course in all_courses:
         settings = CustomSettings.objects.filter(id=course.id).first()
         if not settings:

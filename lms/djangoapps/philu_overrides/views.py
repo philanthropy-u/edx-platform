@@ -109,6 +109,7 @@ def login_and_registration_form(request, initial_mode="login", org_name=None, ad
             'ENABLE_COMBINED_LOGIN_REGISTRATION_FOOTER',
             settings.FEATURES['ENABLE_COMBINED_LOGIN_REGISTRATION_FOOTER']
         ),
+        'fields_to_disable': []
     }
 
     if org_name and admin_email:
@@ -123,6 +124,6 @@ def login_and_registration_form(request, initial_mode="login", org_name=None, ad
         org_field['defaultValue'] = org_name
         is_poc_field['defaultValue'] = "1"
 
-        context['field_to_disable'] = json.dumps([email_field['name'], org_field['name'], is_poc_field['name']])
+        context['fields_to_disable'] = json.dumps([email_field['name'], org_field['name'], is_poc_field['name']])
 
     return render_to_response('student_account/login_and_register.html', context)

@@ -6,9 +6,11 @@ import logging
 import base64
 
 import os
+from django.contrib import messages
 from django.contrib.auth import logout
 
 from django.contrib.auth.decorators import login_required
+from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db import transaction
@@ -26,6 +28,7 @@ from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES
 from lms.djangoapps.onboarding.models import (
     Organization,
     Currency, OrganizationMetric, OrganizationAdminHashKeys)
+from lms.djangoapps.onboarding.signals import save_interests
 from lms.djangoapps.student_dashboard.views import get_recommended_xmodule_courses, get_recommended_communities
 from onboarding import forms
 from lms.djangoapps.onboarding.models import UserExtendedProfile
@@ -127,9 +130,11 @@ def interests(request):
     if request.method == 'POST':
         form = forms.InterestsForm(request.POST, initial=initial)
 
-        interest_survey = form.save(request, user_extended_profile)
+        form.save(request, user_extended_profile)
 
-        # save_interests.send(sender=InterestsSurvey, instance=interest_survey)
+        save_interests.send(sender=UserExtendedProfile, instance=user_extended_profile)
+
+        are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
 
         if user_extended_profile.is_organization_admin or is_first_signup_in_org:
             return redirect(reverse('organization'))
@@ -395,14 +400,8 @@ def admin_activation(request, org_id, activation_key):
 
     """
     context = {}
-
-    # query_dictionary = QueryDict('', mutable=True)
-    # query_dictionary.update(
-    #     {
-    #         'tag': 'food'
-    #     }
-    # )
     hash_key_obj = None
+
     try:
         hash_key_obj = OrganizationAdminHashKeys.objects.get(activation_hash=activation_key)
         user_extended_profile = UserExtendedProfile.objects.get(user__email=hash_key_obj.suggested_admin_email)
@@ -414,21 +413,24 @@ def admin_activation(request, org_id, activation_key):
             activation_status = 4
 
         if request.method == "POST":
-            organization = hash_key_obj.organization
-            organization.admin = user_extended_profile.user
-            organization.save()
+            hash_key_obj.organization.admin = user_extended_profile.user
+            hash_key_obj.organization.save()
             activation_status = 1
 
     except OrganizationAdminHashKeys.DoesNotExist:
         activation_status = 3
 
     except UserExtendedProfile.DoesNotExist:
-        logout(request)
+        activation_status = 5
+
+    if activation_status == 5:
         url = reverse('register_user', kwargs={
             'initial_mode': 'register',
             'org_name': base64.b64encode(str(hash_key_obj.organization.label)),
             'admin_email': base64.b64encode(str(hash_key_obj.suggested_admin_email))})
 
+        messages.add_message(request, messages.INFO,
+                             _('Please signup here to become admin for %s' % hash_key_obj.organization.label))
         return HttpResponseRedirect(url)
 
     context['activation_status'] = activation_status
