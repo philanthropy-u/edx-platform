@@ -206,6 +206,15 @@ def _get_group_data(instance, is_created=True):
         course = CourseOverview.objects.get(id=instance.course_id)
         group_info.update({'courseName': course.display_name})
 
+    group_info = {
+        "team": [""],
+        "roomName": "6th group",
+        "teamDescription": "jjjj",
+        "teamLanguage": "",
+        "teamCountry": "",
+        "courseName": "ABC"
+    }
+
     return group_info
 
 @receiver(post_delete, sender=CourseTeam, dispatch_uid="nodebb.signals.handlers.delete_groupchat_on_nodebb")
