@@ -29,7 +29,6 @@ class ForumGroup(Group):
             "room": "25"
         }
         """
-        kwargs.update({'team': ["abc"]})
         return self.client.post('/api/v2/groupChat/create', **kwargs)
 
     def update(self, room_id, **kwargs):
@@ -56,7 +55,7 @@ class ForumGroup(Group):
             "room": "24"
         }
         """
-        return self.client.post('/api/v2/groupChat/update/%s'.format(room_id), **kwargs)
+        return self.client.put('/api/v2/groupChat/update/%s' % room_id, **kwargs)
 
     def delete(self, room_id, **kwargs):
         """
@@ -78,5 +77,4 @@ class ForumGroup(Group):
 
         NOTE: please send all user name in delete api for deleting the whole team.
         """
-        kwargs.update({'team': ["abc"]})
-        return self.client.delete('/api/v2/groupChat/delete/%s'.format(room_id), **kwargs)
+        return self.client.delete('/api/v2/groupChat/delete/%s' % room_id, **kwargs)
