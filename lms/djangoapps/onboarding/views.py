@@ -209,10 +209,12 @@ def delete_my_account(request):
 
     try:
         logout(request)
-        User.objects.filter(id=user.id).delete()
+        user = User.objects.get(id=user.id)
+        user.delete()
         data = json.dumps({"status": 200})
     except User.DoesNotExist:
-        data = json.dumps({"status": 400})
+        log.info("User does not exists")
+        data = json.dumps({"status": 200})
 
     mime_type = 'application/json'
     return HttpResponse(data, mime_type)
