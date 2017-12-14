@@ -73,20 +73,18 @@ def sync_user_info_with_nodebb(sender, instance, created, **kwargs):  # pylint: 
         status_code, response_body = NodeBBClient().users.update_profile(user.username, kwargs=data_to_sync)
         log_action_response(user, status_code, response_body)
 
-    elif created and sender == UserExtendedProfile:
+    elif created and sender == User:
         # handle user creation case
         data_to_sync = {
-            'edx_user_id': instance.user.id,
-            'email': instance.user.email,
-            'first_name': instance.user.first_name,
-            'last_name': instance.user.last_name,
-            'username': instance.user.username,
-            'date_joined': instance.user.date_joined.strftime('%d/%m/%Y'),
+            'edx_user_id': instance.id,
+            'email': instance.email,
+            'first_name': instance.first_name,
+            'last_name': instance.last_name,
+            'username': instance.username,
+            'date_joined': instance.date_joined.strftime('%d/%m/%Y'),
         }
-        if instance.organization:
-            data_to_sync["organization"] = instance.organization.label
 
-        status_code, response_body = NodeBBClient().users.create(username=instance.user.username, kwargs=data_to_sync)
+        status_code, response_body = NodeBBClient().users.create(username=instance.username, kwargs=data_to_sync)
         log_action_response(user, status_code, response_body)
 
         return status_code
