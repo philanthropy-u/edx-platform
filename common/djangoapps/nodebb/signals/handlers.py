@@ -1,7 +1,7 @@
 from logging import getLogger
 
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save, pre_save, post_delete
+from django.db.models.signals import post_save, pre_save, post_delete, pre_delete
 from django.dispatch import receiver
 
 from common.lib.nodebb_client.client import NodeBBClient
@@ -197,6 +197,7 @@ def create_update_groupchat_on_nodebb(sender, instance, created, **kwargs):
 
 def _get_group_data(instance, is_created=True):
     group_info = {
+        'team': [],
         'roomName': instance.name,
         'teamCountry': str(instance.country.name),
         'teamLanguage': instance.language,
@@ -206,19 +207,10 @@ def _get_group_data(instance, is_created=True):
         course = CourseOverview.objects.get(id=instance.course_id)
         group_info.update({'courseName': course.display_name})
 
-    group_info = {
-        "team": [""],
-        "roomName": "6th group",
-        "teamDescription": "jjjj",
-        "teamLanguage": "",
-        "teamCountry": "",
-        "courseName": "ABC"
-    }
-
     return group_info
 
-@receiver(post_delete, sender=CourseTeam, dispatch_uid="nodebb.signals.handlers.delete_groupchat_on_nodebb")
-def delete_groupchat_on_nodebb(sender, instance, created, **kwargs):
+@receiver(pre_delete, sender=CourseTeam, dispatch_uid="nodebb.signals.handlers.delete_groupchat_on_nodebb")
+def delete_groupchat_on_nodebb(sender, instance, **kwargs):
     """
     Delete group on NodeBB whenever a team is deleted
     """
@@ -229,13 +221,13 @@ def delete_groupchat_on_nodebb(sender, instance, created, **kwargs):
 
         if status_code != 200:
             log.error(
-                "Error: Can't create nodebb group for the given course %s due to %s" % (
+                "Error: Can't delete nodebb group for the given course %s due to %s" % (
                     instance.course_id, response_body
                 )
             )
         else:
             team_group_chat.delete()
-            log.info("Successfully created group chat for course %s" % instance.course_id)
+            log.info("Successfully deleted group chat for course %s" % instance.course_id)
 
 
 @receiver(post_save, sender=CourseTeamMembership, dispatch_uid="nodebb.signals.handlers.join_groupchat_on_nodebb")
@@ -246,7 +238,7 @@ def join_groupchat_on_nodebb(sender, instance, created, **kwargs):
     team_group_chat = TeamGroupChat.objects.filter(team_id=instance.team.id).first()
 
     if created and team_group_chat:
-        member_info = {"team": instance.user.username}
+        member_info = {"team": [instance.user.username, '']}
         status_code, response_body = NodeBBClient().groups.update(room_id=team_group_chat.room_id, **member_info)
 
         if status_code != 200:
@@ -260,20 +252,21 @@ def join_groupchat_on_nodebb(sender, instance, created, **kwargs):
 
 
 @receiver(post_delete, sender=CourseTeamMembership, dispatch_uid="nodebb.signals.handlers.unjoin_groupchat_on_nodebb")
-def unjoin_groupchat_on_nodebb(sender, instance, created, **kwargs):
+def unjoin_groupchat_on_nodebb(sender, instance, **kwargs):
     """
     Unjoin group on NodeBB whenever a member leaves a team
     """
     team_group_chat = TeamGroupChat.objects.filter(team_id=instance.team.id).first()
 
-    member_info = {"team": instance.user.username}
-    status_code, response_body = NodeBBClient().groups.update(room_id=team_group_chat.room_id, **member_info)
+    if team_group_chat:
+        member_info = {"team": [instance.user.username, '']}
+        status_code, response_body = NodeBBClient().groups.delete(room_id=team_group_chat.room_id, **member_info)
 
-    if status_code != 200:
-        log.error(
-            'Error: Can not unjoin the group, user (%s, %s) due to %s' % (
-                instance.team.name, instance.user, response_body
+        if status_code != 200:
+            log.error(
+                'Error: Can not unjoin the group, user (%s, %s) due to %s' % (
+                    instance.team.name, instance.user, response_body
+                )
             )
-        )
-    else:
-        log.info('Success: User have unjoined the group %s successfully' % instance.team.name)
+        else:
+            log.info('Success: User have unjoined the group %s successfully' % instance.team.name)
