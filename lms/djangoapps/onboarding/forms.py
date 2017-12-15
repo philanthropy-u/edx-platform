@@ -20,7 +20,6 @@ from lms.djangoapps.onboarding.models import (
     FocusArea, TotalEmployee, OrgSector, PartnerNetwork, OrganizationPartner, OrganizationMetric, Currency)
 from lms.djangoapps.onboarding.email_utils import send_admin_activation_email
 
-
 NO_OPTION_SELECT_ERROR = 'Please select an option for {}'
 EMPTY_FIELD_ERROR = 'Please enter your {}'
 
@@ -589,10 +588,9 @@ class RegModelForm(forms.ModelForm):
             except Exception as ex:
                 pass
 
-        user.save()
-
         if commit:
             extended_profile.save()
+            user_obj.save()
 
         return extended_profile
 
