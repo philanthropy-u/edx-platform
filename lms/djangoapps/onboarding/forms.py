@@ -38,6 +38,17 @@ def get_onboarding_autosuggesion_data(file_name):
     return data
 
 
+def is_selected_from_autocomplete(autocomplete_data, submitted_input):
+    """
+    Checks whether submitted input lies in autocomplete data or not.
+    """
+
+    for value in autocomplete_data:
+        if value == submitted_input:
+            return True
+    return False
+
+
 class UserInfoModelForm(forms.ModelForm):
     """
     Model from to be used in the first step of survey.
@@ -109,9 +120,6 @@ class UserInfoModelForm(forms.ModelForm):
     def __init__(self,  *args, **kwargs):
         super(UserInfoModelForm, self).__init__( *args, **kwargs)
 
-        self.fields['country_of_employment'].required = False
-        self.fields['city_of_employment'].required = False
-
         focus_area_choices = ((field_name, label) for field_name, label in
                                 UserExtendedProfile.FUNCTIONS_LABELS.items())
         self.fields['function_areas'] = forms.ChoiceField(choices=focus_area_choices,
@@ -150,19 +158,19 @@ class UserInfoModelForm(forms.ModelForm):
         country = self.cleaned_data['country']
         country_of_employment = self.cleaned_data['country_of_employment']
 
-        if is_emp_location_different and (not country_of_employment or not country_of_employment in all_countries):
+        if is_emp_location_different and (not country or not country in all_countries):
             raise forms.ValidationError('Please select country of employment.')
 
         if is_emp_location_different and country == country_of_employment:
             raise forms.ValidationError('Country of Residence should be different from Country of Employment.')
 
-        return country_of_employment
+        return country
 
     def clean_language(self):
         all_languages = get_onboarding_autosuggesion_data('world_languages.json')
         submitted_language = self.cleaned_data['language']
 
-        if submitted_language in all_languages:
+        if is_selected_from_autocomplete(all_languages, submitted_language):
             return submitted_language
 
         raise forms.ValidationError('Please select language.')
@@ -253,7 +261,7 @@ class InterestsForm(forms.Form):
     Model from to be used in the second step of survey.
 
     This will record user's interests information as modeled in
-    'UserExtendedProfile' model.
+    'InterestsSurvey' model.
     """
 
     def __init__(self,  *args, **kwargs):
