@@ -2,6 +2,8 @@
 Model form for the surveys.
 """
 import json
+
+import logging
 import os
 from datetime import datetime
 
@@ -22,6 +24,7 @@ from lms.djangoapps.onboarding.email_utils import send_admin_activation_email
 
 NO_OPTION_SELECT_ERROR = 'Please select an option for {}'
 EMPTY_FIELD_ERROR = 'Please enter your {}'
+log = logging.getLogger("edx.onboarding")
 
 
 def get_onboarding_autosuggesion_data(file_name):
@@ -557,7 +560,6 @@ class RegModelForm(forms.ModelForm):
 
         organization_to_assign, is_created = Organization.objects.get_or_create(label=organization_name)
         extended_profile, is_profile_created = UserExtendedProfile.objects.get_or_create(user=user)
-        user_obj = extended_profile.user
 
         if not is_profile_created:
             prev_org = extended_profile.organization
@@ -572,8 +574,8 @@ class RegModelForm(forms.ModelForm):
                 prev_org.save()
 
         extended_profile.organization = organization_to_assign
-        user_obj.first_name = first_name
-        user_obj.last_name = last_name
+        user.first_name = first_name
+        user.last_name = last_name
 
         if org_admin_email:
             try:
@@ -586,11 +588,11 @@ class RegModelForm(forms.ModelForm):
             except User.DoesNotExist:
                 pass
             except Exception as ex:
+                log.info(ex.args)
                 pass
 
         if commit:
             extended_profile.save()
-            user_obj.save()
 
         return extended_profile
 
