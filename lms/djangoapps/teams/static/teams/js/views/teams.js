@@ -23,6 +23,7 @@
                     router: options.router,
                     maxTeamSize: this.context.maxTeamSize,
                     srInfo: this.srInfo,
+                    room_id: this.context.room_id,
                     countries: TeamUtils.selectorOptionsArrayToHashWithBlank(this.context.countries),
                     languages: TeamUtils.selectorOptionsArrayToHashWithBlank(this.context.languages)
                 });

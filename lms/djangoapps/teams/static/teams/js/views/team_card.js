@@ -10,7 +10,8 @@
         'teams/js/views/team_utils',
         'text!teams/templates/team-membership-details.underscore',
         'text!teams/templates/team-country-language.underscore',
-        'text!teams/templates/date.underscore'
+        'text!teams/templates/date.underscore',
+        'text!teams/templates/group.underscore',
     ], function(
         $,
         Backbone,
@@ -21,9 +22,10 @@
         TeamUtils,
         teamMembershipDetailsTemplate,
         teamCountryLanguageTemplate,
-        dateTemplate
+        dateTemplate,
+        groupTemplate
     ) {
-        var TeamMembershipView, TeamCountryLanguageView, TeamActivityView, TeamCardView;
+        var TeamMembershipView, TeamCountryLanguageView, TeamActivityView, TeamCardView, GroupView;
 
         TeamMembershipView = Backbone.View.extend({
             tagName: 'div',
@@ -94,9 +96,25 @@
             }
         });
 
+        GroupView = Backbone.View.extend({
+            tagName: 'div',
+            className: 'team-group',
+            template: _.template(groupTemplate),
+
+            initialize: function(options) {
+                this.team_id = JSON.parse(options.team_id);
+                this.room_id = options.room_id;
+            },
+
+            render: function() {
+                this.$el.html(this.template({room_id: this.room_id, team_id: this.team_id}));
+            }
+        });
+
         TeamCardView = CardView.extend({
             initialize: function() {
                 CardView.prototype.initialize.apply(this, arguments);
+
                 // TODO: show last activity detail view
                 this.detailViews = [
                     new TeamMembershipView({memberships: this.model.get('membership'), maxTeamSize: this.maxTeamSize}),
@@ -105,7 +123,11 @@
                         countries: this.countries,
                         languages: this.languages
                     }),
-                    new TeamActivityView({date: this.model.get('last_activity_at')})
+                    new TeamActivityView({date: this.model.get('last_activity_at')}),
+                    new GroupView({
+                        room_id: this.room_id,
+                        team_id: this.model.id
+                    }),
                 ];
                 this.model.on('change:membership', function() {
                     this.detailViews[0].memberships = this.model.get('membership');
