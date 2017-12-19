@@ -1,1 +1,1 @@
-<% if (room_id[team_id]) { print('<p class="meta-detail team-group"><a href="' + nodeBBUrl + '/chat/' + room_id[team_id] + '">Team Discussion</a></p>'); } %>
+<% if (roomID[team_id]) { print('<p class="meta-detail team-group"><a href="' + nodeBBUrl + '/chat/' + roomID[team_id] + '">Team Discussion</a></p>'); } %>
