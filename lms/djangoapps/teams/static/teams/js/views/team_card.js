@@ -96,6 +96,8 @@
             }
         });
 
+        // TODO: Move this View out as we are changing edx default files
+        // TODO: [Can't override static files without adding theme name in the url]
         GroupView = Backbone.View.extend({
             tagName: 'div',
             className: 'team-group',
