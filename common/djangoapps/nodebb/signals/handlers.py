@@ -251,10 +251,10 @@ def join_groupchat_on_nodebb(sender, instance, created, **kwargs):
             log.info('Success: User have joined the group %s successfully' % instance.team.name)
 
 
-@receiver(post_delete, sender=CourseTeamMembership, dispatch_uid="nodebb.signals.handlers.unjoin_groupchat_on_nodebb")
-def unjoin_groupchat_on_nodebb(sender, instance, **kwargs):
+@receiver(post_delete, sender=CourseTeamMembership, dispatch_uid="nodebb.signals.handlers.leave_groupchat_on_nodebb")
+def leave_groupchat_on_nodebb(sender, instance, **kwargs):
     """
-    Unjoin group on NodeBB whenever a member leaves a team
+    Leave group on NodeBB whenever a member leaves a team
     """
     team_group_chat = TeamGroupChat.objects.filter(team_id=instance.team.id).first()
 
