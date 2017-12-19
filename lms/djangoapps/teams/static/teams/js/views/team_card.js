@@ -102,8 +102,8 @@
             template: _.template(groupTemplate),
 
             initialize: function(options) {
-                this.team_id = JSON.parse(options.team_id);
-                this.room_id = options.room_id;
+                this.team_id = options.team_id;
+                this.room_id = JSON.parse(options.room_id);
             },
 
             render: function() {
