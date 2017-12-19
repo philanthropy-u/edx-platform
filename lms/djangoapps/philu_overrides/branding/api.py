@@ -180,7 +180,6 @@ def _footer_navigation_links():
             ("help-center", settings.SUPPORT_SITE_LINK, _("Help Center")),
             ("contact", marketing_link("CONTACT"), _("Contact")),
             ("careers", marketing_link("CAREERS"), _("Careers")),
-            ("donate", marketing_link("DONATE"), _("Donate")),
         ]
         if link_url and link_url != "#"
     ]
@@ -188,23 +187,12 @@ def _footer_navigation_links():
 
 def _footer_legal_links():
     """Return the legal footer links (e.g. terms of service). """
-
     links = [
-        ("terms_of_service_and_honor_code", marketing_link("TOS_AND_HONOR"), _("Terms of Service & Honor Code")),
-        ("privacy_policy", marketing_link("PRIVACY"), _("Privacy Policy")),
-        ("accessibility_policy", marketing_link("ACCESSIBILITY"), _("Accessibility Policy")),
-        ("sitemap", marketing_link("SITE_MAP"), _("Sitemap")),
-        ("media_kit", marketing_link("MEDIA_KIT"), _("Media Kit")),
+        {"name": "terms_of_use", "link_url": marketing_link("TOS"), "link_title": _("Terms of Use")},
+        {"name": "privacy_policy", "link_url": marketing_link("PRIVACY"), "link_title": _("Privacy Policy")},
+        {"name": "faq", "link_url": marketing_link("FAQ"), "link_title": _("FAQ")},
+        {"name": "disclaimer", "link_url": marketing_link("DISCLAIMER"), "link_title": _("Disclaimer")},
     ]
-
-    # Backwards compatibility: If a combined "terms of service and honor code"
-    # link isn't provided, add separate TOS and honor code links.
-    tos_and_honor_link = marketing_link("TOS_AND_HONOR")
-    if not (tos_and_honor_link and tos_and_honor_link != "#"):
-        links.extend([
-            ("terms_of_service", marketing_link("TOS"), _("Terms of Service")),
-            ("honor_code", marketing_link("HONOR"), _("Honor Code")),
-        ])
 
     return [
         {
