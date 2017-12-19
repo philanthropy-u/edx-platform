@@ -104,13 +104,13 @@
             template: _.template(groupTemplate),
 
             initialize: function(options) {
-                this.team_id = options.team_id;
+                this.teamID = options.teamID;
                 this.nodeBBUrl = options.nodeBBUrl;
                 this.roomID = JSON.parse(options.roomID);
             },
 
             render: function() {
-                this.$el.html(this.template({roomID: this.roomID, team_id: this.team_id, nodeBBUrl: this.nodeBBUrl}));
+                this.$el.html(this.template({roomID: this.roomID, teamID: this.teamID, nodeBBUrl: this.nodeBBUrl}));
             }
         });
 
@@ -128,7 +128,7 @@
                     new TeamActivityView({date: this.model.get('last_activity_at')}),
                     new GroupView({
                         roomID: this.roomID,
-                        team_id: this.model.id,
+                        teamID: this.model.id,
                         nodeBBUrl: this.nodeBBUrl,
                     }),
                 ];
