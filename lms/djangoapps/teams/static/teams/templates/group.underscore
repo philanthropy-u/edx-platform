@@ -1,1 +1,1 @@
-<% if (room_id[team_id]) { print('<p class="meta-detail team-group"><a href="http://local.philanthropyu.org:4567/chat/' + room_id[team_id] + '">Team Discussion</a></p>'); } %>
+<% if (room_id[team_id]) { print('<p class="meta-detail team-group"><a href="' + nodeBBUrl + '/chat/' + room_id[team_id] + '">Team Discussion</a></p>'); } %>

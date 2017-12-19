@@ -105,11 +105,12 @@
 
             initialize: function(options) {
                 this.team_id = options.team_id;
+                this.nodeBBUrl = options.nodeBBUrl;
                 this.room_id = JSON.parse(options.room_id);
             },
 
             render: function() {
-                this.$el.html(this.template({room_id: this.room_id, team_id: this.team_id}));
+                this.$el.html(this.template({room_id: this.room_id, team_id: this.team_id, nodeBBUrl: this.nodeBBUrl}));
             }
         });
 
@@ -127,7 +128,8 @@
                     new TeamActivityView({date: this.model.get('last_activity_at')}),
                     new GroupView({
                         room_id: this.room_id,
-                        team_id: this.model.id
+                        team_id: this.model.id,
+                        nodeBBUrl: this.nodeBBUrl,
                     }),
                 ];
                 this.model.on('change:membership', function() {
