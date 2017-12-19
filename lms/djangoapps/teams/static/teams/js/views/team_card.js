@@ -116,7 +116,6 @@
         TeamCardView = CardView.extend({
             initialize: function() {
                 CardView.prototype.initialize.apply(this, arguments);
-
                 // TODO: show last activity detail view
                 this.detailViews = [
                     new TeamMembershipView({memberships: this.model.get('membership'), maxTeamSize: this.maxTeamSize}),
