@@ -33,76 +33,40 @@ def is_enabled():
     return BrandingApiConfig.current().enabled
 
 
-def get_footer(is_secure=True):
-    """Retrieve information used to render the footer.
-
-    This will handle both the OpenEdX and EdX.org versions
-    of the footer.  All user-facing text is internationalized.
-
-    Currently, this does NOT support theming.
-
-    Keyword Arguments:
-        is_secure (bool): If True, use https:// in URLs.
-
-    Returns: dict
-
-    Example:
-    >>> get_footer()
-    {
-        "copyright": "(c) 2015 EdX Inc",
-        "logo_image": "http://www.example.com/logo.png",
-        "social_links": [
-            {
-                "name": "facecustobook",
-                "title": "Facebook",
-                "url": "http://www.facebook.com/example",
-                "icon-class": "fa-facebook-square",
-                "action": "Sign up on Facebook!"
-            },
-            ...
-        ],
-        "navigation_links": [
-            {
-                "name": "about",
-                "title": "About",
-                "url": "http://www.example.com/about.html"
-            },
-            ...
-        ],
-        "mobile_links": [
-            {
-                "name": "apple",
-                "title": "Apple",
-                "url": "http://store.apple.com/example_app",
-                "image": "http://example.com/static/apple_logo.png"
-            },
-            ...
-        ],
-        "legal_links": [
-            {
-                "url": "http://example.com/terms-of-service.html",
-                "name": "terms_of_service",
-                "title': "Terms of Service"
-            },
-            # ...
-        ],
-        "openedx_link": {
-            "url": "http://open.edx.org",
-            "title": "Powered by Open edX",
-            "image": "http://example.com/openedx.png"
-        }
+def get_auth_footer(is_secure=True):
+    """ Override default get_footer method & add link for after authentication pages"""
+    return {
+        "copyright": _auth_footer_copyright(),
+        "social_links": _auth_footer_social_links(),
+        "navigation_links": _auth_footer_navigation_links(),
+        "legal_links": _auth_footer_legal_links(),
     }
 
-    """
+
+def get_non_auth_footer(is_secure=True):
+    """ Override default get_footer method """
+
     return {
         "copyright": _footer_copyright(),
-        "logo_image": _footer_logo_img(is_secure),
         "social_links": _footer_social_links(),
         "navigation_links": _footer_navigation_links(),
-        "mobile_links": _footer_mobile_links(is_secure),
-        "legal_links": _footer_legal_links(),
-        "openedx_link": _footer_openedx_link(),
+        "legal_links": my_footer_legal_links(),
     }
+
+
+def _auth_footer_copyright():
+    """Return the copyright to display in the footer.
+
+    Returns: unicode
+
+    """
+    return _(
+        # Translators: 'EdX', 'edX', and 'Open edX' are trademarks of 'edX Inc.'.
+        # Please do not translate any of these trademarks and company names.
+        u"\u00A9 {org_name}.  All rights reserved except where noted.  "
+        u"EdX, Open edX and the edX and Open EdX logos are registered trademarks "
+        u"or trademarks of edX Inc."
+    ).format(org_name=configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME))
 
 
 def _footer_copyright():
@@ -120,23 +84,27 @@ def _footer_copyright():
     ).format(org_name=configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME))
 
 
-def _footer_openedx_link():
-    """Return the image link for "powered by OpenEdX".
+def _auth_footer_social_links():
+    """Return the social media links to display in the footer.
 
-    Args:
-        is_secure (bool): Whether the request is using TLS.
-
-    Returns: dict
+    Returns: list
 
     """
-    # Translators: 'Open edX' is a brand, please keep this untranslated.
-    # See http://openedx.org for more information.
-    title = _("Powered by Open edX")
-    return {
-        "url": settings.FOOTER_OPENEDX_URL,
-        "title": title,
-        "image": settings.FOOTER_OPENEDX_LOGO_IMAGE,
-    }
+    platform_name = configuration_helpers.get_value('platform_name', settings.PLATFORM_NAME)
+    links = []
+
+    for social_name in settings.SOCIAL_MEDIA_FOOTER_NAMES:
+        display = settings.SOCIAL_MEDIA_FOOTER_DISPLAY.get(social_name, {})
+        links.append(
+            {
+                "name": social_name,
+                "title": unicode(display.get("title", "")),
+                "url": settings.SOCIAL_MEDIA_FOOTER_URLS.get(social_name, "#"),
+                "icon-class": display.get("icon", ""),
+                "action": unicode(display.get("action", "")).format(platform_name=platform_name),
+            }
+        )
+    return links
 
 
 def _footer_social_links():
@@ -162,6 +130,24 @@ def _footer_social_links():
     return links
 
 
+def _auth_footer_navigation_links():
+    """Return the navigation links to display in the footer. """
+    platform_name = configuration_helpers.get_value('platform_name', settings.PLATFORM_NAME)
+    return [
+        {
+            "name": link_name,
+            "title": link_title,
+            "url": link_url,
+        }
+        for link_name, link_url, link_title in [
+            ("about", marketing_link("ABOUT"), _("About Philanthropy University")),
+            ("explore_course", "/courses", _("Explore our Courses")),
+            ("communities", settings.NODEBB_ENDPOINT, _("Be part of our Communities")),
+        ]
+        if link_url and link_url != "#"
+    ]
+
+
 def _footer_navigation_links():
     """Return the navigation links to display in the footer. """
     platform_name = configuration_helpers.get_value('platform_name', settings.PLATFORM_NAME)
@@ -172,26 +158,21 @@ def _footer_navigation_links():
             "url": link_url,
         }
         for link_name, link_url, link_title in [
-            ("about", marketing_link("ABOUT"), _("About")),
-            ("enterprise", marketing_link("ENTERPRISE"),
-             _("{platform_name} for Business").format(platform_name=platform_name)),
-            ("blog", marketing_link("BLOG"), _("Blog")),
-            ("news", marketing_link("NEWS"), _("News")),
-            ("help-center", settings.SUPPORT_SITE_LINK, _("Help Center")),
-            ("contact", marketing_link("CONTACT"), _("Contact")),
-            ("careers", marketing_link("CAREERS"), _("Careers")),
+            ("about", marketing_link("ABOUT"), _("About Philanthropy University")),
+            ("explore_course", "/courses", _("Explore our Courses")),
+            ("communities", settings.NODEBB_ENDPOINT, _("Be part of our Communities")),
         ]
         if link_url and link_url != "#"
     ]
 
 
-def _footer_legal_links():
+def _auth_footer_legal_links():
     """Return the legal footer links (e.g. terms of service). """
     links = [
-        {"name": "terms_of_use", "link_url": marketing_link("TOS"), "link_title": _("Terms of Use")},
-        {"name": "privacy_policy", "link_url": marketing_link("PRIVACY"), "link_title": _("Privacy Policy")},
-        {"name": "faq", "link_url": marketing_link("FAQ"), "link_title": _("FAQ")},
-        {"name": "disclaimer", "link_url": marketing_link("DISCLAIMER"), "link_title": _("Disclaimer")},
+        ("terms_of_service_and_honor_code", marketing_link("TOS"), _("Terms of Use")),
+        ("privacy_policy", marketing_link("PRIVACY"), _("Privacy Policy")),
+        ("faq", "/faq", _("Faq")),
+        ("disclaimir", "/disclaimer", _("Disclaimer"))
     ]
 
     return [
@@ -205,78 +186,25 @@ def _footer_legal_links():
     ]
 
 
-def _footer_mobile_links(is_secure):
-    """Return the mobile app store links.
+def my_footer_legal_links():
+    """Return the legal footer links (e.g. terms of service). """
 
-    Args:
-        is_secure (bool): Whether the request is using TLS.
+    links = [
+        ("terms_of_service_and_honor_code", marketing_link("TOS"), _("Terms of Use")),
+        ("privacy_policy", marketing_link("PRIVACY"), _("Privacy Policy")),
+        ("faq", "/faq", _("Faq")),
+        ("disclaimir", "/disclaimer", _("Disclaimer"))
+    ]
 
-    Returns: list
-
-    """
-    platform_name = configuration_helpers.get_value('platform_name', settings.PLATFORM_NAME)
-
-    mobile_links = []
-    if settings.FEATURES.get('ENABLE_FOOTER_MOBILE_APP_LINKS'):
-        mobile_links = [
-            {
-                "name": "apple",
-                "title": _(
-                    "Download the {platform_name} mobile app from the Apple App Store"
-                ).format(platform_name=platform_name),
-                "url": settings.MOBILE_STORE_URLS.get('apple', '#'),
-                "image": _absolute_url_staticfile(is_secure, 'images/app/app_store_badge_135x40.svg'),
-            },
-            {
-                "name": "google",
-                "title": _(
-                    "Download the {platform_name} mobile app from Google Play"
-                ).format(platform_name=platform_name),
-                "url": settings.MOBILE_STORE_URLS.get('google', '#'),
-                "image": _absolute_url_staticfile(is_secure, 'images/app/google_play_badge_45.png'),
-            }
-        ]
-    return mobile_links
-
-
-def _footer_logo_img(is_secure):
-    """Return the logo used for footer about link
-
-    Args:
-        is_secure (bool): Whether the request is using TLS.
-
-    Returns:
-        Absolute url to logo
-    """
-    logo_name = configuration_helpers.get_value('FOOTER_ORGANIZATION_IMAGE', settings.FOOTER_ORGANIZATION_IMAGE)
-    # `logo_name` is looked up from the configuration,
-    # which falls back on the Django settings, which loads it from
-    # `lms.env.json`, which is created and managed by Ansible. Because of
-    # this runaround, we lose a lot of the flexibility that Django's
-    # staticfiles system provides, and we end up having to hardcode the path
-    # to the footer logo rather than use the comprehensive theming system.
-    # EdX needs the FOOTER_ORGANIZATION_IMAGE value to point to edX's
-    # logo by default, so that it can display properly on edx.org -- both
-    # within the LMS, and on the Drupal marketing site, which uses this API.
-    try:
-        return _absolute_url_staticfile(is_secure, logo_name)
-    except ValueError:
-        # However, if the edx.org comprehensive theme is not activated,
-        # Django's staticfiles system will be unable to find this footer,
-        # and will throw a ValueError. Since the edx.org comprehensive theme
-        # is not activated by default, we will end up entering this block
-        # of code on new Open edX installations, and on sandbox installations.
-        # We can log when this happens:
-        default_logo = "images/logo.png"
-        log.info(
-            "Failed to find footer logo at '%s', using '%s' instead",
-            logo_name,
-            default_logo,
-        )
-        # And we'll use the default logo path of "images/logo.png" instead.
-        # There is a core asset that corresponds to this logo, so this should
-        # always succeed.
-        return staticfiles_storage.url(default_logo)
+    return [
+        {
+            "name": link_name,
+            "title": link_title,
+            "url": link_url,
+        }
+        for link_name, link_url, link_title in links
+        if link_url and link_url != "#"
+    ]
 
 
 def _absolute_url(is_secure, url_path):
