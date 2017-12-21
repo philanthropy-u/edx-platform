@@ -965,6 +965,10 @@ INSTALLED_APPS = (
     # Unusual migrations
     'database_fixups',
 
+    # Course teams
+    # Nodebb app has dependency on this app that's why we are adding it here
+    'lms.djangoapps.teams',
+
     # NodeBB app
     'nodebb',
 
