@@ -20,7 +20,8 @@ from lms.djangoapps.onboarding.models import (
     Organization,
     OrganizationAdminHashKeys, EducationLevel, EnglishProficiency, RoleInsideOrg, OperationLevel,
     FocusArea, TotalEmployee, OrgSector, PartnerNetwork, OrganizationPartner, OrganizationMetric, Currency)
-from lms.djangoapps.onboarding.email_utils import send_admin_activation_email
+from lms.djangoapps.onboarding.email_utils import send_admin_activation_email, send_admin_change_email
+from django.http import HttpResponseRedirect
 
 NO_OPTION_SELECT_ERROR = 'Please select an option for {}'
 EMPTY_FIELD_ERROR = 'Please enter your {}'
@@ -641,9 +642,19 @@ class UpdateRegModelForm(RegModelForm):
             organization_to_assign, is_created = Organization.objects.get_or_create(label=organization_name)
             extended_profile.organization = organization_to_assign
 
-            if user and is_poc == '1':
+            if user and is_poc == '1' and (not organization_to_assign.admin or user == organization_to_assign.admin):
                 organization_to_assign.unclaimed_org_admin_email = None
                 organization_to_assign.admin = user
+
+            elif user and is_poc == '1' and organization_to_assign.admin:
+                print ("Admin already exists!")
+                prev_admin_email = organization_to_assign.admin.email
+                org_id = extended_profile.organization_id
+                org_name = extended_profile.organization.label
+                send_admin_change_email(org_id, org_name, prev_admin_email, user.username)
+
+            if not is_poc == '1' and organization_to_assign.admin and user == organization_to_assign.admin:
+                organization_to_assign.admin = None
 
             if not is_poc == '1' and org_admin_email:
                 try:
