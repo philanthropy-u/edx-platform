@@ -38,7 +38,8 @@ def send_admin_activation_email(org_id, org_name, dest_addr, hash_key):
         except Exception:
             max_retries -= 1
 
-def send_admin_change_email(org_id, org_name, dest_addr, claimed_by):
+
+def send_admin_change_email(org_id, org_name, dest_addr, claimed_by, claimed_by_email):
     """
     Send an email to the admin, that this user claims himself to be the admin
     """
@@ -50,6 +51,7 @@ def send_admin_change_email(org_id, org_name, dest_addr, claimed_by):
         "org_id": encoded_org_id,
         "org_name": org_name,
         "claimed_by": claimed_by,
+        "claimed_by_email": claimed_by_email,
     }
     message_body = render_to_string('emails/admin_change.txt', message_context)
 

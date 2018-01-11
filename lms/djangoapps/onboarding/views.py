@@ -34,6 +34,7 @@ from lms.djangoapps.student_dashboard.views import get_recommended_xmodule_cours
 from onboarding import forms
 from lms.djangoapps.onboarding.models import UserExtendedProfile
 from nodebb.helpers import update_nodebb_for_user_status
+from lms.djangoapps.onboarding.email_utils import send_admin_change_email
 
 log = logging.getLogger("edx.onboarding")
 
@@ -329,12 +330,14 @@ def update_account_settings(request):
     View to handle update of registration extra fields
     """
     user_extended_profile = request.user.extended_profile
+    prev_admin = ""
     if request.method == 'POST':
 
         form = forms.UpdateRegModelForm(request.POST, instance=user_extended_profile)
         if form.is_valid():
-            user_extended_profile, prev_org = form.save(user=user_extended_profile.user, commit=False)
-
+            user_extended_profile, prev_org, prev_admin = form.save(user=user_extended_profile.user, commit=False)
+            # if prev_admin != "":
+            #     raise Exception("Previous admin present!")
             user_extended_profile.save()
             if prev_org:
                 prev_org.save()
@@ -355,8 +358,19 @@ def update_account_settings(request):
 
     return render(
         request, 'onboarding/registration_update.html',
-        {'form': form, 'org_url': reverse('get_user_organizations')}
+        {'form': form, 'prev_admin': prev_admin, 'org_url': reverse('get_user_organizations')}
     )
+
+
+@login_required
+def admin_change(request):
+    user_extended_profile = request.user.extended_profile
+    organization = user_extended_profile.organization
+    org_id = user_extended_profile.organization_id
+    org_name = organization.label
+    prev_admin_email = organization.admin.email
+    send_admin_change_email(org_id, org_name, prev_admin_email, request.user.username, request.user.email)
+    return HttpResponseRedirect('/onboarding/account_settings/')
 
 
 @csrf_exempt

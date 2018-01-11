@@ -637,6 +637,7 @@ class UpdateRegModelForm(RegModelForm):
 
         extended_profile = UserExtendedProfile.objects.get(user=user)
         prev_org = extended_profile.organization
+        prev_admin = ""
 
         if organization_name:
             organization_to_assign, is_created = Organization.objects.get_or_create(label=organization_name)
@@ -647,11 +648,7 @@ class UpdateRegModelForm(RegModelForm):
                 organization_to_assign.admin = user
 
             elif user and is_poc == '1' and organization_to_assign.admin:
-                print ("Admin already exists!")
-                prev_admin_email = organization_to_assign.admin.email
-                org_id = extended_profile.organization_id
-                org_name = extended_profile.organization.label
-                send_admin_change_email(org_id, org_name, prev_admin_email, user.username)
+                prev_admin = organization_to_assign.admin
 
             if not is_poc == '1' and organization_to_assign.admin and user == organization_to_assign.admin:
                 organization_to_assign.admin = None
@@ -680,7 +677,7 @@ class UpdateRegModelForm(RegModelForm):
         if commit:
             extended_profile.save()
 
-        return extended_profile, prev_org
+        return extended_profile, prev_org, prev_admin
 
 
 class OrganizationMetricModelForm(BaseOnboardingModelForm):

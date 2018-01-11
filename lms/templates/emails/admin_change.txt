@@ -2,17 +2,17 @@
 <%! from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers %>
 ${_("Dear,")}
 
-${_("We have received a claim from {claimed_by} that he is the"
-    "Admin of the organization i.e {org_name}. Please click the link below"
-    "and confirm if you want to resign your Admin status."
-    ).format(claimed_by=claimed_by, org_name=org_name)}
+${_("We have received a claim from {claimed_by} that he is the "
+    "Admin of the organization i.e {org_name}. Please click the link below "
+    "and confirm if you want to resign your Admin status. "
+    "If you don't want to resign the admin status, please contact {claimed_by_email}. "
+    ).format(claimed_by=claimed_by, org_name=org_name, claimed_by_email=claimed_by_email)}
 
 % if is_secure:
   https://${ site }/onboarding/account_settings
 % else:
   http://${ site }/onboarding/account_settings
 % endif
-${_("If you are not admin of the organization, you don't need to do anything; you "
-      "won't receive any more email from us. If you need assistance, please "
+${_("If you need assistance, please "
       "do not reply to this email message. Check the help section of the "
       "{platform_name} website.").format(platform_name=configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME))}
