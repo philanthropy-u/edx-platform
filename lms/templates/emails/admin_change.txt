@@ -9,9 +9,9 @@ ${_("We have received a claim from {claimed_by} that he is the "
     ).format(claimed_by=claimed_by, org_name=org_name, claimed_by_email=claimed_by_email)}
 
 % if is_secure:
-  https://${ site }/onboarding/account_settings
+  https://${ site }/onboarding/admin_change_request/0/${ claimed_by }
 % else:
-  http://${ site }/onboarding/account_settings
+  http://${ site }/onboarding/admin_change_request/0/${ claimed_by }
 % endif
 ${_("If you need assistance, please "
       "do not reply to this email message. Check the help section of the "

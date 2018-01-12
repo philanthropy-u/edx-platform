@@ -34,7 +34,7 @@ from lms.djangoapps.student_dashboard.views import get_recommended_xmodule_cours
 from onboarding import forms
 from lms.djangoapps.onboarding.models import UserExtendedProfile
 from nodebb.helpers import update_nodebb_for_user_status
-from lms.djangoapps.onboarding.email_utils import send_admin_change_email
+from lms.djangoapps.onboarding.email_utils import send_admin_change_email, send_admin_change_confirmation_email
 
 log = logging.getLogger("edx.onboarding")
 
@@ -336,8 +336,6 @@ def update_account_settings(request):
         form = forms.UpdateRegModelForm(request.POST, instance=user_extended_profile)
         if form.is_valid():
             user_extended_profile, prev_org, prev_admin = form.save(user=user_extended_profile.user, commit=False)
-            # if prev_admin != "":
-            #     raise Exception("Previous admin present!")
             user_extended_profile.save()
             if prev_org:
                 prev_org.save()
@@ -371,6 +369,26 @@ def admin_change(request):
     prev_admin_email = organization.admin.email
     send_admin_change_email(org_id, org_name, prev_admin_email, request.user.username, request.user.email)
     return HttpResponseRedirect('/onboarding/account_settings/')
+
+
+@csrf_exempt
+def admin_change_confirmation(request, confirmation, username):
+    user = User.objects.get(username=username)
+    context = {"username": username, "confirmation": 0}
+    if request.method == 'POST':
+        organization = request.user.extended_profile.organization
+        org_name = organization.label
+        admin_email = organization.admin.email
+        if confirmation == "1":
+            organization.unclaimed_org_admin_email = None
+            organization.admin = user
+            organization.save()
+            send_admin_change_confirmation_email(org_name, admin_email, username, user.email, confirm=1)
+            return HttpResponseRedirect('/onboarding/account_settings/')
+        else:
+            send_admin_change_confirmation_email(org_name, admin_email, username, user.email, confirm=0)
+            return HttpResponseRedirect('/onboarding/account_settings/')
+    return render_to_response('onboarding/admin_change_confirmation.html', context)
 
 
 @csrf_exempt
