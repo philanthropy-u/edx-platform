@@ -374,7 +374,7 @@ def admin_change(request):
 @csrf_exempt
 def admin_change_confirmation(request, confirmation, username):
     user = User.objects.get(username=username)
-    context = {"username": username, "confirmation": 0}
+    context = {"username": username, "confirmation": 0, "org_id": request.user.extended_profile.organization_id}
     if request.method == 'POST':
         organization = request.user.extended_profile.organization
         org_name = organization.label
