@@ -348,7 +348,7 @@ class UserExtendedProfile(TimeStampedModel):
     history = HistoricalRecords()
 
     def __str__(self):
-        return self.user
+        return str(self.user)
 
     def get_user_selected_functions(self, _type="labels"):
         if _type == "labels":

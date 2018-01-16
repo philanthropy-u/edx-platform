@@ -445,6 +445,15 @@ def admin_activation(request, org_id, activation_key):
             hash_key_obj.organization.admin = user_extended_profile.user
             hash_key_obj.organization.unclaimed_org_admin_email = None
             hash_key_obj.organization.save()
+
+            # Check whether this user is already an admin of another organization.
+            # Un claim him from that organization
+            if user_extended_profile.organization != hash_key_obj.organization:
+                user_extended_profile.organization == hash_key_obj.organization
+
+            if user_extended_profile.organization.admin == user_extended_profile.user:
+                user_extended_profile.organization.admin = None
+                
             activation_status = 1
 
     except OrganizationAdminHashKeys.DoesNotExist:

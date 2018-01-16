@@ -37,3 +37,26 @@ def send_admin_activation_email(org_id, org_name, dest_addr, hash_key):
             max_retries -= 1
         except Exception:
             max_retries -= 1
+
+
+def send_email_to_register(dest_addr):
+    """
+    Join Philanthropy university
+    """
+    max_retries = settings.RETRY_ACTIVATION_EMAIL_MAX_ATTEMPTS
+    subject = "Join Philanthropy University ."
+    message_body = render_to_string('emails/join_us.txt', {})
+
+    from_address = configuration_helpers.get_value(
+        'email_from_address',
+        settings.DEFAULT_FROM_EMAIL
+    )
+
+    while max_retries > 0:
+        try:
+            mail.send_mail(subject, message_body, from_address, [dest_addr], fail_silently=False)
+            max_retries = 0
+        except SMTPException:
+            max_retries -= 1
+        except Exception:
+            max_retries -= 1

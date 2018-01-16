@@ -21,7 +21,7 @@ from lms.djangoapps.onboarding.models import (
     Organization,
     OrganizationAdminHashKeys, EducationLevel, EnglishProficiency, RoleInsideOrg, OperationLevel,
     FocusArea, TotalEmployee, OrgSector, PartnerNetwork, OrganizationPartner, OrganizationMetric, Currency)
-from lms.djangoapps.onboarding.email_utils import send_admin_activation_email
+from lms.djangoapps.onboarding.email_utils import send_admin_activation_email, send_email_to_register
 
 NO_OPTION_SELECT_ERROR = 'Please select an option for {}'
 EMPTY_FIELD_ERROR = 'Please enter your {}'
@@ -616,17 +616,42 @@ class RegModelForm(forms.ModelForm):
 
                 if not is_poc == '1' and org_admin_email:
                     try:
+                        # # Check whether the provided user exists in our DB or not
+                        # admin_user = User.objects.filter(email=org_admin_email).first()
+                        # if admin_user:
+                        #     # If user has same organization.
+                        #     hash_key = OrganizationAdminHashKeys.assign_hash(organization_to_assign, user,
+                        #                                                      org_admin_email)
+                        #     org_id = extended_profile.organization_id
+                        #     org_name = extended_profile.organization.label
+                        #     organization_to_assign.unclaimed_org_admin_email = org_admin_email
+                        #
+                        #     send_admin_activation_email(org_id, org_name, org_admin_email, hash_key)
+                        # else:
+                        #     # If they are not a user existed in our system
+                        #     # send them an email to register
+                        #     send_email_to_register(org_admin_email)
 
-                        hash_key = OrganizationAdminHashKeys.assign_hash(organization_to_assign, user, org_admin_email)
+
+                        hash_key = OrganizationAdminHashKeys.assign_hash(organization_to_assign, user,
+                                                                         org_admin_email)
                         org_id = extended_profile.organization_id
                         org_name = extended_profile.organization.label
                         organization_to_assign.unclaimed_org_admin_email = org_admin_email
 
                         send_admin_activation_email(org_id, org_name, org_admin_email, hash_key)
 
+
+
                     except Exception as ex:
                         log.info(ex.args)
                         pass
+            else:
+                # Check whether he was an admin of another organization before.
+                # If organization is going to be claimed first time
+                if user and is_poc == '1' and not organization_to_assign.admin:
+                    organization_to_assign.unclaimed_org_admin_email = None
+                    organization_to_assign.admin = user
 
         user.first_name = first_name
         user.last_name = last_name
