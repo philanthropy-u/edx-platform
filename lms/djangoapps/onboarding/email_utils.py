@@ -11,7 +11,6 @@ def send_admin_activation_email(org_id, org_name, dest_addr, hash_key):
     """
     Send an admin activation email.
     """
-    max_retries = settings.RETRY_ACTIVATION_EMAIL_MAX_ATTEMPTS
     subject = "Admin Activation."
     encoded_org_id = base64.b64encode(str(org_id))
 
@@ -22,28 +21,15 @@ def send_admin_activation_email(org_id, org_name, dest_addr, hash_key):
         "referring_user": hash_key.suggested_by.username,
 
     }
-    message_body = render_to_string('emails/admin_activation.txt', message_context)
+    message_body_path = 'emails/admin_activation.txt'
 
-    from_address = configuration_helpers.get_value(
-        'email_from_address',
-        settings.DEFAULT_FROM_EMAIL
-    )
-
-    while max_retries > 0:
-        try:
-            mail.send_mail(subject, message_body, from_address, [dest_addr], fail_silently=False)
-            max_retries = 0
-        except SMTPException:
-            max_retries -= 1
-        except Exception:
-            max_retries -= 1
+    send_email(subject, message_body_path, message_context, dest_addr)
 
 
 def send_admin_change_email(org_id, org_name, dest_addr, claimed_by, claimed_by_email):
     """
     Send an email to the admin, that this user claims himself to be the admin
     """
-    max_retries = settings.RETRY_ACTIVATION_EMAIL_MAX_ATTEMPTS
     subject = "Admin Claim"
 
     message_context = {
@@ -51,28 +37,15 @@ def send_admin_change_email(org_id, org_name, dest_addr, claimed_by, claimed_by_
         "claimed_by": claimed_by,
         "claimed_by_email": claimed_by_email,
     }
-    message_body = render_to_string('emails/admin_change.txt', message_context)
+    message_body_path = 'emails/admin_change.txt'
 
-    from_address = configuration_helpers.get_value(
-        'email_from_address',
-        settings.DEFAULT_FROM_EMAIL
-    )
+    send_email(subject, message_body_path, message_context, dest_addr)
 
-    while max_retries > 0:
-        try:
-            mail.send_mail(subject, message_body, from_address, [dest_addr], fail_silently=False)
-            max_retries = 0
-        except SMTPException:
-            max_retries -= 1
-        except Exception:
-            max_retries -= 1
 
 def send_admin_change_confirmation_email(org_name, sender, claimed_by, dest_addr, confirm):
     """
     Send an email to the claimed admin, that he is either accepted as admin or rejected
     """
-
-    max_retries = settings.RETRY_ACTIVATION_EMAIL_MAX_ATTEMPTS
     subject = "Admin Claim Request Confirmation"
 
     message_context = {
@@ -81,12 +54,17 @@ def send_admin_change_confirmation_email(org_name, sender, claimed_by, dest_addr
         "sender": sender,
         "confirm": confirm
     }
-    message_body = render_to_string('emails/admin_change_confirmation.txt', message_context)
+    message_body_path = 'emails/admin_change_confirmation.txt'
 
-    from_address = configuration_helpers.get_value(
-        'email_from_address',
-        settings.DEFAULT_FROM_EMAIL
-    )
+    send_email(subject, message_body_path, message_context, dest_addr)
+
+
+def send_email(subject, message_body_path, message_context, dest_addr):
+
+    max_retries = settings.RETRY_ACTIVATION_EMAIL_MAX_ATTEMPTS
+    message_body = render_to_string(message_body_path, message_context)
+
+    from_address = configuration_helpers.get_value('email_from_address', settings.DEFAULT_FROM_EMAIL)
 
     while max_retries > 0:
         try:
