@@ -351,7 +351,7 @@ def update_account_settings(request):
         )
 
     return render(
-        request, 'onboarding/registration_update.html',
+        request, 'myaccount/registration_update.html',
         {'form': form, 'org_url': reverse('get_user_organizations')}
     )
 
