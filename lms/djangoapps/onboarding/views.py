@@ -102,11 +102,17 @@ def user_info(request):
         'is_poc': user_extended_profile.is_organization_admin,
         'is_first_user': user_extended_profile.organization.is_first_signup_in_org() \
         if user_extended_profile.organization else False,
-        'google_place_api_key': settings.GOOGLE_PLACE_API_KEY
+        'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
+
     })
 
+    template = 'onboarding/tell_us_more_survey.html'
+
+    if request.path == reverse('additional_information'):
+        template = 'myaccount/additional_information.html'
+
     context.update(user_extended_profile.unattended_surveys())
-    return render(request, 'onboarding/tell_us_more_survey.html', context)
+    return render(request, template, context)
 
 
 @login_required
@@ -121,7 +127,7 @@ def interests(request):
     namely, organization survey.
     """
     user_extended_profile = request.user.extended_profile
-    are_forms_complete = not(bool(user_extended_profile.unattended_surveys()))
+    are_forms_complete = not(bool(user_extended_profile.unattended_surveys(_type='list')))
     is_first_signup_in_org = user_extended_profile.organization.is_first_signup_in_org() \
         if user_extended_profile.organization else False
 
@@ -161,7 +167,13 @@ def interests(request):
     context.update(extended_profile.unattended_surveys())
     context['is_poc'] = extended_profile.is_organization_admin
     context['is_first_user'] = is_first_signup_in_org
-    return render(request, 'onboarding/interests_survey.html', context)
+
+    template = 'onboarding/interests_survey.html'
+
+    if request.path == reverse('update_interests'):
+        template = 'myaccount/interests.html'
+
+    return render(request, template, context)
 
 
 @login_required
