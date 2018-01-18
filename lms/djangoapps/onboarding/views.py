@@ -1,40 +1,39 @@
 """
 Views for on-boarding app.
 """
+import base64
 import json
 import logging
 from datetime import datetime
-import base64
 
 import os
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
-
 from django.contrib.auth.decorators import login_required
-from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect
-from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from path import Path as path
 
 from edxmako.shortcuts import render_to_response
 from lms.djangoapps.onboarding.decorators import can_save_org_data
+from lms.djangoapps.onboarding.email_utils import send_admin_change_email, send_admin_change_confirmation_email
 from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES
 from lms.djangoapps.onboarding.models import (
     Organization,
     Currency, OrganizationMetric, OrganizationAdminHashKeys)
+from lms.djangoapps.onboarding.models import UserExtendedProfile
 from lms.djangoapps.onboarding.signals import save_interests
 from lms.djangoapps.student_dashboard.views import get_recommended_xmodule_courses, get_recommended_communities
-from onboarding import forms
-from lms.djangoapps.onboarding.models import UserExtendedProfile
 from nodebb.helpers import update_nodebb_for_user_status
-from lms.djangoapps.onboarding.email_utils import send_admin_change_email, send_admin_change_confirmation_email
+from onboarding import forms
 
 log = logging.getLogger("edx.onboarding")
 
@@ -330,12 +329,11 @@ def update_account_settings(request):
     View to handle update of registration extra fields
     """
     user_extended_profile = request.user.extended_profile
-    prev_admin = ""
     if request.method == 'POST':
 
         form = forms.UpdateRegModelForm(request.POST, instance=user_extended_profile)
         if form.is_valid():
-            user_extended_profile, prev_org, prev_admin = form.save(user=user_extended_profile.user, commit=False)
+            user_extended_profile, prev_org = form.save(user=user_extended_profile.user, commit=False)
             user_extended_profile.save()
             if prev_org:
                 prev_org.save()
@@ -356,7 +354,7 @@ def update_account_settings(request):
 
     return render(
         request, 'onboarding/registration_update.html',
-        {'form': form, 'prev_admin': prev_admin, 'org_url': reverse('get_user_organizations')}
+        {'form': form,'org_url': reverse('get_user_organizations')}
     )
 
 
