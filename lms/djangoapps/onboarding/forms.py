@@ -302,7 +302,7 @@ class InterestsForm(BaseOnboardingForm):
         """
         return True
 
-    def save(self, request, user_exended_profile):
+    def save(self, request, user_extended_profile):
         """
         save form selected choices without any validation
         """
@@ -310,11 +310,11 @@ class InterestsForm(BaseOnboardingForm):
         selected_interested_learners = get_actual_field_names(request.POST.getlist('interested_learners'))
         selected_personal_goals = get_actual_field_names(request.POST.getlist('personal_goals'))
 
-        user_exended_profile.save_user_interests(selected_interests)
-        user_exended_profile.save_user_interested_learners(selected_interested_learners)
-        user_exended_profile.save_user_personal_goals(selected_personal_goals)
-        user_exended_profile.is_interests_data_submitted = True
-        user_exended_profile.save()
+        user_extended_profile.save_user_interests(selected_interests)
+        user_extended_profile.save_user_interested_learners(selected_interested_learners)
+        user_extended_profile.save_user_personal_goals(selected_personal_goals)
+        user_extended_profile.is_interests_data_submitted = True
+        user_extended_profile.save()
 
 
 class OrganizationInfoForm(BaseOnboardingModelForm):

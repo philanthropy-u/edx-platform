@@ -191,6 +191,12 @@ def organization(request):
     _organization = user_extended_profile.organization
     are_forms_complete = not(bool(user_extended_profile.unattended_surveys(_type='list')))
 
+    template = 'onboarding/organization_survey.html'
+    next_page_url = reverse('org_detail_survey')
+
+    if request.path == reverse('update_organization'):
+        template = 'organization/update_organization.html'
+
     initial = {
         'country': COUNTRIES.get(_organization.country),
         'is_org_url_exist': '1' if _organization.url else '0',
@@ -206,7 +212,7 @@ def organization(request):
             are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
 
             if not are_forms_complete:
-                return redirect(reverse('org_detail_survey'))
+                return redirect(next_page_url)
 
     else:
         form = forms.OrganizationInfoForm(instance=_organization, initial=initial)
@@ -221,7 +227,7 @@ def organization(request):
     context['organization_name'] = _organization.label
     context['google_place_api_key'] = settings.GOOGLE_PLACE_API_KEY
 
-    return render(request, 'onboarding/organization_survey.html', context)
+    return render(request, template, context)
 
 
 @login_required
@@ -278,8 +284,13 @@ def org_detail_survey(request):
         "effective_date": datetime.strftime(latest_survey.effective_date, '%d/%m/%Y') if latest_survey else ""
     }
 
-    if request.method == 'POST':
+    template = 'onboarding/organization_detail_survey.html'
+    next_page_url = reverse('oef_survey')
 
+    if request.path == reverse('update_organization_details'):
+        template = 'organization/update_organization.html'
+
+    if request.method == 'POST':
         if latest_survey:
             form = forms.OrganizationMetricModelForm(request.POST, instance=latest_survey, initial=initial)
         else:
@@ -292,7 +303,7 @@ def org_detail_survey(request):
 
             if are_forms_complete:
                 update_nodebb_for_user_status(request.user.username)
-                return redirect(reverse('oef_survey'))
+                return redirect(next_page_url)
 
     else:
         if latest_survey:
@@ -306,7 +317,7 @@ def org_detail_survey(request):
     context['is_first_user'] = user_extended_profile.organization.is_first_signup_in_org() \
         if user_extended_profile.organization else False
     context['organization_name'] = user_extended_profile.organization.label
-    return render(request, 'onboarding/organization_detail_survey.html', context)
+    return render(request, template, context)
 
 
 @csrf_exempt
