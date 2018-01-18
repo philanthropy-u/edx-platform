@@ -55,6 +55,12 @@ def user_info(request):
     userprofile = request.user.profile
     is_under_age = False
 
+    template = 'onboarding/tell_us_more_survey.html'
+    next_page_url = reverse('interests')
+
+    if request.path == reverse('additional_information'):
+        template = 'myaccount/additional_information.html'
+
     initial = {
         'year_of_birth': userprofile.year_of_birth,
         'gender': userprofile.gender,
@@ -91,8 +97,7 @@ def user_info(request):
             are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
 
             if not are_forms_complete:
-                return redirect(reverse('interests'))
-            return redirect(reverse('user_info'))
+                return redirect(next_page_url)
 
     else:
         form = forms.UserInfoModelForm(instance=user_extended_profile, initial=initial)
@@ -106,11 +111,6 @@ def user_info(request):
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
 
     })
-
-    template = 'onboarding/tell_us_more_survey.html'
-
-    if request.path == reverse('additional_information'):
-        template = 'myaccount/additional_information.html'
 
     context.update(user_extended_profile.unattended_surveys())
     return render(request, template, context)
@@ -132,6 +132,12 @@ def interests(request):
     is_first_signup_in_org = user_extended_profile.organization.is_first_signup_in_org() \
         if user_extended_profile.organization else False
 
+    template = 'onboarding/interests_survey.html'
+    next_page_url = reverse('organization')
+
+    if request.path == reverse('update_interests'):
+        template = 'myaccount/interests.html'
+
     initial = {
         "interests": user_extended_profile.get_user_selected_interests(_type="fields"),
         "interested_learners": user_extended_profile.get_user_selected_interested_learners(_type="fields"),
@@ -150,13 +156,11 @@ def interests(request):
         are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
 
         if (user_extended_profile.is_organization_admin or is_first_signup_in_org) and not are_forms_complete:
-            return redirect(reverse('organization'))
+            return redirect(next_page_url)
 
         if are_forms_complete and not is_action_update:
             update_nodebb_for_user_status(request.user.username)
             return redirect(reverse('recommendations'))
-
-        return redirect(reverse('interests'))
 
     else:
         form = forms.InterestsForm(initial=initial)
@@ -168,11 +172,6 @@ def interests(request):
     context.update(extended_profile.unattended_surveys())
     context['is_poc'] = extended_profile.is_organization_admin
     context['is_first_user'] = is_first_signup_in_org
-
-    template = 'onboarding/interests_survey.html'
-
-    if request.path == reverse('update_interests'):
-        template = 'myaccount/interests.html'
 
     return render(request, template, context)
 
@@ -208,8 +207,6 @@ def organization(request):
 
             if not are_forms_complete:
                 return redirect(reverse('org_detail_survey'))
-
-            return redirect(reverse('organization'))
 
     else:
         form = forms.OrganizationInfoForm(instance=_organization, initial=initial)
@@ -296,8 +293,6 @@ def org_detail_survey(request):
             if are_forms_complete:
                 update_nodebb_for_user_status(request.user.username)
                 return redirect(reverse('oef_survey'))
-
-            return redirect(reverse('org_detail_survey'))
 
     else:
         if latest_survey:
