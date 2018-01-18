@@ -294,7 +294,16 @@ class InterestsForm(BaseOnboardingForm):
             choices=personal_goal_choices, widget=forms.CheckboxSelectMultiple,
             required=False)
 
+    def _clean_fields(self):
+        """
+        Override to prevent 'valid choice options' validations
+        """
+        return True
+
     def save(self, request, user_exended_profile):
+        """
+        save form selected choices without any validation
+        """
         selected_interests = get_actual_field_names(request.POST.getlist('interests'))
         selected_interested_learners = get_actual_field_names(request.POST.getlist('interested_learners'))
         selected_personal_goals = get_actual_field_names(request.POST.getlist('personal_goals'))
