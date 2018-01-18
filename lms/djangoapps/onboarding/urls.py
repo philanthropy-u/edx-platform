@@ -20,6 +20,6 @@ urlpatterns = [
     url(r"^delete_account/$", views.delete_my_account, name="delete_my_account"), # signup step 4
     url(r"^admin_activate/(?P<org_id>[^/]*)/(?P<activation_key>[^/]*)$", views.admin_activation, name="admin_activation"),
     url(r"^admin_change_request/$", views.admin_change, name="admin_change"),
-    url(r"^admin_change_request/(?P<confirmation>[0-1])/(?P<username>[^/]*)$",
+    url(r"^admin_change_request/(?P<username>[^/]*)/$",
         views.admin_change_confirmation, name="admin_change_confirmation")
 ]

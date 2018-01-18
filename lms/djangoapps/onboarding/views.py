@@ -362,19 +362,27 @@ def update_account_settings(request):
 
 @login_required
 def admin_change(request):
+    """
+    View to handle a user's admin claim of an organization while there is already an admin
+    """
     user_extended_profile = request.user.extended_profile
     organization = user_extended_profile.organization
     org_id = user_extended_profile.organization_id
     org_name = organization.label
     prev_admin_email = organization.admin.email
-    send_admin_change_email(org_id, org_name, prev_admin_email, request.user.username, request.user.email)
+    key = OrganizationAdminHashKeys.assign_hash(organization, request.user, request.user.email)
+    send_admin_change_email(org_id, org_name, prev_admin_email, key, request.user.email)
     return HttpResponseRedirect('/onboarding/account_settings/')
 
 
 @csrf_exempt
-def admin_change_confirmation(request, confirmation, username):
+def admin_change_confirmation(request, username):
+    """
+    View to handle a user's admin claim to be accepted by the current admin or rejected
+    """
+    confirmation = request.GET.get('confirm')
     user = User.objects.get(username=username)
-    context = {"username": username, "confirmation": 0, "org_id": request.user.extended_profile.organization_id}
+    context = {"username": username, "confirmation": confirmation, "org_id": request.user.extended_profile.organization_id}
     if request.method == 'POST':
         organization = request.user.extended_profile.organization
         org_name = organization.label
@@ -383,11 +391,8 @@ def admin_change_confirmation(request, confirmation, username):
             organization.unclaimed_org_admin_email = None
             organization.admin = user
             organization.save()
-            send_admin_change_confirmation_email(org_name, admin_email, username, user.email, confirm=1)
-            return HttpResponseRedirect('/onboarding/account_settings/')
-        else:
-            send_admin_change_confirmation_email(org_name, admin_email, username, user.email, confirm=0)
-            return HttpResponseRedirect('/onboarding/account_settings/')
+            send_admin_change_confirmation_email(org_name, admin_email, username, user.email, confirm=1 if confirmation==True else 0)
+        return HttpResponseRedirect('/onboarding/account_settings/')
     return render_to_response('onboarding/admin_change_confirmation.html', context)
 
 
