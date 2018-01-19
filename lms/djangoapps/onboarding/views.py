@@ -24,7 +24,7 @@ from django.views.decorators.csrf import csrf_exempt
 from path import Path as path
 
 from edxmako.shortcuts import render_to_response
-from lms.djangoapps.onboarding.decorators import can_save_org_data
+from lms.djangoapps.onboarding.decorators import can_save_org_data, can_not_update_onboarding_steps
 from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES
 from lms.djangoapps.onboarding.models import (
     Organization,
@@ -39,6 +39,7 @@ log = logging.getLogger("edx.onboarding")
 
 
 @login_required
+@can_not_update_onboarding_steps
 @transaction.atomic
 def user_info(request):
     """
@@ -57,8 +58,10 @@ def user_info(request):
 
     template = 'onboarding/tell_us_more_survey.html'
     next_page_url = reverse('interests')
+    redirect_to_next = True
 
     if request.path == reverse('additional_information'):
+        redirect_to_next = False
         template = 'myaccount/additional_information.html'
 
     initial = {
@@ -96,7 +99,7 @@ def user_info(request):
 
             are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
 
-            if not are_forms_complete:
+            if not are_forms_complete and redirect_to_next:
                 return redirect(next_page_url)
 
     else:
@@ -117,6 +120,7 @@ def user_info(request):
 
 
 @login_required
+@can_not_update_onboarding_steps
 @transaction.atomic
 def interests(request):
     """
@@ -134,8 +138,10 @@ def interests(request):
 
     template = 'onboarding/interests_survey.html'
     next_page_url = reverse('organization')
+    redirect_to_next = True
 
     if request.path == reverse('update_interests'):
+        redirect_to_next = False
         template = 'myaccount/interests.html'
 
     initial = {
@@ -155,7 +161,8 @@ def interests(request):
 
         are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
 
-        if (user_extended_profile.is_organization_admin or is_first_signup_in_org) and not are_forms_complete:
+        if (user_extended_profile.is_organization_admin or is_first_signup_in_org) and not are_forms_complete \
+                and redirect_to_next:
             return redirect(next_page_url)
 
         if are_forms_complete and not is_action_update:
@@ -178,6 +185,7 @@ def interests(request):
 
 @login_required
 @can_save_org_data
+@can_not_update_onboarding_steps
 @transaction.atomic
 def organization(request):
     """
@@ -193,8 +201,10 @@ def organization(request):
 
     template = 'onboarding/organization_survey.html'
     next_page_url = reverse('org_detail_survey')
+    redirect_to_next = True
 
     if request.path == reverse('update_organization'):
+        redirect_to_next = False
         template = 'organization/update_organization.html'
 
     initial = {
@@ -211,7 +221,7 @@ def organization(request):
 
             are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
 
-            if not are_forms_complete:
+            if not are_forms_complete and redirect_to_next:
                 return redirect(next_page_url)
 
     else:
@@ -270,6 +280,7 @@ def get_country_names(request):
 
 @login_required
 @can_save_org_data
+@can_not_update_onboarding_steps
 @transaction.atomic
 def org_detail_survey(request):
     user_extended_profile = request.user.extended_profile
@@ -286,30 +297,34 @@ def org_detail_survey(request):
 
     template = 'onboarding/organization_detail_survey.html'
     next_page_url = reverse('oef_survey')
+    org_metric_form = forms.OrganizationMetricModelForm
+    redirect_to_next = True
 
     if request.path == reverse('update_organization_details'):
-        template = 'organization/update_organization.html'
+        redirect_to_next = False
+        template = 'organization/update_organization_details.html'
+        org_metric_form = forms.OrganizationMetricModelUpdateForm
 
     if request.method == 'POST':
         if latest_survey:
-            form = forms.OrganizationMetricModelForm(request.POST, instance=latest_survey, initial=initial)
+            form = org_metric_form(request.POST, instance=latest_survey, initial=initial)
         else:
-            form = forms.OrganizationMetricModelForm(request.POST, initial=initial)
+            form = org_metric_form(request.POST, initial=initial)
 
         if form.is_valid():
             form.save(request)
 
             are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
 
-            if are_forms_complete:
+            if are_forms_complete and redirect_to_next:
                 update_nodebb_for_user_status(request.user.username)
                 return redirect(next_page_url)
 
     else:
         if latest_survey:
-            form = forms.OrganizationMetricModelForm(instance=latest_survey, initial=initial)
+            form = org_metric_form(instance=latest_survey, initial=initial)
         else:
-            form = forms.OrganizationMetricModelForm()
+            form = org_metric_form()
 
     context = {'form': form, 'are_forms_complete': are_forms_complete}
     context.update(user_extended_profile.unattended_surveys())
