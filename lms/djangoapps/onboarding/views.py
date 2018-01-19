@@ -359,33 +359,52 @@ def update_account_settings(request):
 def admin_change_confirmation(request, activation_key):
     """
     View to handle a user's admin claim to be accepted by the current admin or rejected
+
+    activation_status can have values 0, 1, 2.
+        0 = Initial
+        1 = Invalid Hash
+        2 = User not exist in platform
+        3 = Hash been consumed once
+
     """
     hash_key_obj = None
     user_extended_profile = None
+    activation_status = 0
+
     try:
         hash_key_obj = OrganizationAdminHashKeys.objects.get(activation_hash=activation_key)
         user_extended_profile = UserExtendedProfile.objects.get(user__email=hash_key_obj.suggested_admin_email)
     except OrganizationAdminHashKeys.DoesNotExist:
-        pass
+        activation_status = 1
+
+    except UserExtendedProfile.DoesNotExist:
+        activation_status = 2
+
+    if hash_key_obj.is_hash_consumed:
+        activation_status = 3
 
     confirmation = True if eval(request.GET.get('confirm', u"False")) else False
     user = user_extended_profile.user if user_extended_profile else None
     username = user.username if user else None
 
-    if request.method == 'POST':
-        organization = request.user.extended_profile.organization
+    if request.method == 'POST' and activation_status == 0:
+        organization = hash_key_obj.organization
         org_name = organization.label
         admin_email = organization.admin.email
         if confirmation:
             hash_key_obj.organization.unclaimed_org_admin_email = None
             hash_key_obj.organization.admin = user
             hash_key_obj.organization.save()
-        hash_key_obj.delete()
-        send_admin_change_confirmation_email(org_name, admin_email, user.email, confirm=1 if confirmation==True else None)
+
+        hash_key_obj.is_hash_consumed = True
+        hash_key_obj.save()
+        send_admin_change_confirmation_email(org_name, admin_email, user.email, confirm=1 if confirmation else None)
         return HttpResponseRedirect('/onboarding/account_settings/')
 
     context = {"user_key": hash_key_obj, "confirmation": confirmation,
-               "org_id": request.user.extended_profile.organization_id, "username": username}
+               "org_id": request.user.extended_profile.organization_id, "username": username,
+               "activation_status": activation_status}
+
     return render_to_response('onboarding/admin_change_confirmation.html', context)
 
 
