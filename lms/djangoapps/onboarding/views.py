@@ -135,16 +135,18 @@ def interests(request):
     if request.method == 'POST':
         form = forms.InterestsForm(request.POST, initial=initial)
 
+        is_action_update = user_extended_profile.is_interests_data_submitted
+
         form.save(request, user_extended_profile)
 
         save_interests.send(sender=UserExtendedProfile, instance=user_extended_profile)
 
         are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
 
-        if user_extended_profile.is_organization_admin or is_first_signup_in_org:
+        if (user_extended_profile.is_organization_admin or is_first_signup_in_org) and not are_forms_complete:
             return redirect(reverse('organization'))
 
-        if are_forms_complete:
+        if are_forms_complete and not is_action_update:
             update_nodebb_for_user_status(request.user.username)
             return redirect(reverse('recommendations'))
 
@@ -329,18 +331,13 @@ def update_account_settings(request):
     """
     View to handle update of registration extra fields
     """
-    user_extended_profile = request.user.extended_profile
+
+    user_extended_profile = UserExtendedProfile.objects.get(user_id=request.user.id)
     if request.method == 'POST':
 
         form = forms.UpdateRegModelForm(request.POST, instance=user_extended_profile)
         if form.is_valid():
-            user_extended_profile, prev_org = form.save(user=user_extended_profile.user, commit=False)
-            user_extended_profile.save()
-            if prev_org:
-                prev_org.save()
-
-            if user_extended_profile.organization:
-                user_extended_profile.organization.save()
+            user_extended_profile = form.save(user=user_extended_profile.user, commit=True)
 
     else:
         form = forms.UpdateRegModelForm(

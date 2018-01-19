@@ -14,7 +14,8 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext_noop
 from rest_framework.compat import MinValueValidator, MaxValueValidator
 
-from lms.djangoapps.onboarding.helpers import COUNTRIES, get_country_iso, get_sorted_choices_from_dict
+from lms.djangoapps.onboarding.helpers import COUNTRIES, get_country_iso, get_sorted_choices_from_dict, \
+    get_actual_field_names
 from lms.djangoapps.onboarding.models import (
     UserExtendedProfile,
     Organization,
@@ -70,12 +71,12 @@ class UserInfoModelForm(BaseOnboardingModelForm):
 
     NO_SELECT_CHOICE = [('', ugettext_noop('- Select -'))]
 
-    LEVEL_OF_EDUCAION_CHOICES = NO_SELECT_CHOICE  + [(el.code, el.label)
-                                                     for el in EducationLevel.objects.all().order_by("label")]
-    ENLISHP_ROFICIENCY_CHOICES = NO_SELECT_CHOICE + [(ep.code, ep.label)
-                                                     for ep in EnglishProficiency.objects.all().order_by("label")]
+    LEVEL_OF_EDUCATION_CHOICES = NO_SELECT_CHOICE  + [(el.code, el.label)
+                                                     for el in EducationLevel.objects.all()]
+    ENGLISH_PROFICIENCY_CHOICES = NO_SELECT_CHOICE + [(ep.code, ep.label)
+                                                     for ep in EnglishProficiency.objects.all()]
     ROLE_IN_ORG_CHOICES = NO_SELECT_CHOICE + [(r.code, r.label)
-                                              for r in RoleInsideOrg.objects.all().order_by("label")]
+                                              for r in RoleInsideOrg.objects.all()]
 
     year_of_birth = forms.IntegerField(
         label="Year of Birth",
@@ -106,13 +107,13 @@ class UserInfoModelForm(BaseOnboardingModelForm):
                                                                        'and/or city of residence.'),
                                                    required=False)
     level_of_education = forms.ChoiceField(label=ugettext_noop('Level of Education'), label_suffix="*",
-                                           choices=LEVEL_OF_EDUCAION_CHOICES,
+                                           choices=LEVEL_OF_EDUCATION_CHOICES,
                                            error_messages={
                                                 'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                                     'Level of Education')),
                                            })
     english_proficiency = forms.ChoiceField(label=ugettext_noop('English Language Proficiency'), label_suffix="*",
-                                            choices=ENLISHP_ROFICIENCY_CHOICES,
+                                            choices=ENGLISH_PROFICIENCY_CHOICES,
                                             error_messages={
                                                  'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                                      'English Language Proficiency')),
@@ -133,6 +134,9 @@ class UserInfoModelForm(BaseOnboardingModelForm):
 
         focus_area_choices = ((field_name, label) for field_name, label in
                                 UserExtendedProfile.FUNCTIONS_LABELS.items())
+
+        focus_area_choices = sorted(focus_area_choices, key=lambda focus_area_choices: focus_area_choices[0])
+
         self.fields['function_areas'] = forms.ChoiceField(choices=focus_area_choices,
             label=ugettext_noop('Department of Function (Check all that apply.)'),
             widget=forms.CheckboxSelectMultiple)
@@ -228,7 +232,8 @@ class UserInfoModelForm(BaseOnboardingModelForm):
             user_info_survey.country_of_employment = get_country_iso(request.POST.get('country_of_employment'))
         user_info_survey.city_of_employment = self.cleaned_data['city_of_employment']
 
-        user_info_survey.user.extended_profile.save_user_function_areas(request.POST.getlist('function_areas'))
+        selected_function_areas = get_actual_field_names(request.POST.getlist('function_areas'))
+        user_info_survey.user.extended_profile.save_user_function_areas(selected_function_areas)
         if commit:
             user_info_survey.save()
 
@@ -265,6 +270,7 @@ class InterestsForm(BaseOnboardingForm):
         super(InterestsForm, self).__init__( *args, **kwargs)
 
         interest_choices = get_sorted_choices_from_dict(UserExtendedProfile.INTERESTS_LABELS)
+        interest_choices = sorted(interest_choices, key=lambda interest_choices: interest_choices[0])
         self.fields['interests'] = forms.ChoiceField(
             label=ugettext_noop('Which of these areas of organizational effectiveness are you most interested '
                                 'to learn more about? (Check all that apply.)'),
@@ -272,23 +278,31 @@ class InterestsForm(BaseOnboardingForm):
             required=False)
 
         interested_learners_choices = get_sorted_choices_from_dict(UserExtendedProfile.INTERESTED_LEARNERS_LABELS)
+        interested_learners_choices = sorted(interested_learners_choices,
+                                             key=lambda interested_learners_choices: interested_learners_choices[0])
         self.fields['interested_learners'] = forms.ChoiceField(
-            label=ugettext_noop('Which type of other Philanthropy University learners are interesting to you? '
+            label=ugettext_noop('Which types of other Philanthropy University learners are interesting to you? '
                                 '(Check all that apply.)'),
             choices=interested_learners_choices, widget=forms.CheckboxSelectMultiple,
             required=False)
 
         personal_goal_choices = get_sorted_choices_from_dict(UserExtendedProfile.GOALS_LABELS)
+        personal_goal_choices = sorted(personal_goal_choices,
+                                       key=lambda personal_goal_choices: personal_goal_choices[0])
         self.fields['personal_goals'] = forms.ChoiceField(
-            label=ugettext_noop('What is your most important personal goals in joining Philanthropy University? '
+            label=ugettext_noop('What is your most important personal goal in joining Philanthropy University? '
                                 '(Check all that apply.)'),
             choices=personal_goal_choices, widget=forms.CheckboxSelectMultiple,
             required=False)
 
     def save(self, request, user_exended_profile):
-        user_exended_profile.save_user_interests(request.POST.getlist('interests'))
-        user_exended_profile.save_user_interested_learners(request.POST.getlist('interested_learners'))
-        user_exended_profile.save_user_personal_goals(request.POST.getlist('personal_goals'))
+        selected_interests = get_actual_field_names(request.POST.getlist('interests'))
+        selected_interested_learners = get_actual_field_names(request.POST.getlist('interested_learners'))
+        selected_personal_goals = get_actual_field_names(request.POST.getlist('personal_goals'))
+
+        user_exended_profile.save_user_interests(selected_interests)
+        user_exended_profile.save_user_interested_learners(selected_interested_learners)
+        user_exended_profile.save_user_personal_goals(selected_personal_goals)
         user_exended_profile.is_interests_data_submitted = True
         user_exended_profile.save()
 
@@ -303,13 +317,13 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
 
     NO_SELECT_CHOICE = [('', '- Select -')]
 
-    ORG_TYPE_CHOICES = NO_SELECT_CHOICE + [(os.code, os.label) for os in OrgSector.objects.all().order_by('label')]
+    ORG_TYPE_CHOICES = NO_SELECT_CHOICE + [(os.code, os.label) for os in OrgSector.objects.all()]
     OPERATION_LEVEL_CHOICES = NO_SELECT_CHOICE + [(ol.code, ol.label)
-                                                  for ol in OperationLevel.objects.all().order_by('label')]
-    FOCUS_AREA_CHOICES = NO_SELECT_CHOICE + [(fa.code, fa.label) for fa in FocusArea.objects.all().order_by('label')]
+                                                  for ol in OperationLevel.objects.all()]
+    FOCUS_AREA_CHOICES = NO_SELECT_CHOICE + [(fa.code, fa.label) for fa in FocusArea.objects.all()]
     TOTAL_EMPLOYEES_CHOICES = NO_SELECT_CHOICE + [(ep.code, ep.label)
-                                                  for ep in TotalEmployee.objects.all().order_by('label')]
-    PARTNER_NETWORK_CHOICES = [(pn.code, pn.label) for pn in PartnerNetwork.objects.all().order_by('label')]
+                                                  for ep in TotalEmployee.objects.all()]
+    PARTNER_NETWORK_CHOICES = [(pn.code, pn.label) for pn in PartnerNetwork.objects.all()]
 
     is_org_url_exist = forms.ChoiceField(label=ugettext_noop('Does your organization have a website?'),
                                          choices=((1, ugettext_noop('Yes')), (0, ugettext_noop('No'))),
@@ -343,6 +357,10 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
                                    })
 
     total_employees = forms.ChoiceField(label=ugettext_noop('Total Employees'), label_suffix="*",
+                                        help_text="An employee is a member of your staff who is paid for their work. "
+                                                  "An staff member working full-time counts as 1 employee; a staff "
+                                                  "member working half-time counts as 0.5 of an employee. Please "
+                                                  "include yourself in your organization's employee count.",
                                         choices=TOTAL_EMPLOYEES_CHOICES,
                                         error_messages={
                                             'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format('Total Employees')),
@@ -368,7 +386,7 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
     def __init__(self,  *args, **kwargs):
         super(OrganizationInfoForm, self).__init__( *args, **kwargs)
         self.fields['city'].required = False
-        self.fields['founding_year'].required = False
+        self.fields['founding_year'].required = True
 
     class Meta:
         """
@@ -402,7 +420,7 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
 
         error_messages = {
             'founding_year': {
-                'required': ugettext_noop(required_error.format('Founding Year')),
+                'required': ugettext_noop(EMPTY_FIELD_ERROR.format('Founding Year')),
             },
             'country': {
                 'required': ugettext_noop(EMPTY_FIELD_ERROR.format('Country of Organization Headquarters')),
@@ -436,7 +454,7 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
         if self.errors.get('partner_networks'):
             del self.errors['partner_networks']
 
-        year = cleaned_data['founding_year']
+        year = cleaned_data.get('founding_year', '')
 
         if year:
             if len("{}".format(year)) < 4 or year < 0 or len("{}".format(year)) > 4:
@@ -688,9 +706,16 @@ class UpdateRegModelForm(RegModelForm):
         user.last_name = last_name
 
         if commit:
-            extended_profile.save()
+            user.save()
 
-        return extended_profile, prev_org
+            extended_profile.save()
+            if prev_org:
+                prev_org.save()
+
+            if extended_profile.organization:
+                extended_profile.organization.save()
+
+        return extended_profile
 
 
 class OrganizationMetricModelForm(BaseOnboardingModelForm):
@@ -705,7 +730,7 @@ class OrganizationMetricModelForm(BaseOnboardingModelForm):
                                          })
     effective_date = forms.DateField(input_formats=['%d/%m/%Y'],
                                      required=False,
-                                     label=ugettext_noop('End date of lat Fiscal Year'),
+                                     label=ugettext_noop('End date of last Fiscal Year'),
                                      label_suffix='*')
 
     def __init__(self,  *args, **kwargs):
