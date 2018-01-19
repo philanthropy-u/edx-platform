@@ -590,6 +590,11 @@ class RegModelForm(forms.ModelForm):
     def clean_org_admin_email(self):
         org_admin_email = self.cleaned_data['org_admin_email']
 
+        already_an_admin = Organization.objects.filter(admin__email=org_admin_email).first()
+        if already_an_admin:
+            raise forms.ValidationError(ugettext_noop('%s is already as admin of organiztaion %s'
+                                                      % (org_admin_email, already_an_admin.label)))
+
         already_suggested_as_admin = OrganizationAdminHashKeys.objects.filter(
             suggested_admin_email=org_admin_email).first()
         if already_suggested_as_admin:
