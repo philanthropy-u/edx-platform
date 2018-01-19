@@ -26,7 +26,7 @@ def send_admin_activation_email(org_id, org_name, dest_addr, hash_key):
     send_email(subject, message_body_path, message_context, dest_addr)
 
 
-def send_admin_change_email(org_id, org_name, dest_addr, claimed_by, claimed_by_email):
+def send_admin_change_email(org_id, org_name, dest_addr, hash_key, claimed_by_email, claimed_by_name):
     """
     Send an email to the admin, that this user claims himself to be the admin
     """
@@ -34,7 +34,8 @@ def send_admin_change_email(org_id, org_name, dest_addr, claimed_by, claimed_by_
 
     message_context = {
         "org_name": org_name,
-        "claimed_by": claimed_by,
+        "claimed_by_name": claimed_by_name,
+        "claimed_by_key": hash_key.activation_hash,
         "claimed_by_email": claimed_by_email,
     }
     message_body_path = 'emails/admin_change.txt'
@@ -42,7 +43,7 @@ def send_admin_change_email(org_id, org_name, dest_addr, claimed_by, claimed_by_
     send_email(subject, message_body_path, message_context, dest_addr)
 
 
-def send_admin_change_confirmation_email(org_name, sender, claimed_by, dest_addr, confirm):
+def send_admin_change_confirmation_email(org_name, sender, dest_addr, confirm):
     """
     Send an email to the claimed admin, that he is either accepted as admin or rejected
     """
@@ -50,7 +51,6 @@ def send_admin_change_confirmation_email(org_name, sender, claimed_by, dest_addr
 
     message_context = {
         "org_name": org_name,
-        "claimed_by": claimed_by,
         "sender": sender,
         "confirm": confirm
     }

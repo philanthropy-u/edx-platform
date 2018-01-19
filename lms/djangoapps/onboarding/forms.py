@@ -647,11 +647,14 @@ class UpdateRegModelForm(RegModelForm):
                 organization_to_assign.admin = user
 
             if user and is_poc == '1' and organization_to_assign.admin != user:
+                hash_key = OrganizationAdminHashKeys.assign_hash(organization_to_assign, user, user.email)
                 send_admin_change_email(
                     organization_to_assign.id,
                     organization_to_assign.label,
                     organization_to_assign.admin.email,
-                    user.username, user.email
+                    hash_key,
+                    user.email,
+                    user.username
                 )
 
             if not is_poc == '1' and organization_to_assign.admin and user == organization_to_assign.admin:
