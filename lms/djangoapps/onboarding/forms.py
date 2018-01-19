@@ -486,7 +486,7 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
             OrganizationPartner.update_organization_partners(organization, partners)
 
 
-class RegModelForm(forms.ModelForm):
+class RegModelForm(BaseOnboardingModelForm):
     """
     Model form for extra fields in registration model
     """
@@ -498,6 +498,7 @@ class RegModelForm(forms.ModelForm):
 
     first_name = forms.CharField(
         label=ugettext_noop('First Name'),
+        label_suffix="*",
         widget=forms.TextInput(
             attrs={'placeholder': ugettext_noop('First Name')}
         )
@@ -505,6 +506,7 @@ class RegModelForm(forms.ModelForm):
 
     last_name = forms.CharField(
         label=ugettext_noop('Last Name'),
+        label_suffix="*",
         widget=forms.TextInput(
             attrs={'placeholder': ugettext_noop('Last Name')}
         )
