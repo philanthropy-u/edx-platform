@@ -686,24 +686,18 @@ class UpdateRegModelForm(RegModelForm):
                 organization_to_assign.admin = None
 
             if not is_poc == '1' and org_admin_email:
-                suggested_admin = User.objects.get(email=org_admin_email)
-                suggested_admin_extended_profile = UserExtendedProfile.objects.get(user=suggested_admin)
-                if suggested_admin_extended_profile.is_organization_admin:
-                    # todo: show on the template that he cannot be suggested as admin
-                    log.info("The suggested admin is already an admin of an organization.")
-                else:
-                    try:
+                try:
 
-                        hash_key = OrganizationAdminHashKeys.assign_hash(organization_to_assign, user, org_admin_email)
-                        org_id = extended_profile.organization_id
-                        org_name = extended_profile.organization.label
-                        organization_to_assign.unclaimed_org_admin_email = org_admin_email
+                    hash_key = OrganizationAdminHashKeys.assign_hash(organization_to_assign, user, org_admin_email)
+                    org_id = extended_profile.organization_id
+                    org_name = extended_profile.organization.label
+                    organization_to_assign.unclaimed_org_admin_email = org_admin_email
 
-                        send_admin_activation_email(org_id, org_name, org_admin_email, hash_key)
+                    send_admin_activation_email(org_id, org_name, org_admin_email, hash_key)
 
-                    except Exception as ex:
-                        log.info(ex.args)
-                        pass
+                except Exception as ex:
+                    log.info(ex.args)
+                    pass
 
             if prev_org:
                 if organization_to_assign.label != prev_org.label:
