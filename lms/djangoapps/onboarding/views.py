@@ -411,10 +411,12 @@ def get_user_organizations(request):
 
             if organization:
                 org_label = organization.label
+                is_poc =  True if organization.admin and organization.admin == request.user else False
                 admin_email = organization.admin.email if organization.admin else organization.unclaimed_org_admin_email
 
             final_result['user_org_info'] = {
                 'org': org_label,
+                'is_poc': is_poc,
                 'admin_email': admin_email
             }
 
