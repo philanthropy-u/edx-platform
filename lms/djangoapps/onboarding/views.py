@@ -6,7 +6,6 @@ import json
 import logging
 from datetime import datetime
 
-import ast
 import os
 from django.conf import settings
 from django.contrib import messages
@@ -25,7 +24,7 @@ from path import Path as path
 
 from edxmako.shortcuts import render_to_response
 from lms.djangoapps.onboarding.decorators import can_save_org_data
-from lms.djangoapps.onboarding.email_utils import send_admin_change_email, send_admin_change_confirmation_email
+from lms.djangoapps.onboarding.email_utils import send_admin_change_confirmation_email
 from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES
 from lms.djangoapps.onboarding.models import (
     Organization,
@@ -369,7 +368,7 @@ def admin_change_confirmation(request, activation_key):
     except OrganizationAdminHashKeys.DoesNotExist:
         pass
 
-    confirmation = True if ast.literal_eval(request.GET.get('confirm', u"False")) else False
+    confirmation = True if eval(request.GET.get('confirm', u"False")) else False
     user = user_extended_profile.user if user_extended_profile else None
     username = user.username if user else None
 
@@ -384,6 +383,7 @@ def admin_change_confirmation(request, activation_key):
         hash_key_obj.delete()
         send_admin_change_confirmation_email(org_name, admin_email, user.email, confirm=1 if confirmation==True else None)
         return HttpResponseRedirect('/onboarding/account_settings/')
+
     context = {"user_key": hash_key_obj, "confirmation": confirmation,
                "org_id": request.user.extended_profile.organization_id, "username": username}
     return render_to_response('onboarding/admin_change_confirmation.html', context)
