@@ -19,6 +19,7 @@ urlpatterns = [
     url(r"^organization/general/$", views.organization, name="update_organization"),
     url(r"^organization/details/$", views.org_detail_survey, name="update_organization_details"),
     url(r"^onboarding/get_user_organizations/$", views.get_user_organizations, name="get_user_organizations"),
+    url(r"^onboarding/suggest_org_admin/$", views.suggest_org_admin, name="suggest_org_admin"),
     url(r"^onboarding/get_currencies/$", views.get_currencies, name="get_currencies"),
     url(r"^onboarding/organization_detail/$", views.org_detail_survey, name="org_detail_survey"), # signup step 4
     url(r"^onboarding/delete_account/$", views.delete_my_account, name="delete_my_account"), # signup step 4
