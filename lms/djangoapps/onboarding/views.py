@@ -403,7 +403,11 @@ def get_user_organizations(request):
         all_organizations = Organization.objects.filter(label__istartswith=query)
 
         for organization in all_organizations:
-            final_result[organization.label] = True if organization.admin else False
+            final_result[organization.label] = {
+                'is_admin_assigned': True if organization.admin else False,
+                'is_current_user_admin': True if organization.admin and organization.admin == request.user else False,
+                'admin_email': organization.admin.email if organization.admin else ''
+            }
 
         if request.user.is_authenticated():
             user_extended_profile = request.user.extended_profile
@@ -411,8 +415,8 @@ def get_user_organizations(request):
 
             if organization:
                 org_label = organization.label
-                is_poc =  True if organization.admin and organization.admin == request.user else False
-                admin_email = organization.admin.email if organization.admin else organization.unclaimed_org_admin_email
+                is_poc = True if organization.admin and organization.admin == request.user else False
+                admin_email = organization.admin.email if organization.admin else ''
 
             final_result['user_org_info'] = {
                 'org': org_label,
