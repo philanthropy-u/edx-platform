@@ -421,6 +421,7 @@ def suggest_org_admin(request):
 
     return JsonResponse({'status': status})
 
+
 @csrf_exempt
 def get_user_organizations(request):
     """
