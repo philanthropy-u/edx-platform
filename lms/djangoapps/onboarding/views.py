@@ -458,6 +458,10 @@ def admin_change_confirmation(request, activation_key):
         org_name = organization.label
         admin_email = organization.admin.email
         if confirmation:
+            if user_extended_profile.organization.admin == user:
+                user_extended_profile.organization.admin = None
+                user_extended_profile.organization.save()
+
             hash_key_obj.organization.unclaimed_org_admin_email = None
             hash_key_obj.organization.admin = user
             hash_key_obj.organization.save()
