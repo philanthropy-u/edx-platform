@@ -23,8 +23,8 @@ from django.views.decorators.csrf import csrf_exempt
 from path import Path as path
 
 from edxmako.shortcuts import render_to_response
-from lms.djangoapps.onboarding.email_utils import send_admin_change_confirmation_email
 from lms.djangoapps.onboarding.decorators import can_save_org_data, can_not_update_onboarding_steps
+from lms.djangoapps.onboarding.email_utils import send_admin_activation_email, send_admin_change_confirmation_email
 from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES
 from lms.djangoapps.onboarding.models import (
     Organization,
@@ -385,8 +385,40 @@ def update_account_settings(request):
 
     return render(
         request, 'myaccount/registration_update.html',
-        {'form': form, 'org_url': reverse('get_user_organizations')}
+        {'form': form, 'org_url': reverse('get_organizations')}
     )
+
+
+@login_required
+def suggest_org_admin(request):
+    """
+    Suggest a user as administrator of an organization
+    """
+    status = 200
+    if request.method == 'POST':
+        organization = request.POST.get('organization')
+        org_admin_email = request.POST.get('email')
+
+        if organization and org_admin_email:
+
+            try:
+                organization = Organization.objects.get(label__iexact=organization)
+                extended_profile = request.user.extended_profile
+
+                hash_key = OrganizationAdminHashKeys.assign_hash(organization, request.user, org_admin_email)
+                org_id = extended_profile.organization_id
+                org_name = extended_profile.organization.label
+                organization.unclaimed_org_admin_email = org_admin_email
+
+                send_admin_activation_email(org_id, org_name, org_admin_email, hash_key)
+            except Organization.DoesNotExist:
+                log.info("Organization does not exists: %s" % organization)
+                status = 400
+            except Exception as ex:
+                log.info(ex.args)
+                status = 400
+
+    return JsonResponse({'status': status})
 
 
 @csrf_exempt
@@ -443,7 +475,7 @@ def admin_change_confirmation(request, activation_key):
 
 
 @csrf_exempt
-def get_user_organizations(request):
+def get_organizations(request):
     """
     Get organizations
     """
@@ -458,7 +490,7 @@ def get_user_organizations(request):
         for organization in all_organizations:
             final_result[organization.label] = {
                 'is_admin_assigned': True if organization.admin else False,
-                'is_current_user_admin': True if organization.admin and organization.admin == request.user else False,
+                'is_current_user_admin': True if organization.admin == request.user else False,
                 'admin_email': organization.admin.email if organization.admin else ''
             }
 
@@ -468,7 +500,7 @@ def get_user_organizations(request):
 
             if organization:
                 org_label = organization.label
-                is_poc = True if organization.admin and organization.admin == request.user else False
+                is_poc = True if organization.admin == request.user else False
                 admin_email = organization.admin.email if organization.admin else ''
 
             final_result['user_org_info'] = {
