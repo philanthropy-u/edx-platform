@@ -433,7 +433,7 @@ def admin_change_confirmation(request, activation_key):
         hash_key_obj.is_hash_consumed = True
         hash_key_obj.save()
         send_admin_change_confirmation_email(org_name, admin_email, user.email, confirm=1 if confirmation else None)
-        return HttpResponseRedirect('/onboarding/account_settings/')
+        return HttpResponseRedirect('/myaccount/settings/')
 
     context = {"user_key": hash_key_obj, "confirmation": confirmation,
                "org_id": request.user.extended_profile.organization_id, "username": username,
