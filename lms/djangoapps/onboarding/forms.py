@@ -678,18 +678,6 @@ class UpdateRegModelForm(RegModelForm):
             if not is_poc == '1':
                 if organization_to_assign.admin == user:
                     organization_to_assign.admin = None
-                if org_admin_email:
-                    try:
-                        hash_key = OrganizationAdminHashKeys.assign_hash(organization_to_assign, user, org_admin_email)
-                        org_id = extended_profile.organization_id
-                        org_name = extended_profile.organization.label
-                        organization_to_assign.unclaimed_org_admin_email = org_admin_email
-
-                        send_admin_activation_email(org_id, org_name, org_admin_email, hash_key)
-
-                    except Exception as ex:
-                        log.info(ex.args)
-                        pass
 
         user.first_name = first_name
         user.last_name = last_name

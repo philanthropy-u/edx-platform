@@ -386,7 +386,7 @@ def update_account_settings(request):
 
     return render(
         request, 'myaccount/registration_update.html',
-        {'form': form, 'org_url': reverse('get_user_organizations')}
+        {'form': form, 'org_url': reverse('get_organizations')}
     )
 
 
@@ -423,7 +423,7 @@ def suggest_org_admin(request):
 
 
 @csrf_exempt
-def get_user_organizations(request):
+def get_organizations(request):
     """
     Get organizations
     """
@@ -438,7 +438,7 @@ def get_user_organizations(request):
         for organization in all_organizations:
             final_result[organization.label] = {
                 'is_admin_assigned': True if organization.admin else False,
-                'is_current_user_admin': True if organization.admin and organization.admin == request.user else False,
+                'is_current_user_admin': True if organization.admin == request.user else False,
                 'admin_email': organization.admin.email if organization.admin else ''
             }
 
@@ -448,7 +448,7 @@ def get_user_organizations(request):
 
             if organization:
                 org_label = organization.label
-                is_poc = True if organization.admin and organization.admin == request.user else False
+                is_poc = True if organization.admin == request.user else False
                 admin_email = organization.admin.email if organization.admin else ''
 
             final_result['user_org_info'] = {
