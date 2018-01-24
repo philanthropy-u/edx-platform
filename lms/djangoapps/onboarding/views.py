@@ -24,7 +24,7 @@ from path import Path as path
 
 from edxmako.shortcuts import render_to_response
 from lms.djangoapps.onboarding.decorators import can_save_org_data, can_not_update_onboarding_steps
-from lms.djangoapps.onboarding.email_utils import send_admin_activation_email, send_admin_change_confirmation_email
+from lms.djangoapps.onboarding.email_utils import send_admin_activation_email, send_admin_change_confirmation_email, send_admin_change_email
 from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES
 from lms.djangoapps.onboarding.models import (
     Organization,
@@ -399,18 +399,23 @@ def suggest_org_admin(request):
         organization = request.POST.get('organization')
         org_admin_email = request.POST.get('email')
 
-        if organization and org_admin_email:
-
+        if organization:
             try:
                 organization = Organization.objects.get(label__iexact=organization)
                 extended_profile = request.user.extended_profile
 
-                hash_key = OrganizationAdminHashKeys.assign_hash(organization, request.user, org_admin_email)
-                org_id = extended_profile.organization_id
-                org_name = extended_profile.organization.label
-                organization.unclaimed_org_admin_email = org_admin_email
+                if org_admin_email:
+                    hash_key = OrganizationAdminHashKeys.assign_hash(organization, request.user, org_admin_email)
+                    org_id = extended_profile.organization_id
+                    org_name = extended_profile.organization.label
+                    organization.unclaimed_org_admin_email = org_admin_email
 
-                send_admin_activation_email(org_id, org_name, org_admin_email, hash_key)
+                    send_admin_activation_email(org_id, org_name, org_admin_email, hash_key)
+                else:
+                    hash_key = OrganizationAdminHashKeys.assign_hash(organization, request.user, request.user.email)
+                    send_admin_change_email(organization.id, organization.label, organization.admin.email,
+                                            hash_key, request.user.email, request.user.username
+                                            )
             except Organization.DoesNotExist:
                 log.info("Organization does not exists: %s" % organization)
                 status = 400
@@ -465,6 +470,9 @@ def admin_change_confirmation(request, activation_key):
             hash_key_obj.organization.unclaimed_org_admin_email = None
             hash_key_obj.organization.admin = user
             hash_key_obj.organization.save()
+
+            user_extended_profile.organization = hash_key_obj.organization
+            user_extended_profile.save()
 
         hash_key_obj.is_hash_consumed = True
         hash_key_obj.save()
