@@ -12,7 +12,6 @@ from lms.djangoapps.onboarding.models import (
     Organization,
     UserExtendedProfile,
     FunctionArea,
-    OrganizationAdminHashKeys,
 )
 
 
@@ -75,4 +74,3 @@ admin.site.register(EnglishProficiency, EnglishProficiencyAdmin)
 admin.site.register(Organization, OraganizationAdmin)
 admin.site.register(UserExtendedProfile, UserExtendedProfileAdmin)
 admin.site.register(FunctionArea, FunctionAreaAdmin)
-admin.site.register(OrganizationAdminHashKeys)

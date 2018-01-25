@@ -529,7 +529,6 @@ def admin_activation(request, activation_key):
                 hash_key.organization.admin = user
                 hash_key.organization.save()
                 activation_status = 1
-
             else:
                 if admin_change_confirmation:
                     if user_profile.organization.admin == user:
