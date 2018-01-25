@@ -24,7 +24,7 @@ from path import Path as path
 
 from edxmako.shortcuts import render_to_response
 from lms.djangoapps.onboarding.decorators import can_save_org_data, can_not_update_onboarding_steps
-from lms.djangoapps.onboarding.email_utils import send_admin_activation_email, send_admin_change_confirmation_email, send_admin_change_email
+from lms.djangoapps.onboarding.email_utils import send_admin_activation_email, send_admin_change_confirmation_email, send_admin_update_email
 from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES
 from lms.djangoapps.onboarding.models import (
     Organization,
@@ -413,7 +413,7 @@ def suggest_org_admin(request):
                     send_admin_activation_email(org_id, org_name, org_admin_email, hash_key)
                 else:
                     hash_key = OrganizationAdminHashKeys.assign_hash(organization, request.user, request.user.email)
-                    send_admin_change_email(organization.id, organization.label, organization.admin.email,
+                    send_admin_update_email(organization.id, organization.label, organization.admin.email,
                                             hash_key, request.user.email, request.user.username
                                             )
             except Organization.DoesNotExist:

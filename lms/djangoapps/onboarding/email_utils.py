@@ -26,7 +26,7 @@ def send_admin_activation_email(org_id, org_name, dest_addr, hash_key):
     send_email(subject, message_body_path, message_context, dest_addr)
 
 
-def send_admin_change_email(org_id, org_name, dest_addr, hash_key, claimed_by_email, claimed_by_name):
+def send_admin_update_email(org_id, org_name, dest_addr, hash_key, claimed_by_email, claimed_by_name):
     """
     Send an email to the admin, that this user claims himself to be the admin
     """
