@@ -427,66 +427,6 @@ def suggest_org_admin(request):
 
 
 @csrf_exempt
-def admin_change_confirmation(request, activation_key):
-    """
-    View to handle a user's admin claim to be accepted by the current admin or rejected
-
-    activation_status can have values 0, 1, 2.
-        0 = Initial
-        1 = Invalid Hash
-        2 = User not exist in platform
-        3 = Hash been consumed once
-
-    """
-    hash_key_obj = None
-    user_extended_profile = None
-    activation_status = 0
-
-    try:
-        hash_key_obj = OrganizationAdminHashKeys.objects.get(activation_hash=activation_key)
-        user_extended_profile = UserExtendedProfile.objects.get(user__email=hash_key_obj.suggested_admin_email)
-    except OrganizationAdminHashKeys.DoesNotExist:
-        activation_status = 1
-
-    except UserExtendedProfile.DoesNotExist:
-        activation_status = 2
-
-    if hash_key_obj.is_hash_consumed:
-        activation_status = 3
-
-    confirmation = True if eval(request.GET.get('confirm', u"False")) else False
-    user = user_extended_profile.user if user_extended_profile else None
-    username = user.username if user else None
-
-    if request.method == 'POST' and activation_status == 0:
-        organization = hash_key_obj.organization
-        org_name = organization.label
-        admin_email = organization.admin.email
-        if confirmation:
-            if user_extended_profile.organization.admin == user:
-                user_extended_profile.organization.admin = None
-                user_extended_profile.organization.save()
-
-            hash_key_obj.organization.unclaimed_org_admin_email = None
-            hash_key_obj.organization.admin = user
-            hash_key_obj.organization.save()
-
-            user_extended_profile.organization = hash_key_obj.organization
-            user_extended_profile.save()
-
-        hash_key_obj.is_hash_consumed = True
-        hash_key_obj.save()
-        send_admin_change_confirmation_email(org_name, admin_email, user.email, confirm=1 if confirmation else None)
-        return HttpResponseRedirect('/myaccount/settings/')
-
-    context = {"user_key": hash_key_obj, "confirmation": confirmation,
-               "org_id": request.user.extended_profile.organization_id, "username": username,
-               "activation_status": activation_status}
-
-    return render_to_response('onboarding/admin_change_confirmation.html', context)
-
-
-@csrf_exempt
 def get_organizations(request):
     """
     Get organizations
@@ -553,7 +493,8 @@ def recommendations(request):
 
 
 @csrf_exempt
-def admin_activation(request, org_id, activation_key):
+@transaction.atomic
+def admin_activation(request, activation_key):
     """
         When clicked on link sent in email to make user admin.
 
@@ -566,23 +507,46 @@ def admin_activation(request, org_id, activation_key):
 
     """
     context = {}
-    hash_key_obj = None
+    admin_activation = eval(request.GET.get('admin_activation', 'False'))
 
     try:
-        hash_key_obj = OrganizationAdminHashKeys.objects.get(activation_hash=activation_key)
-        user_extended_profile = UserExtendedProfile.objects.get(user__email=hash_key_obj.suggested_admin_email)
+        hash_key = OrganizationAdminHashKeys.objects.get(activation_hash=activation_key)
+        admin_change_confirmation = True if eval(request.GET.get('confirm', u'False')) else False
+        user_profile = UserExtendedProfile.objects.get(user__email=hash_key.suggested_admin_email)
+        user = user_profile.user
 
-        context['key'] = hash_key_obj.activation_hash
-        if hash_key_obj.is_hash_consumed:
+        context['key'] = hash_key.activation_hash
+        if hash_key.is_hash_consumed:
             activation_status = 2
         else:
+            hash_key.is_hash_consumed = True
+            hash_key.save()
             activation_status = 4
 
-        if request.method == "POST":
-            hash_key_obj.organization.admin = user_extended_profile.user
-            hash_key_obj.organization.unclaimed_org_admin_email = None
-            hash_key_obj.organization.save()
-            activation_status = 1
+        if request.method == 'POST':
+            if admin_activation:
+                hash_key.organization.unclaimed_org_admin_email = None
+                hash_key.organization.admin = user
+                hash_key.organization.save()
+                activation_status = 1
+
+            else:
+                if admin_change_confirmation:
+                    if user_profile.organization.admin == user:
+                        user_profile.organization.admin = None
+                        user_profile.organization.save()
+
+                    hash_key.organization.unclaimed_org_admin_email = None
+                    hash_key.organization.admin = user
+                    hash_key.organization.save()
+
+                    user_profile.organization = hash_key.organization
+                    user_profile.save()
+
+                activation_status = 1
+                send_admin_change_confirmation_email(hash_key.organization.label, user.email,
+                                                     confirm=1 if admin_change_confirmation else None)
+                return HttpResponseRedirect('/myaccount/settings/')
 
     except OrganizationAdminHashKeys.DoesNotExist:
         activation_status = 3
@@ -590,15 +554,22 @@ def admin_activation(request, org_id, activation_key):
     except UserExtendedProfile.DoesNotExist:
         activation_status = 5
 
-    if activation_status == 5:
+    if activation_status == 5 and admin_activation:
         url = reverse('register_user', kwargs={
             'initial_mode': 'register',
-            'org_name': base64.b64encode(str(hash_key_obj.organization.label)),
-            'admin_email': base64.b64encode(str(hash_key_obj.suggested_admin_email))})
+            'org_name': base64.b64encode(str(hash_key.organization.label)),
+            'admin_email': base64.b64encode(str(hash_key.suggested_admin_email))})
 
         messages.add_message(request, messages.INFO,
-                             _('Please signup here to become admin for %s' % hash_key_obj.organization.label))
+                             _('Please signup here to become admin for %s' % hash_key.organization.label))
         return HttpResponseRedirect(url)
 
     context['activation_status'] = activation_status
-    return render_to_response('onboarding/admin_activation.html', context)
+
+    if admin_activation:
+        return render_to_response('onboarding/admin_activation.html', context)
+
+    context['username'] = user.username if user else None
+    return render_to_response('onboarding/admin_change_confirmation.html', context)
+
+

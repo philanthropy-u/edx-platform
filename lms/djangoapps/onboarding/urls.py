@@ -21,8 +21,7 @@ urlpatterns = [
     url(r"^onboarding/get_organizations/$", views.get_organizations, name="get_organizations"),
     url(r"^onboarding/suggest_org_admin/$", views.suggest_org_admin, name="suggest_org_admin"),
     url(r"^onboarding/get_currencies/$", views.get_currencies, name="get_currencies"),
-    url(r"^onboarding/organization_detail/$", views.org_detail_survey, name="org_detail_survey"), # signup step 4
-    url(r"^onboarding/delete_account/$", views.delete_my_account, name="delete_my_account"), # signup step 4
-    url(r"^onboarding/admin_activate/(?P<org_id>[^/]*)/(?P<activation_key>[^/]*)$", views.admin_activation, name="admin_activation"),
-    url(r"^onboarding/admin_change_request/(?P<activation_key>[^/]*)/$", views.admin_change_confirmation, name="admin_change_confirmation")
+    url(r"^onboarding/organization_detail/$", views.org_detail_survey, name="org_detail_survey"),  # signup step 4
+    url(r"^onboarding/delete_account/$", views.delete_my_account, name="delete_my_account"),  # signup step 4
+    url(r"^onboarding/admin_activate/(?P<activation_key>[^/]*)$", views.admin_activation, name="admin_activation"),
 ]
