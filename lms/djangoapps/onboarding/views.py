@@ -512,8 +512,8 @@ def admin_activation(request, activation_key):
     try:
         hash_key = OrganizationAdminHashKeys.objects.get(activation_hash=activation_key)
         admin_change_confirmation = True if eval(request.GET.get('confirm', u'False')) else False
-        user_profile = UserExtendedProfile.objects.get(user__email=hash_key.suggested_admin_email)
-        user = user_profile.user
+        user_extended_profile = UserExtendedProfile.objects.get(user__email=hash_key.suggested_admin_email)
+        user = user_extended_profile.user
 
         context['key'] = hash_key.activation_hash
         if hash_key.is_hash_consumed:
@@ -531,16 +531,16 @@ def admin_activation(request, activation_key):
                 activation_status = 1
             else:
                 if admin_change_confirmation:
-                    if user_profile.organization.admin == user:
-                        user_profile.organization.admin = None
-                        user_profile.organization.save()
+                    if user_extended_profile.organization.admin == user:
+                        user_extended_profile.organization.admin = None
+                        user_extended_profile.organization.save()
 
                     hash_key.organization.unclaimed_org_admin_email = None
                     hash_key.organization.admin = user
                     hash_key.organization.save()
 
-                    user_profile.organization = hash_key.organization
-                    user_profile.save()
+                    user_extended_profile.organization = hash_key.organization
+                    user_extended_profile.save()
 
                 activation_status = 1
                 send_admin_change_confirmation_email(hash_key.organization.label, user.email,
