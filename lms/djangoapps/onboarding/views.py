@@ -507,11 +507,11 @@ def admin_activation(request, activation_key):
 
     """
     context = {}
-    admin_activation = eval(request.GET.get('admin_activation', 'False'))
+    admin_activation = True if request.GET.get('admin_activation') == 'True' else False
 
     try:
         hash_key = OrganizationAdminHashKeys.objects.get(activation_hash=activation_key)
-        admin_change_confirmation = eval(request.GET.get('confirm', u'False'))
+        admin_change_confirmation = True if request.GET.get('confirm') == 'True' else False
         user_extended_profile = UserExtendedProfile.objects.get(user__email=hash_key.suggested_admin_email)
         user = user_extended_profile.user
 
