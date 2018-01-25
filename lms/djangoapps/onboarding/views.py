@@ -24,7 +24,7 @@ from path import Path as path
 
 from edxmako.shortcuts import render_to_response
 from lms.djangoapps.onboarding.decorators import can_save_org_data, can_not_update_onboarding_steps
-from lms.djangoapps.onboarding.email_utils import send_admin_activation_email, send_admin_change_confirmation_email, send_admin_update_email
+from lms.djangoapps.onboarding.email_utils import send_admin_activation_email, send_admin_update_confirmation_email, send_admin_update_email
 from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES
 from lms.djangoapps.onboarding.models import (
     Organization,
@@ -539,7 +539,7 @@ def admin_activation(request, activation_key):
                     user_extended_profile.save()
 
                 activation_status = 1
-                send_admin_change_confirmation_email(hash_key.organization.label, user.email,
+                send_admin_update_confirmation_email(hash_key.organization.label, user.email,
                                                      confirm=1 if admin_change_confirmation else None)
                 return HttpResponseRedirect('/myaccount/settings/')
 

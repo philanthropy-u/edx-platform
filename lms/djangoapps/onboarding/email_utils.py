@@ -43,7 +43,7 @@ def send_admin_update_email(org_id, org_name, dest_addr, hash_key, claimed_by_em
     send_email(subject, message_body_path, message_context, dest_addr)
 
 
-def send_admin_change_confirmation_email(org_name, dest_addr, confirm):
+def send_admin_update_confirmation_email(org_name, dest_addr, confirm):
     """
     Send an email to the claimed admin, that he is either accepted as admin or rejected
     """
