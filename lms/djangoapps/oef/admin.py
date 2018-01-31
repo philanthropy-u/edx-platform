@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from lms.djangoapps.oef.models import OptionLevel, TopicQuestion, Option, OefSurvey
+from lms.djangoapps.oef.models import OptionLevel, TopicQuestion, Option, OefSurvey, Instruction
 
 
 class OptionPriorityAdmin(admin.ModelAdmin):
@@ -16,9 +16,11 @@ class TopicQuestionInlineAdmin(admin.TabularInline):
     model = TopicQuestion
     ordering = ("order_number",)
 
+
 class TopicQuestionAdmin(admin.ModelAdmin):
     inlines = (OptionInlineAdmin,)
     model = TopicQuestion
+    ordering = ("order_number",)
 
 
 class OefSurveyAdmin(admin.ModelAdmin):
@@ -27,5 +29,6 @@ class OefSurveyAdmin(admin.ModelAdmin):
 
 admin.site.register(OptionLevel)
 admin.site.register(Option)
+admin.site.register(Instruction)
 admin.site.register(TopicQuestion, TopicQuestionAdmin)
 admin.site.register(OefSurvey, OefSurveyAdmin)
