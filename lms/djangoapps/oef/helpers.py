@@ -79,7 +79,7 @@ def is_answered(uos, question_id):
 
 
 def get_survey_topics(uos, survey_id):
-    topics = TopicQuestion.objects.filter(survey_id=survey_id)
+    topics = TopicQuestion.objects.filter(survey_id=survey_id).order_by("order_number")
     parsed_topics = []
     for index, topic in enumerate(topics):
         options = topic.options.order_by('level__value')

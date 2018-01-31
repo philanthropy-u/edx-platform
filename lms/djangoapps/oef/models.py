@@ -26,6 +26,7 @@ class TopicQuestion(TimeStampedModel):
     survey = models.ForeignKey(OefSurvey, related_name='topics')
     title = models.TextField()
     description = models.TextField()
+    order_number = models.IntegerField()
 
     def __str__(self):
         return self.title

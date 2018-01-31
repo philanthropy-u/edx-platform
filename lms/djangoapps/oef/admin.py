@@ -14,6 +14,7 @@ class OptionInlineAdmin(admin.TabularInline):
 class TopicQuestionInlineAdmin(admin.TabularInline):
     inlines = (OptionInlineAdmin,)
     model = TopicQuestion
+    ordering = ("order_number",)
 
 class TopicQuestionAdmin(admin.ModelAdmin):
     inlines = (OptionInlineAdmin,)
