@@ -41,6 +41,7 @@ from lms.djangoapps.grades.new.course_grade import CourseGradeFactory
 from lms.djangoapps.instructor.enrollment import uses_shib
 from lms.djangoapps.verify_student.models import SoftwareSecurePhotoVerification
 from lms.djangoapps.ccx.custom_exception import CCXLocatorValidationException
+from lms.djangoapps.certificates.api import get_certificate_url
 
 from openedx.core.djangoapps.catalog.utils import get_programs_data
 import shoppingcart
@@ -75,6 +76,7 @@ from courseware.user_state_client import DjangoXBlockUserStateClient
 from edxmako.shortcuts import render_to_response, render_to_string, marketing_link
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from openedx.core.djangoapps.coursetalk.helpers import inject_coursetalk_keys_into_context
+from openedx.core.djangoapps.timed_notification.core import get_course_link
 from openedx.core.djangoapps.credit.api import (
     get_credit_requirement_status,
     is_user_eligible_for_credit,
@@ -98,6 +100,7 @@ from xmodule.tabs import CourseTabList
 from xmodule.x_module import STUDENT_VIEW
 from ..entrance_exams import user_must_complete_entrance_exam
 from ..module_render import get_module_for_descriptor, get_module, get_module_by_usage_id
+from common.lib.mandrill_client.client import MandrillClient
 
 log = logging.getLogger("edx.courseware")
 
@@ -1206,6 +1209,16 @@ def generate_user_cert(request, course_id):
         # mark the certificate with "error" status, so it can be re-run
         # with a management command.  From the user's perspective,
         # it will appear that the certificate task was submitted successfully.
+        MandrillClient().send_mail(
+            MandrillClient.COURSE_COMPLETION_TEMPLATE,
+            student.email,
+            {
+               'course_name': course.display_name,
+               'course_url': get_course_link(course_id=course.id),
+               'full_name': student.first_name + " " + student.last_name,
+               'certificate_url': get_certificate_url(user_id=student.id, course_id=course.id)
+            }
+        )
         certs_api.generate_user_certificates(student, course.id, course=course, generation_mode='self')
         _track_successful_certificate_generation(student.id, course.id)
         return HttpResponse()
