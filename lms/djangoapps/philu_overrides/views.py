@@ -211,7 +211,7 @@ def courses(request):
         }
     )
 
-# Grades can potentially be written - if so, let grading manage the transaction.
+
 @transaction.non_atomic_requests
 @require_POST
 def generate_user_cert(request, course_id):
