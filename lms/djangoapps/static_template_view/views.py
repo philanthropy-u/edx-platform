@@ -71,7 +71,6 @@ def render_press_release(request, slug):
 
 
 def render_404(request):
-    import pdb;pdb.set_trace()
     return HttpResponseNotFound(render_to_string('static_templates/404.html', {}, request=request))
 
 
