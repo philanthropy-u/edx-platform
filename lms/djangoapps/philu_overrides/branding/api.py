@@ -101,7 +101,7 @@ def _auth_footer_social_links():
                 "title": unicode(display.get("title", "")),
                 "url": settings.SOCIAL_MEDIA_FOOTER_URLS.get(social_name, "#"),
                 "icon-class": display.get("icon", ""),
-                "action": unicode(display.get("action", "google.com")).format(platform_name=platform_name),
+                "action": unicode(display.get("action", "")).format(platform_name=platform_name),
             }
         )
     return links
@@ -124,7 +124,7 @@ def _footer_social_links():
                 "title": unicode(display.get("title", "")),
                 "url": settings.SOCIAL_MEDIA_FOOTER_URLS.get(social_name, "#"),
                 "icon-class": display.get("icon", ""),
-                "action": unicode(display.get("action", "google.com")).format(platform_name=platform_name),
+                "action": unicode(display.get("action", "")).format(platform_name=platform_name),
             }
         )
     return links

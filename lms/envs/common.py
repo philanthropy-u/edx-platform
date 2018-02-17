@@ -2318,7 +2318,12 @@ JWT_AUTH = {
 
 # The footer URLs dictionary maps social footer names
 # to URLs defined in configuration.
-SOCIAL_MEDIA_FOOTER_URLS = {}
+SOCIAL_MEDIA_FOOTER_URLS = {
+    "linkedin": "http://linkedin.com",
+    "facebook": "http://facebook.com",
+    "twitter": "http://twitter.com",
+    "youtube": "http://youtube.com",
+}
 
 # The display dictionary defines the title
 # and icon class for each social media link.
@@ -2328,6 +2333,7 @@ SOCIAL_MEDIA_FOOTER_DISPLAY = {
         # translate this the way that LinkedIn advertises in your language.
         "title": _("LinkedIn"),
         "icon": "fa-linkedin",
+        "url": "http://linkedin.com",
         "action": _("Follow {platform_name} on LinkedIn")
     },
     "facebook": {
@@ -2335,6 +2341,7 @@ SOCIAL_MEDIA_FOOTER_DISPLAY = {
         # translate this the way that Facebook advertises in your language.
         "title": _("Facebook"),
         "icon": "fa-facebook",
+        "url": "http://facebook.com",
         "action": _("Like {platform_name} on Facebook")
     },
     "twitter": {
@@ -2342,6 +2349,7 @@ SOCIAL_MEDIA_FOOTER_DISPLAY = {
         # translate this the way that Twitter advertises in your language.
         "title": _("Twitter"),
         "icon": "fa-twitter",
+        "url": "http://twitter.com",
         "action": _("Follow {platform_name} on Twitter")
     },
     "youtube": {
@@ -2349,6 +2357,7 @@ SOCIAL_MEDIA_FOOTER_DISPLAY = {
         # translate this the way that YouTube advertises in your language.
         "title": _("Youtube"),
         "icon": "fa-youtube",
+        "url": "http://youtube.com",
         "action": _("Subscribe to the {platform_name} YouTube channel")
     }
 }
