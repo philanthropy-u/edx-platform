@@ -101,7 +101,7 @@ def _auth_footer_social_links():
                 "title": unicode(display.get("title", "")),
                 "url": settings.SOCIAL_MEDIA_FOOTER_URLS.get(social_name, "#"),
                 "icon-class": display.get("icon", ""),
-                "action": unicode(display.get("action", "")).format(platform_name=platform_name),
+                "action": unicode(display.get("action", "google.com")).format(platform_name=platform_name),
             }
         )
     return links
@@ -124,7 +124,7 @@ def _footer_social_links():
                 "title": unicode(display.get("title", "")),
                 "url": settings.SOCIAL_MEDIA_FOOTER_URLS.get(social_name, "#"),
                 "icon-class": display.get("icon", ""),
-                "action": unicode(display.get("action", "")).format(platform_name=platform_name),
+                "action": unicode(display.get("action", "google.com")).format(platform_name=platform_name),
             }
         )
     return links
@@ -140,7 +140,7 @@ def _auth_footer_navigation_links():
             "url": link_url,
         }
         for link_name, link_url, link_title in [
-            ("about", marketing_link("ABOUT"), _("About Philanthropy University"))
+            ("about", "https://philanthropyu.org/about-us/", _("About Philanthropy University"))
         ]
         if link_url and link_url != "#"
     ]
@@ -174,7 +174,7 @@ def _footer_navigation_links():
             "url": link_url,
         }
         for link_name, link_url, link_title in [
-            ("about", marketing_link("ABOUT"), _("About Philanthropy University")),
+            ("about", "https://philanthropyu.org/about-us/", _("About Philanthropy University")),
             ("explore_course", "/courses", _("Explore our Courses")),
             ("communities", settings.NODEBB_ENDPOINT, _("Be part of our Communities")),
         ]
