@@ -311,6 +311,7 @@ def org_detail_survey(request):
 
     initial = {
         'actual_data': '1' if latest_survey and latest_survey.actual_data else '0',
+        'registration_number': user_extended_profile.organization.registration_number if user_extended_profile.organization else '',
         "effective_date": datetime.strftime(latest_survey.effective_date, '%d/%m/%Y') if latest_survey else ""
     }
 

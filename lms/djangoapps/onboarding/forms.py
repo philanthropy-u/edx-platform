@@ -774,7 +774,7 @@ class OrganizationMetricModelForm(BaseOnboardingModelForm):
 
         fields = [
             'can_provide_info', 'actual_data', 'effective_date', 'total_clients', 'total_employees', 'local_currency',
-            'total_revenue', 'total_donations', 'total_expenses', 'total_program_expenses'
+            'total_revenue', 'total_donations', 'total_expenses', 'total_program_expenses',
         ]
 
         widgets = {
