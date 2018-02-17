@@ -2318,12 +2318,7 @@ JWT_AUTH = {
 
 # The footer URLs dictionary maps social footer names
 # to URLs defined in configuration.
-SOCIAL_MEDIA_FOOTER_URLS = {
-    "linkedin": "http://linkedin.com",
-    "facebook": "http://facebook.com",
-    "twitter": "http://twitter.com",
-    "youtube": "http://youtube.com",
-}
+SOCIAL_MEDIA_FOOTER_URLS = {}
 
 # The display dictionary defines the title
 # and icon class for each social media link.
