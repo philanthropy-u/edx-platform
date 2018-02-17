@@ -4,6 +4,7 @@ View for Courseware Index
 # pylint: disable=attribute-defined-outside-init
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
+from django.core.urlresolvers import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -81,3 +82,26 @@ class CustomCoursewareIndex(CoursewareIndex):
             return redirect("404")
         except Exception:  # pylint: disable=broad-except
             return self._handle_unexpected_error()
+
+
+    def _redirect_if_not_requested_section(self):
+        """
+        If the resulting section and chapter are different from what was initially
+        requested, redirect back to the index page, but with an updated URL that includes
+        the correct section and chapter values.  We do this so that our analytics events
+        and error logs have the appropriate URLs.
+        """
+        if (
+                self.chapter.url_name != self.original_chapter_url_name or
+                (self.original_section_url_name and self.section.url_name != self.original_section_url_name)
+        ):
+            raise Redirect(
+                reverse(
+                    'courseware_section',
+                    kwargs={
+                        'course_id': unicode(self.course_key),
+                        'chapter': self.chapter.url_name,
+                        'section': self.section.url_name,
+                    },
+                )
+            )
