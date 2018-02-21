@@ -79,12 +79,12 @@ def send_admin_update_confirmation_email(org_name, current_admin, new_admin, con
             "first_name": current_admin.first_name,
             "org_name": org_name,
             "claimed_by_name": new_admin.email,
-        });
+        })
         MandrillClient().send_mail(MandrillClient.NEW_ADMIN_CLAIM_CONFIRMATION, new_admin.email, {
             "first_name": new_admin.first_name,
             "org_name": org_name,
             "confirm": confirm,
-        });
+        })
     else:
         MandrillClient().send_mail(MandrillClient.ORG_ADMIN_GET_IN_TOUCH, current_admin.email, {
             "first_name": current_admin.first_name,
@@ -92,9 +92,9 @@ def send_admin_update_confirmation_email(org_name, current_admin, new_admin, con
             "claimed_by_name": "{first_name} {last_name}".format(first_name= new_admin.first_name,
                                                                  last_name=new_admin.last_name),
             "claimed_by_email": new_admin.email,
-        });
+        })
         MandrillClient().send_mail(MandrillClient.NEW_ADMIN_GET_IN_TOUCH, new_admin.email, {
             "first_name": new_admin.first_name,
             "org_name": org_name,
             "current_admin": current_admin.email,
-        });
+        })
