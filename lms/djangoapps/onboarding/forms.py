@@ -202,6 +202,7 @@ class UserInfoModelForm(BaseOnboardingModelForm):
             'country_of_employment': forms.TextInput,
             'city_of_employment': forms.TextInput,
             'start_month_year': forms.TextInput(attrs={'placeholder': 'mm/yy'}),
+            'hours_per_week': forms.NumberInput(attrs={'max': 168})
         }
 
         error_messages = {
