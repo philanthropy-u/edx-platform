@@ -747,8 +747,8 @@ class OrganizationMetricModelForm(BaseOnboardingModelForm):
                                              'required': ugettext_noop('Please select an option for Are you able to '
                                                                        'provide information'),
                                          })
-    effective_date = forms.DateField(input_formats=['%d/%m/%Y'],
-                                     required=False,
+    effective_date = forms.DateField(input_formats=['%m/%d/%Y'],
+                                required=False,
                                      label=ugettext_noop('End date of last Fiscal Year'),
                                      help_text=ugettext_noop("he fiscal year is the period that an organization uses "
                                                              "for accounting  purposes and preparing financial "
@@ -948,7 +948,7 @@ class OrganizationMetricModelForm(BaseOnboardingModelForm):
 
 
 class OrganizationMetricModelUpdateForm(OrganizationMetricModelForm):
-    effective_date = forms.DateField(input_formats=['%d/%m/%Y'],
+    effective_date = forms.DateField(input_formats=['%m/%d/%Y'],
                                      required=False,
                                      help_text=ugettext_noop("he fiscal year is the period that an organization uses "
                                                              "for accounting  purposes and preparing financial "
