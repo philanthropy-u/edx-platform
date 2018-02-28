@@ -608,7 +608,7 @@ class UserExtendedProfile(TimeStampedModel):
             taken_oef = bool(self.user.organization_oef_scores.filter(org=self.organization, user=self.user).exclude(
                 finish_date__isnull=True))
 
-        return self.organization and self.is_first_learner and taken_oef
+        return self.organization and taken_oef
 
 
 class OrganizationMetric(TimeStampedModel):
