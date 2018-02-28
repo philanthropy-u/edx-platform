@@ -112,7 +112,7 @@ def user_info(request):
         'is_under_age': is_under_age,
         'non_profile_organization': Organization.is_non_profit(user_extended_profile),
         'is_poc': user_extended_profile.is_organization_admin,
-        'is_first_user': user_extended_profile.organization.is_first_signup_in_org() \
+        'is_first_user': user_extended_profile.is_first_signup_in_org \
         if user_extended_profile.organization else False,
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
 
@@ -136,7 +136,7 @@ def interests(request):
     """
     user_extended_profile = request.user.extended_profile
     are_forms_complete = not(bool(user_extended_profile.unattended_surveys(_type='list')))
-    is_first_signup_in_org = user_extended_profile.organization.is_first_signup_in_org() \
+    is_first_signup_in_org = user_extended_profile.is_first_signup_in_org \
         if user_extended_profile.organization else False
 
     template = 'onboarding/interests_survey.html'
@@ -251,7 +251,7 @@ def organization(request):
     context.update({
         'non_profile_organization': Organization.is_non_profit(user_extended_profile),
         'is_poc': user_extended_profile.is_organization_admin,
-        'is_first_user': organization.is_first_signup_in_org() if user_extended_profile.organization else False,
+        'is_first_user': user_extended_profile.is_first_signup_in_org if user_extended_profile.organization else False,
         'org_admin_id': organization.admin_id if user_extended_profile.organization else None,
         'organization_name': _organization.label,
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY
@@ -352,7 +352,7 @@ def org_detail_survey(request):
     context.update({
         'non_profile_organization': Organization.is_non_profit(user_extended_profile),
         'is_poc': user_extended_profile.is_organization_admin,
-        'is_first_user': user_extended_profile.organization.is_first_signup_in_org()\
+        'is_first_user': user_extended_profile.is_first_signup_in_org\
             if user_extended_profile.organization else False,
         'organization_name': user_extended_profile.organization.label,
     })
