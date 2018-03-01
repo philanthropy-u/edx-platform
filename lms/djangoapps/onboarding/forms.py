@@ -796,7 +796,7 @@ class OrganizationMetricModelForm(BaseOnboardingModelForm):
             'effective_date': forms.TextInput,
             'total_clients': forms.NumberInput,
             'total_employees': forms.NumberInput,
-            'local_currency': forms.TextInput,
+            'local_currency': forms.TextInput(attrs={"autocomplete": "off"}),
             'total_revenue': forms.NumberInput,
             'total_donations': forms.NumberInput,
             'total_expenses': forms.NumberInput,
