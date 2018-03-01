@@ -352,8 +352,7 @@ def org_detail_survey(request):
     context.update({
         'non_profile_organization': Organization.is_non_profit(user_extended_profile),
         'is_poc': user_extended_profile.is_organization_admin,
-        'is_first_user': user_extended_profile.is_first_signup_in_org\
-            if user_extended_profile.organization else False,
+        'is_first_user': user_extended_profile.is_first_signup_in_org if user_extended_profile.organization else False,
         'organization_name': user_extended_profile.organization.label,
     })
 
