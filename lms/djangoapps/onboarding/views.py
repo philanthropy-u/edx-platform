@@ -27,7 +27,7 @@ from edxmako.shortcuts import render_to_response
 from lms.djangoapps.onboarding.decorators import can_save_org_data, can_not_update_onboarding_steps, \
     can_save_org_details
 from lms.djangoapps.onboarding.email_utils import send_admin_activation_email, send_admin_update_confirmation_email, send_admin_update_email
-from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES
+from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES, oef_eligible_first_learner
 from lms.djangoapps.onboarding.models import (
     Organization,
     Currency, OrganizationMetric, OrganizationAdminHashKeys, PartnerNetwork)
@@ -547,7 +547,10 @@ def recommendations(request):
     context = {
         'recommended_courses': recommended_courses,
         'recommended_communities': recommended_communities,
+        'user_has_organization': bool(user_extended_profile.organization),
+        'is_nonprofit_org': Organization.is_non_profit(user_extended_profile),
         'is_poc': user_extended_profile.is_organization_admin,
+        'oef_eligible_first_learner': oef_eligible_first_learner(user_extended_profile),
     }
 
     return render_to_response('onboarding/recommendations.html', context)
