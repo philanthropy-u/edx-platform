@@ -22,6 +22,7 @@ def oef_dashboard(request):
     user_surveys = list(OrganizationOefScore.objects.filter(user_id=request.user.id))
     organization_surveys = list(OrganizationOefScore.objects.filter(org=user_extended_profile.organization).exclude(finish_date__isnull=True))
     user_surveys = set(user_surveys + organization_surveys)
+
     surveys = []
     user_survey_status = get_user_survey_status(request.user, create_new_survey=False)
 
@@ -77,7 +78,7 @@ def get_survey_by_id(request, user_survey_id):
                                                    "topics": topics,
                                                    "instructions": get_oef_instructions(),
                                                    "levels": levels,
-                                                   'organization': organization.label,
+                                                   'organization': request.user.extended_profile.organization.label,
                                                    'date': uos.modified.strftime('%m/%d/%Y')
                                                    })
 
