@@ -52,6 +52,35 @@ def oef_dashboard(request):
 
 @login_required
 @can_take_oef
+def fetch_survey(request):
+    """
+    Fetch appropriate survey for the user
+
+    """
+    survey_info = get_user_survey_status(request.user)
+    user_extended_profile = request.user.extended_profile
+    if not survey_info['survey']:
+        last_finished_survey = OrganizationOefScore.objects.filter(org=user_extended_profile.organization).exclude(
+            finish_date__isnull=True).last()
+        return redirect('/oef/%s' % last_finished_survey.id)
+
+    uos = get_user_survey(request.user, survey_info['survey'])
+    survey = OefSurvey.objects.filter(is_enabled=True).latest('created')
+    topics = get_survey_topics(uos, survey.id)
+    levels = get_option_levels()
+    return render(request, 'oef/oef_survey.html', {"survey_id": survey.id,
+                                                   "description": survey.description,
+                                                   "topics": topics,
+                                                   "levels": levels,
+                                                   'is_completed': False,
+                                                   "instructions": get_oef_instructions(),
+                                                   'organization': request.user.extended_profile.organization.label,
+                                                   'date': uos.start_date.strftime('%m/%d/%Y')
+                                                   })
+
+
+@login_required
+@can_take_oef
 def oef_instructions(request):
     """
     View for instructions page of OEF
@@ -80,32 +109,6 @@ def get_survey_by_id(request, user_survey_id):
                                                    "levels": levels,
                                                    'organization': organization.label,
                                                    'date': uos.modified.strftime('%m/%d/%Y')
-                                                   })
-
-
-@login_required
-@can_take_oef
-def fetch_survey(request):
-    """
-    Fetch appropriate survey for the user
-
-    """
-    survey_info = get_user_survey_status(request.user)
-    if not survey_info['survey']:
-        return redirect(reverse('oef_dashboard'))
-
-    uos = get_user_survey(request.user, survey_info['survey'])
-    survey = OefSurvey.objects.filter(is_enabled=True).latest('created')
-    topics = get_survey_topics(uos, survey.id)
-    levels = get_option_levels()
-    return render(request, 'oef/oef_survey.html', {"survey_id": survey.id,
-                                                   "description": survey.description,
-                                                   "topics": topics,
-                                                   "levels": levels,
-                                                   'is_completed': False,
-                                                   "instructions": get_oef_instructions(),
-                                                   'organization': request.user.extended_profile.organization.label,
-                                                   'date': uos.start_date.strftime('%m/%d/%Y')
                                                    })
 
 
