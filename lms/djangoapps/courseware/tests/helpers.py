@@ -57,10 +57,13 @@ class LoginEnrollmentTestCase(TestCase):
         Login, check that the corresponding view's response has a 200 status code.
         """
         resp = self.client.post(reverse('login'),
-                                {'email': email, 'password': password})
-        self.assertEqual(resp.status_code, 200)
-        data = json.loads(resp.content)
-        self.assertTrue(data['success'])
+                                {'email': email, 'password': password}, follow=False)
+        if resp.status_code == 302:
+            self.assertEqual(resp.url, "http://testserver/onboarding/user_info/")
+        else:
+            self.assertEqual(resp.status_code, 200)
+            data = json.loads(resp.content)
+            self.assertTrue(data['success'])
 
     def logout(self):
         """
@@ -79,9 +82,21 @@ class LoginEnrollmentTestCase(TestCase):
             'username': username,
             'email': email,
             'password': password,
-            'name': 'username',
+            'name': username,
             'terms_of_service': 'true',
             'honor_code': 'true',
+            'level_of_education': 'b',
+            'gender': 'm',
+            'year_of_birth': 1986,
+            'mailing_address': 'address of street',
+            'goals': 'some goals',
+            'first_name': 'Foo',
+            'last_name': 'Bar',
+            'confirm_password': password,
+            'is_currently_employed': 'true',
+            'organization_name': '',
+            'is_poc': 0,
+            'org_admin_email': '',
         }
         resp = self.assert_request_status_code(200, url, method="POST", data=request_data)
         data = json.loads(resp.content)

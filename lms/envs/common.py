@@ -516,6 +516,14 @@ MAKO_TEMPLATES['main'] = [
     OPENEDX_ROOT / 'core' / 'djangoapps' / 'dark_lang' / 'templates',
 ]
 
+DJANGO_TEMPLATE_DIRS = [
+    PROJECT_ROOT / "templates",
+    COMMON_ROOT / 'templates',
+    COMMON_ROOT / 'lib' / 'capa' / 'capa' / 'templates',
+    COMMON_ROOT / 'djangoapps' / 'pipeline_mako' / 'templates',
+    COMMON_ROOT / 'static',  # required to statically include common Underscore templates
+]
+
 # Django templating
 TEMPLATES = [
     {
@@ -523,13 +531,7 @@ TEMPLATES = [
         # Don't look for template source files inside installed applications.
         'APP_DIRS': False,
         # Instead, look for template source files in these dirs.
-        'DIRS': [
-            PROJECT_ROOT / "templates",
-            COMMON_ROOT / 'templates',
-            COMMON_ROOT / 'lib' / 'capa' / 'capa' / 'templates',
-            COMMON_ROOT / 'djangoapps' / 'pipeline_mako' / 'templates',
-            COMMON_ROOT / 'static',  # required to statically include common Underscore templates
-        ],
+        'DIRS': DJANGO_TEMPLATE_DIRS,
         # Options specific to this backend.
         'OPTIONS': {
             'loaders': [

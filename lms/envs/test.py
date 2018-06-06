@@ -184,13 +184,28 @@ CONTENTSTORE = {
     }
 }
 
+NODEBB_ENDPOINT = "http://local.philanthropyu.org:4567"
+NODEBB_MASTER_TOKEN = "6b8ae395-7cd6-484b-b446-2af30b61703a"
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'edxtest',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
         'ATOMIC_REQUESTS': True,
+
     },
     'student_module_history': {
-        'ENGINE': 'django.db.backends.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'student_module_history',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+        'ATOMIC_REQUESTS': True,
     },
 }
 
@@ -497,13 +512,21 @@ MICROSITE_CONFIGURATION = {
 MICROSITE_TEST_HOSTNAME = 'test-site.testserver'
 MICROSITE_LOGISTRATION_HOSTNAME = 'logistration.testserver'
 
+VAGRANT_ROOT_DIR = PROJECT_ROOT.dirname().dirname().dirname().dirname()
+
 TEST_THEME = COMMON_ROOT / "test" / "test-theme"
+PHILU_THEME = VAGRANT_ROOT_DIR / "src" / "philu-edx-theme" / "edx-platform"
 
 # add extra template directory for test-only templates
 MAKO_TEMPLATES['main'].extend([
     COMMON_ROOT / 'test' / 'templates',
     COMMON_ROOT / 'test' / 'test_sites',
     REPO_ROOT / 'openedx' / 'core' / 'djangolib' / 'tests' / 'templates',
+    PHILU_THEME / 'philu' / 'lms' / 'templates',
+])
+
+DJANGO_TEMPLATE_DIRS.extend([
+    PHILU_THEME / 'philu' / 'lms' / 'templates',
 ])
 
 
