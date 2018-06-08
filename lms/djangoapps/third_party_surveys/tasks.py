@@ -21,7 +21,7 @@ def get_third_party_surveys():
         filters = [('datesubmitted', '>', last_survey.request_date)]
     except ThirdPartySurvey.DoesNotExist:
         filters = []
-    filters += [('status', '=', 'Completed')]
+    # filters += [('status', '=', 'Completed')]
     survey_responses = SurveyGizmoClient().get_filtered_survey_responses(survey_filters=filters)
     save_responses(survey_responses)
 
