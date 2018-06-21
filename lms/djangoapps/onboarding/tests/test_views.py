@@ -2,19 +2,65 @@ import unittest
 
 import lxml.html
 
+from mock import patch
+
+import httpretty
+
+from django.http import HttpRequest
+
 from django.test import override_settings
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from xmodule.modulestore.tests.django_utils import SharedModuleStoreTestCase
 
+from common.djangoapps.student.tests.factories import UserFactory
 from lms.djangoapps.courseware.tests.helpers import LoginEnrollmentTestCase
 from lms.djangoapps.onboarding.models import UserExtendedProfile
 from lms.djangoapps.onboarding.tests.factories import EnglishProficiencyFactory, EducationLevelFactory
 from openedx.core.djangolib.testing.utils import get_mock_request
 
 
-@override_settings(COMPREHENSIVE_THEME_DIRS=[settings.PHILU_THEME])
-@override_settings(MKTG_URLS={'ROOT': 'https://www.example.com'})
+class FakeMessages:
+    """ mocks the Django message framework, makes it easier to get
+    the messages out """
+
+    def __init__(self):
+        pass
+
+    messages = []
+
+    def add(self, level, message, extra_tags):
+        self.messages.append(str(message))
+
+    @property
+    def pop(self):
+        return self.messages.pop()
+
+
+def FakeRequestFactory(user, **kwargs):
+    ''' FakeRequestFactory, FakeMessages and FakeRequestContext are good for
+    mocking out django views; they are MUCH faster than the Django test client.
+    '''
+    if kwargs.get('authenticated'):
+        user.is_authenticated = lambda: True
+
+    request = HttpRequest()
+    request.user = user
+    request._messages = FakeMessages()
+    request.session = kwargs.get('session', {})
+    if kwargs.get('POST'):
+        request.method = 'POST'
+        request.POST = kwargs.get('POST')
+    else:
+        request.method = 'GET'
+        request.POST = kwargs.get('GET', {})
+
+    return request
+
+
+# @override_settings(COMPREHENSIVE_THEME_DIRS=[settings.PHILU_THEME])
+# @override_settings(MKTG_URLS={'ROOT': 'https://www.example.com'})
+@httpretty.activate
 @unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
 class TestUserInfoForm(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
     """
@@ -43,8 +89,40 @@ class TestUserInfoForm(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
             label="Bachelor's Degree"
         )
 
+        global request, user_being_viewed
+
         self.setup_user()
+
+        request = FakeRequestFactory(self.user)
+
         self.request.user = self.user
+
+        user_being_viewed = self.user
+
+        def render_to_response_echo(*args, **kwargs):
+            ''' mocked render_to_response that just returns what was passed in,
+            also puts the template name into the results dict '''
+            context = args[1]
+            locals = context.dicts[0]
+            locals.update(dict(template_name=args[0]))
+            return locals
+
+        def sync_user_info_with_nodebb_mock(sender, instance, created, **kwargs):
+            print "holaa"
+            raise NotImplementedError
+            return True
+
+        patch('lms.djangoapps.onboarding.views.render',
+              render_to_response_echo).start()
+
+        patch('common.lib.nodebb_client.client.NodeBBClient.configure',
+              sync_user_info_with_nodebb_mock).start()
+
+        patch('common.djangoapps.nodebb.signals.handlers.update_user_profile_on_nodebb',
+              sync_user_info_with_nodebb_mock).start()
+
+        patch('common.djangoapps.nodebb.signals.handlers.sync_user_info_with_nodebb',
+              sync_user_info_with_nodebb_mock).start()
 
     def test_login_required_get_request(self):
         """
@@ -139,7 +217,6 @@ class TestUserInfoForm(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
         self.client.logout()
 
     def test_happy_path_post_request(self):
-
         url = reverse('user_info')
 
         response = self.client.get(url, follow=True)

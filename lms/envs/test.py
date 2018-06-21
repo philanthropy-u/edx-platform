@@ -184,8 +184,8 @@ CONTENTSTORE = {
     }
 }
 
-NODEBB_ENDPOINT = "http://local.philanthropyu.org:4567"
-NODEBB_MASTER_TOKEN = "6b8ae395-7cd6-484b-b446-2af30b61703a"
+NODEBB_ENDPOINT = ""
+NODEBB_MASTER_TOKEN = ""
 
 DATABASES = {
     'default': {
@@ -521,8 +521,7 @@ PHILU_THEME = VAGRANT_ROOT_DIR / "src" / "philu-edx-theme" / "edx-platform"
 MAKO_TEMPLATES['main'].extend([
     COMMON_ROOT / 'test' / 'templates',
     COMMON_ROOT / 'test' / 'test_sites',
-    REPO_ROOT / 'openedx' / 'core' / 'djangolib' / 'tests' / 'templates',
-    PHILU_THEME / 'philu' / 'lms' / 'templates',
+    REPO_ROOT / 'openedx' / 'core' / 'djangolib' / 'tests' / 'templates'
 ])
 
 DJANGO_TEMPLATE_DIRS.extend([
