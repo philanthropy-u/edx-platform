@@ -34,3 +34,10 @@ def audit_log(name, **kwargs):
     message = u'{name}: {payload}'.format(name=name, payload=payload)
 
     log.info(message)
+
+
+class RemoveRecurringPollingLogsFilter(logging.Filter):
+    def filter(self, record):
+        if record.name == 'requests.packages.urllib3.connectionpool':
+            return False
+        return True
