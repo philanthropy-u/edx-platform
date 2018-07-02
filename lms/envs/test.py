@@ -512,20 +512,13 @@ MICROSITE_CONFIGURATION = {
 MICROSITE_TEST_HOSTNAME = 'test-site.testserver'
 MICROSITE_LOGISTRATION_HOSTNAME = 'logistration.testserver'
 
-VAGRANT_ROOT_DIR = PROJECT_ROOT.dirname().dirname().dirname().dirname()
-
 TEST_THEME = COMMON_ROOT / "test" / "test-theme"
-PHILU_THEME = VAGRANT_ROOT_DIR / "src" / "philu-edx-theme" / "edx-platform"
 
 # add extra template directory for test-only templates
 MAKO_TEMPLATES['main'].extend([
     COMMON_ROOT / 'test' / 'templates',
     COMMON_ROOT / 'test' / 'test_sites',
     REPO_ROOT / 'openedx' / 'core' / 'djangolib' / 'tests' / 'templates'
-])
-
-DJANGO_TEMPLATE_DIRS.extend([
-    PHILU_THEME / 'philu' / 'lms' / 'templates',
 ])
 
 

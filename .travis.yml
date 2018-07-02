@@ -3,25 +3,49 @@ language: python
 python:
   - "2.7"
 
+sudo: required
+
 branches:
   only:
-    - master
+    - develop
+
+services:
+  - mysql
+
+before_install:
+  - sudo rm -vf /etc/apt/sources.list.d/*riak*
+  - sudo apt-get update -qq
+  - sudo xargs -a requirements/system/ubuntu/apt-packages.txt
+  - sudo apt-get install -qq --fix-missing
 
 install:
-  - pip install pep8
-  - pip install pylint
   - pip install -r requirements/edx/pre.txt
   - pip install -r requirements/edx/github.txt
   - pip install -r requirements/edx/local.txt
   - pip install -r requirements/edx/base.txt
   - pip install -r requirements/edx/paver.txt
+  - sudo apt-get update
+  - sudo apt-get install libxmlsec1-dev
   - pip install -r requirements/edx/post.txt
   - pip install -r requirements/philu/base.txt
   - pip install -r requirements/edx/testing.txt
+  - pip install google-compute-engine
+  - pip install pep8
+  - pip install pylint
+
+before_script:
+  - mysql -e 'create database edxtest;' -u root
 
 script:
   # Run pep8 on all .py files in all subfolders
   # ignore E402: module level import not at top of file
-  - find . -name \*.py -exec pep8 --max-line-length=120 {} +
-  - pylint --disable=all --enable=function-redefined,undefined-variable,unused-variable
+  - sudo service mongod start
+  - find lms/djangoapps/onboarding -name \*.py -exec pep8 --max-line-length=120 {} +
+  - pylint lms/djangoapps/onboarding --disable=all --enable=function-redefined,undefined-variable,unused-variable
   - paver test_system -t lms/djangoapps/onboarding --fasttest
+
+notifications:
+  email:
+    recipients:
+      - zohaib.assad@arbisoft.com
+
