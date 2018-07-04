@@ -34,3 +34,19 @@ def audit_log(name, **kwargs):
     message = u'{name}: {payload}'.format(name=name, payload=payload)
 
     log.info(message)
+
+
+class RemoveRecurringPollingLogsFilter(logging.Filter):
+    def filter(self, record):
+        """
+        :param record: LogRecord
+        :return: Boolean (True/False)
+        # True, if you want to show the log
+        # else False
+        """
+
+        # polling is creating numerous logs per second for requests module connection
+        # to avoid that recurring logs we are hiding that logs
+        if record.name == 'requests.packages.urllib3.connectionpool':
+            return False
+        return True

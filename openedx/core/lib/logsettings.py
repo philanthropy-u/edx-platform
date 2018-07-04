@@ -73,12 +73,16 @@ def get_logger_config(log_dir,
         'filters': {
             'require_debug_false': {
                 '()': 'django.utils.log.RequireDebugFalse',
+            },
+            'remove_recurring_polling_logs': {
+                '()': 'openedx.core.lib.log_utils.RemoveRecurringPollingLogsFilter'
             }
         },
         'handlers': {
             'console': {
                 'level': console_loglevel,
                 'class': 'logging.StreamHandler',
+                'filters': ['remove_recurring_polling_logs'],
                 'formatter': 'standard',
                 'stream': sys.stderr,
             },
