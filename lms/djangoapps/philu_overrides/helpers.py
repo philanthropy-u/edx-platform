@@ -46,7 +46,7 @@ def has_access_custom(course):
     if not course.enrollment_start or not course.enrollment_end:
         return False
 
-    if course.enrollment_end > current_time >= course.enrollment_start:
+    if course.enrollment_start < current_time < course.enrollment_end:
         return True
     else:
         return False
@@ -59,12 +59,11 @@ def get_course_next_classes(request, course):
 
     # imports to avoid circular dependencies
     from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
-    from lms.djangoapps.courseware.access import has_access
+    from lms.djangoapps.courseware.access import _can_enroll_courselike
     from lms.djangoapps.courseware.views.views import registered_for_course
     from student.models import CourseEnrollment
     from opaque_keys.edx.locations import SlashSeparatedCourseKey
     from course_action_state.models import CourseRerunState
-
 
     course_rerun_states = [crs.course_key for crs in CourseRerunState.objects.filter(
         source_course_key=course.id, action="rerun", state="succeeded")] + [course.id]
@@ -79,7 +78,7 @@ def get_course_next_classes(request, course):
         registered = registered_for_course(course, request.user)
 
         # Used to provide context to message to student if enrollment not allowed
-        can_enroll = has_access_custom(course)
+        can_enroll = _can_enroll_courselike(request.user, course)
         invitation_only = course.invitation_only
         is_course_full = CourseEnrollment.objects.is_course_full(course)
 
@@ -93,7 +92,7 @@ def get_course_next_classes(request, course):
             'user': request.user,
             'registered': registered,
             'is_course_full': is_course_full,
-            'can_enroll': can_enroll,
+            'can_enroll': can_enroll.has_access,
             'invitation_only': invitation_only,
             'course': course,
             'active_reg_button': active_reg_button
