@@ -19,7 +19,7 @@ from edxmako.shortcuts import render_to_response, render_to_string
 from opaque_keys.edx.locations import SlashSeparatedCourseKey
 from openedx.core.djangoapps.catalog.utils import get_programs_data
 from philu_overrides.helpers import reactivation_email_for_user_custom, get_course_next_classes, \
-    get_user_current_enrolled_class
+    get_user_current_enrolled_class, has_access_custom
 from lms.djangoapps.courseware.views.views import add_tag_to_enrolled_courses
 from student.views import (
     signin_user as old_login_view,
@@ -31,7 +31,7 @@ from util.cache import cache_if_anonymous
 from util.enterprise_helpers import set_enterprise_branding_filter_param
 from xmodule.modulestore.django import modulestore
 from common.djangoapps.student.views import get_course_related_keys
-from lms.djangoapps.courseware.access import has_access
+from lms.djangoapps.courseware.access import has_access, _can_enroll_courselike
 from lms.djangoapps.courseware.views.views import get_last_accessed_courseware
 from lms.djangoapps.onboarding.helpers import reorder_registration_form_fields
 from lms.djangoapps.student_account.views import _local_server_get, _get_form_descriptions, _external_auth_intercept, \
@@ -585,6 +585,7 @@ def course_about(request, course_id):
             settings.PAID_COURSE_REGISTRATION_CURRENCY[0]
         )
         course_price = get_cosmetic_display_price(course, registration_price)
+        can_enroll = _can_enroll_courselike(request.user, course)
 
         # Determine which checkout workflow to use -- LMS shoppingcart or Otto basket
         can_add_course_to_cart = _is_shopping_cart_enabled and registration_price and not ecommerce_checkout_link
@@ -605,6 +606,7 @@ def course_about(request, course_id):
             'course_details': course_details,
             'course_next_classes': course_next_classes,
             'current_class': current_class,
+            'can_user_enroll': can_enroll.has_access,
             'user_current_enrolled_class': user_current_enrolled_class,
             'current_enrolled_class_target': current_enrolled_class_target,
             'staff_access': staff_access,
