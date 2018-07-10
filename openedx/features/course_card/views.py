@@ -24,7 +24,7 @@ def get_course_start_date(course):
     current_time = datetime.utcnow().replace(tzinfo=utc)
     course_start_time = None
 
-    if course and course.start and course.end:
+    if course and course.start:
         _start_time = course.start.replace(tzinfo=utc)
         if _start_time >= current_time:
             course_start_time = course.start

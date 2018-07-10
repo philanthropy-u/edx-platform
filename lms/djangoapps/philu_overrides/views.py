@@ -512,6 +512,7 @@ def course_about(request, course_id):
     from openedx.core.djangoapps.models.course_details import CourseDetails
     from commerce.utils import EcommerceService
     from course_modes.models import CourseMode
+    from lms.djangoapps.courseware.access_utils import ACCESS_DENIED
     from lms.djangoapps.courseware.views.views import registered_for_course, get_cosmetic_display_price
     from lms.djangoapps.courseware.courses import (
         get_courses,
@@ -585,7 +586,6 @@ def course_about(request, course_id):
             settings.PAID_COURSE_REGISTRATION_CURRENCY[0]
         )
         course_price = get_cosmetic_display_price(course, registration_price)
-        can_enroll = _can_enroll_courselike(request.user, course)
 
         # Determine which checkout workflow to use -- LMS shoppingcart or Otto basket
         can_add_course_to_cart = _is_shopping_cart_enabled and registration_price and not ecommerce_checkout_link
@@ -600,6 +600,7 @@ def course_about(request, course_id):
 
         course_next_classes = get_course_next_classes(request, course)
         current_class, user_current_enrolled_class, current_enrolled_class_target = get_user_current_enrolled_class(request, course)
+        can_enroll = _can_enroll_courselike(request.user, current_class) if current_class else ACCESS_DENIED
 
         context = {
             'course': course,
