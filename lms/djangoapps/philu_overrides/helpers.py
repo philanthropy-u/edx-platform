@@ -65,10 +65,11 @@ def get_course_next_classes(request, course):
     from opaque_keys.edx.locations import SlashSeparatedCourseKey
     from course_action_state.models import CourseRerunState
 
+    current_time = datetime.utcnow().replace(tzinfo=utc)
     course_rerun_states = [crs.course_key for crs in CourseRerunState.objects.filter(
         source_course_key=course.id, action="rerun", state="succeeded")] + [course.id]
     course_rerun_objects = CourseOverview.objects.select_related('image_set').filter(
-        id__in=course_rerun_states, start__gte=datetime.utcnow().replace(tzinfo=utc)).order_by('start')
+        id__in=course_rerun_states, start__gt=current_time).order_by('start')
 
     course_next_classes = []
 
@@ -107,12 +108,6 @@ def get_user_current_enrolled_class(request, course):
     => end date > today
     => user is enrolled
     """
-
-    import pytz
-    from lms.djangoapps.courseware.courses import (
-        get_permission_for_course_about,
-        get_course_with_access
-    )
     from datetime import datetime
     from django.core.urlresolvers import reverse
     from opaque_keys.edx.locations import SlashSeparatedCourseKey
@@ -120,14 +115,12 @@ def get_user_current_enrolled_class(request, course):
     from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
     from student.models import CourseEnrollment
     from course_action_state.models import CourseRerunState
-    utc = pytz.UTC
 
     all_course_reruns = [crs.course_key for crs in CourseRerunState.objects.filter(
         source_course_key=course.id, action="rerun", state="succeeded")] + [course.id]
-
+    current_time = datetime.utcnow().replace(tzinfo=utc)
     current_class = CourseOverview.objects.select_related('image_set').filter(
-        id__in=all_course_reruns, start__lte=datetime.utcnow().replace(tzinfo=utc),
-        end__gt=datetime.utcnow().replace(tzinfo=utc)).order_by('-start').first()
+        id__in=all_course_reruns, start__lte=current_time, end__gte=current_time).order_by('-start').first()
 
     current_enrolled_class = False
     if current_class:

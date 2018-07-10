@@ -585,7 +585,6 @@ def course_about(request, course_id):
             settings.PAID_COURSE_REGISTRATION_CURRENCY[0]
         )
         course_price = get_cosmetic_display_price(course, registration_price)
-        can_enroll = _can_enroll_courselike(request.user, course)
 
         # Determine which checkout workflow to use -- LMS shoppingcart or Otto basket
         can_add_course_to_cart = _is_shopping_cart_enabled and registration_price and not ecommerce_checkout_link
@@ -600,6 +599,7 @@ def course_about(request, course_id):
 
         course_next_classes = get_course_next_classes(request, course)
         current_class, user_current_enrolled_class, current_enrolled_class_target = get_user_current_enrolled_class(request, course)
+        can_enroll = _can_enroll_courselike(request.user, current_class)
 
         context = {
             'course': course,

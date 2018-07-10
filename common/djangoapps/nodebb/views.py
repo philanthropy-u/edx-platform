@@ -7,8 +7,8 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.core.urlresolvers import reverse
+from openedx.features.course_card.helpers import get_related_card_id
 from opaque_keys.edx.keys import CourseKey
-
 from nodebb.models import DiscussionCommunity
 from common.djangoapps.nodebb.helpers import get_course_related_tabs, get_all_course_progress
 
@@ -39,7 +39,7 @@ def nodebb_forum_discussion(request, course_id):
 
     progress = get_all_course_progress(request.user, current_course)
 
-    course_link = reverse('about_course', args=[course_id])
+    course_link = reverse('about_course', args=[get_related_card_id(course_key)])
 
     context = {
         "provider": current_course.org,
