@@ -8,7 +8,7 @@ from openedx.features.course_card.models import CourseCard
 def get_parent_courses():
     course_rerun_states = CourseRerunState.objects.all()
     course_rerun_ids = [rerun.course_key for rerun in course_rerun_states]
-    return tuple((co.id, "%s %s" % (co.display_name, co.id)) for co in CourseOverview.objects.filter(
+    return tuple((co.id, "%s -- %s" % (co.display_name, co.id)) for co in CourseOverview.objects.filter(
         start__isnull=False, end__isnull=False).exclude(
         id__in=course_rerun_ids).order_by('id'))
 
