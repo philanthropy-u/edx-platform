@@ -41,6 +41,7 @@ def get_course_cards(request):
 
     course_card_ids = [cc.course_id for cc in CourseCard.objects.filter(is_enabled=True)]
     courses_list = CourseOverview.objects.select_related('image_set').filter(id__in=course_card_ids)
+    courses_list = sorted(courses_list, key=lambda _course: _course.number)
     current_time = datetime.now()
 
     date_time_format = '%b %-d, %Y'
