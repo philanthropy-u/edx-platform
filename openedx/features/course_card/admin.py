@@ -21,7 +21,7 @@ class CardModel(ModelForm):
 
     class Meta:
         model = CourseCard
-        fields = ['course_id', 'organization_domain', 'is_enabled']
+        fields = ['course_id', 'is_enabled']
 
 
 class CardModelAdmin(admin.ModelAdmin):
