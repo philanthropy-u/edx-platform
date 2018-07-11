@@ -67,6 +67,7 @@ def get_recommended_xmodule_courses(request, _from='onboarding'):
     course_card_ids = [cc.course_id for cc in CourseCard.objects.filter(is_enabled=True)]
     courses_list = CourseOverview.objects.select_related('image_set').filter(id__in=course_card_ids)
     course_list_ids = []
+
     current_time = datetime.utcnow().replace(tzinfo=utc)
 
     for course in courses_list:
@@ -77,7 +78,6 @@ def get_recommended_xmodule_courses(request, _from='onboarding'):
         ).order_by('start').first()
 
         if course_rerun_object:
-
             course_list_ids.append(course.id)
             _settings = CustomSettings.objects.filter(id=course_rerun_object.id).first()
             course.settings_attrs = _settings
