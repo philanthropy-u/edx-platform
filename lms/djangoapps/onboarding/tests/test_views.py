@@ -4,6 +4,7 @@ from mock import patch, MagicMock, Mock
 
 import httpretty
 
+from django.test import override_settings
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from xmodule.modulestore.tests.django_utils import SharedModuleStoreTestCase
@@ -14,6 +15,8 @@ from lms.djangoapps.onboarding.tests.factories import EnglishProficiencyFactory,
 from openedx.core.djangolib.testing.utils import get_mock_request
 
 
+@override_settings(MAILCHIMP_API_KEY="")
+@patch.dict(settings.FEATURES, {'BYPASS_ACTIVATION_EMAIL_FOR_EXTAUTH': False, 'AUTOMATIC_AUTH_FOR_TESTING': False, 'SKIP_EMAIL_VALIDATION': True})
 @httpretty.activate
 @unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
 class TestUserInfoForm(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
@@ -158,13 +161,13 @@ class TestUserInfoForm(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
 
         user_extended_profile = UserExtendedProfile.objects.get(user_id=self.request.user.id)
 
-        for (_key, field) in self.form_data.items():
-            if _key in ["year_of_birth", "gender", "level_of_education", "language", "city"]:
-                self.assertEqual(getattr(user_extended_profile.user.profile, _key) , self.form_data[_key])
-            elif _key in ["not_listed_gender", "english_proficiency"]:
-                self.assertEqual(getattr(user_extended_profile, _key) , self.form_data[_key])
-            elif _key in ["country"]:
-                self.assertEqual(getattr(user_extended_profile.user.profile, _key).name, self.form_data[_key])
+        for (key, _field) in self.form_data.items():
+            if key in ["year_of_birth", "gender", "level_of_education", "language", "city"]:
+                self.assertEqual(getattr(user_extended_profile.user.profile, key) , self.form_data[key])
+            elif key in ["not_listed_gender", "english_proficiency"]:
+                self.assertEqual(getattr(user_extended_profile, key) , self.form_data[key])
+            elif key in ["country"]:
+                self.assertEqual(getattr(user_extended_profile.user.profile, key).name, self.form_data[key])
 
         self.assertRedirects(
             resp,
@@ -226,6 +229,8 @@ class TestUserInfoForm(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
         self.assertEqual(resp.status_code, 200)
 
 
+@override_settings(MAILCHIMP_API_KEY="")
+@patch.dict(settings.FEATURES, {'BYPASS_ACTIVATION_EMAIL_FOR_EXTAUTH': False, 'AUTOMATIC_AUTH_FOR_TESTING': False, 'SKIP_EMAIL_VALIDATION': True})
 @httpretty.activate
 @unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
 class TestOnBoardingSteps(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
