@@ -21,17 +21,19 @@ class LoginEnrollmentTestCase(TestCase):
     """
     user = None
 
-    def setup_user(self):
+    def setup_user(self, employed="true"):
         """
         Create a user account, activate, and log in.
         """
         self.email = 'foo@test.com'
         self.password = 'bar'
         self.username = 'test'
+
         self.user = self.create_account(
             self.username,
             self.email,
             self.password,
+            employed
         )
         # activate_user re-fetches and returns the activated user record
         self.user = self.activate_user(self.email)
@@ -73,7 +75,7 @@ class LoginEnrollmentTestCase(TestCase):
         # should redirect
         self.assert_request_status_code(302, reverse('logout'))
 
-    def create_account(self, username, email, password):
+    def create_account(self, username, email, password, employed):
         """
         Create the account and check that it worked.
         """
@@ -93,7 +95,7 @@ class LoginEnrollmentTestCase(TestCase):
             'first_name': 'Foo',
             'last_name': 'Bar',
             'confirm_password': password,
-            'is_currently_employed': 'true',
+            'is_currently_employed': employed,
             'organization_name': '',
             'is_poc': 0,
             'org_admin_email': '',
