@@ -48,4 +48,6 @@ notifications:
   email:
     recipients:
       - zohaib.assad@arbisoft.com
+      - imran.bashir@arbisoft.com
+      - muhammad.nadeem@arbisoft.com
 
