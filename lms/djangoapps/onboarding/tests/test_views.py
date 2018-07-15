@@ -4,7 +4,6 @@ from mock import patch, MagicMock, Mock
 
 import httpretty
 
-from django.test import override_settings
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from xmodule.modulestore.tests.django_utils import SharedModuleStoreTestCase
@@ -15,7 +14,6 @@ from lms.djangoapps.onboarding.tests.factories import EnglishProficiencyFactory,
 from openedx.core.djangolib.testing.utils import get_mock_request
 
 
-@override_settings(MAILCHIMP_API_KEY="")
 @patch.dict(settings.FEATURES, {'BYPASS_ACTIVATION_EMAIL_FOR_EXTAUTH': False, 'AUTOMATIC_AUTH_FOR_TESTING': False, 'SKIP_EMAIL_VALIDATION': True})
 @httpretty.activate
 @unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
@@ -55,6 +53,15 @@ class TestUserInfoForm(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
 
         patch('common.lib.nodebb_client.client.ForumUser.activate',
               activate_user_profile_on_nodebb_mock).start()
+
+        patch('nodebb.signals.handlers.send_user_info_to_mailchimp',
+              Mock(return_value=MagicMock())).start()
+
+        patch('nodebb.signals.handlers.send_user_profile_info_to_mailchimp',
+              Mock(return_value=MagicMock())).start()
+
+        patch('nodebb.signals.handlers.get_current_request',
+               Mock(return_value=MagicMock())).start()
 
     def setUp(self):
         """ Create a course and user, then log in. """
@@ -229,12 +236,10 @@ class TestUserInfoForm(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
         self.assertEqual(resp.status_code, 200)
 
 
-@override_settings(MAILCHIMP_API_KEY="")
 @patch.dict(settings.FEATURES, {'BYPASS_ACTIVATION_EMAIL_FOR_EXTAUTH': False, 'AUTOMATIC_AUTH_FOR_TESTING': False, 'SKIP_EMAIL_VALIDATION': True})
 @httpretty.activate
 @unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
 class TestOnBoardingSteps(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
-
 
     password = "test"
 
@@ -279,6 +284,15 @@ class TestOnBoardingSteps(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
 
         patch('common.lib.nodebb_client.client.ForumCategory.joined',
               get_joined_communities_mock).start()
+
+        patch('nodebb.signals.handlers.send_user_info_to_mailchimp',
+              Mock(return_value=MagicMock())).start()
+
+        patch('nodebb.signals.handlers.send_user_profile_info_to_mailchimp',
+              Mock(return_value=MagicMock())).start()
+
+        patch('nodebb.signals.handlers.get_current_request',
+               Mock(return_value=MagicMock())).start()
 
     def setUp(self):
         """ Create a course and user, then log in. """
