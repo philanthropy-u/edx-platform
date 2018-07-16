@@ -184,13 +184,28 @@ CONTENTSTORE = {
     }
 }
 
+NODEBB_ENDPOINT = ""
+NODEBB_MASTER_TOKEN = ""
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'edxtest',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
         'ATOMIC_REQUESTS': True,
+
     },
     'student_module_history': {
-        'ENGINE': 'django.db.backends.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'student_module_history',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+        'ATOMIC_REQUESTS': True,
     },
 }
 
@@ -503,7 +518,7 @@ TEST_THEME = COMMON_ROOT / "test" / "test-theme"
 MAKO_TEMPLATES['main'].extend([
     COMMON_ROOT / 'test' / 'templates',
     COMMON_ROOT / 'test' / 'test_sites',
-    REPO_ROOT / 'openedx' / 'core' / 'djangolib' / 'tests' / 'templates',
+    REPO_ROOT / 'openedx' / 'core' / 'djangolib' / 'tests' / 'templates'
 ])
 
 
