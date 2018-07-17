@@ -36,7 +36,7 @@ def create_records(apps, ModelClass, records_map):
     objs = []
     idx = 1
     for code, label in records_map.items():
-        if not code in all_codes:
+        if code not in all_codes:
             objs.append(ModelClass(order=idx, code=code, label=label))
             idx += 1
 
@@ -47,7 +47,7 @@ def create_records(apps, ModelClass, records_map):
 class Migration(migrations.Migration):
 
     def insert_education_levels(apps, schema_editor):
-         
+
         _levels = {
             "DPD": "Doctoral or professional degree",
             "MD": "Master's degree",
