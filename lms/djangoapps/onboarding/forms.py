@@ -68,10 +68,10 @@ class UserInfoModelForm(BaseOnboardingModelForm):
 
     NO_SELECT_CHOICE = [('', ugettext_noop('- Select -'))]
 
-    LEVEL_OF_EDUCATION_CHOICES = NO_SELECT_CHOICE  + [(el.code, el.label)
+    LEVEL_OF_EDUCATION_CHOICES = NO_SELECT_CHOICE + [(el.code, el.label)
                                                      for el in EducationLevel.objects.all()]
     ENGLISH_PROFICIENCY_CHOICES = NO_SELECT_CHOICE + [(ep.code, ep.label)
-                                                     for ep in EnglishProficiency.objects.all()]
+                                                      for ep in EnglishProficiency.objects.all()]
     ROLE_IN_ORG_CHOICES = NO_SELECT_CHOICE + [(r.code, r.label)
                                               for r in RoleInsideOrg.objects.all()]
 
@@ -97,8 +97,8 @@ class UserInfoModelForm(BaseOnboardingModelForm):
                                error_messages={"required": ugettext_noop(EMPTY_FIELD_ERROR.format('Language'))},
                                widget=forms.HiddenInput)
     country = forms.CharField(label="Country of Residence", label_suffix="*", widget=forms.HiddenInput,
-                              error_messages={"required": ugettext_noop(EMPTY_FIELD_ERROR.format("Country of Residence"))
-    })
+                              error_messages={"required": ugettext_noop(
+                                  EMPTY_FIELD_ERROR.format("Country of Residence"))})
     city = forms.CharField(label=ugettext_noop('City of Residence'), required=False, widget=forms.HiddenInput)
     is_emp_location_different = forms.BooleanField(label=ugettext_noop('Check here if your country and/or city of '
                                                                        'employment is different from your country '
@@ -107,26 +107,26 @@ class UserInfoModelForm(BaseOnboardingModelForm):
     level_of_education = forms.ChoiceField(label=ugettext_noop('Level of Education'), label_suffix="*",
                                            choices=LEVEL_OF_EDUCATION_CHOICES,
                                            error_messages={
-                                                'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
-                                                    'Level of Education')),
+                                               'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
+                                                   'Level of Education')),
                                            },
                                            required=True)
     english_proficiency = forms.ChoiceField(label=ugettext_noop('English Language Proficiency'), label_suffix="*",
                                             choices=ENGLISH_PROFICIENCY_CHOICES,
                                             error_messages={
-                                                 'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
-                                                     'English Language Proficiency')),
+                                                'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
+                                                    'English Language Proficiency')),
                                             })
     role_in_org = forms.ChoiceField(label=ugettext_noop('Role in the Organization'),
                                     label_suffix="*",
                                     choices=ROLE_IN_ORG_CHOICES,
                                     error_messages={
-                                         'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
-                                             'Role in the Organization')),
+                                        'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
+                                            'Role in the Organization')),
                                     })
 
-    def __init__(self,  *args, **kwargs):
-        super(UserInfoModelForm, self).__init__( *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(UserInfoModelForm, self).__init__(*args, **kwargs)
 
         self.fields['country_of_employment'].required = False
         self.fields['city_of_employment'].required = False
@@ -137,13 +137,14 @@ class UserInfoModelForm(BaseOnboardingModelForm):
             self.fields['hours_per_week'].required = False
 
         focus_area_choices = ((field_name, label) for field_name, label in
-                                UserExtendedProfile.FUNCTIONS_LABELS.items())
+                              UserExtendedProfile.FUNCTIONS_LABELS.items())
 
         focus_area_choices = sorted(focus_area_choices, key=lambda focus_area_choices: focus_area_choices[0])
 
         self.fields['function_areas'] = forms.ChoiceField(choices=focus_area_choices,
-            label=ugettext_noop('Department or Function (Check all that apply.)'),
-            widget=forms.CheckboxSelectMultiple)
+                                                          label=ugettext_noop(
+                                                              'Department or Function (Check all that apply.)'),
+                                                          widget=forms.CheckboxSelectMultiple)
 
     def clean(self):
         if self.errors.get('function_areas'):
@@ -203,7 +204,7 @@ class UserInfoModelForm(BaseOnboardingModelForm):
 
         labels = {
             'is_emp_location_different': ugettext_noop('Check here if your country and/or city of employment is different'
-                                         ' from your country and/or city of residence.'),
+                                                       ' from your country and/or city of residence.'),
             'start_month_year': ugettext_noop('Start Month and Year*'),
             'country_of_employment': ugettext_noop('Country of Employment'),
             'city_of_employment': ugettext_noop('City of Employment'),
@@ -260,7 +261,8 @@ class RadioSelectNotNull(forms.RadioSelect):
         """
         Returns an instance of the renderer.
         """
-        if value is None: value = ''
+        if value is None:
+            value = ''
         # Normalize to string.
         str_value = force_unicode(value)
         final_attrs = self.build_attrs(attrs)
@@ -278,8 +280,8 @@ class InterestsForm(BaseOnboardingForm):
     'UserExtendedProfile' model.
     """
 
-    def __init__(self,  *args, **kwargs):
-        super(InterestsForm, self).__init__( *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(InterestsForm, self).__init__(*args, **kwargs)
 
         interest_choices = get_sorted_choices_from_dict(UserExtendedProfile.INTERESTS_LABELS)
         interest_choices = sorted(interest_choices, key=lambda interest_choices: interest_choices[0])
@@ -356,8 +358,8 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
                                                                  "Facebook or WordPress, please answer Yes here and "
                                                                  "give the address for this page."),
                                          error_messages={
-                                            'required': ugettext_noop('Please select an option for "Does your organization have a'
-                                                        ' webpage?"'),
+                                             'required': ugettext_noop('Please select an option for "Does your organization have a'
+                                                                       ' webpage?"'),
                                          })
 
     org_type = forms.ChoiceField(label=ugettext_noop('Organization Type'), label_suffix="*",
@@ -408,8 +410,8 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
                                              'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format("Partner's")),
                                          })
 
-    def __init__(self,  *args, **kwargs):
-        super(OrganizationInfoForm, self).__init__( *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(OrganizationInfoForm, self).__init__(*args, **kwargs)
         self.fields['city'].required = False
         self.fields['founding_year'].required = True
 
@@ -558,7 +560,7 @@ class RegModelForm(BaseOnboardingModelForm):
         required=False,
         label=ugettext_noop('Check here if you are currently unemployed or otherwise not affiliated with an '
                             'organization.')
-        )
+    )
 
     is_poc = forms.ChoiceField(label=ugettext_noop('Will you be the Administrator of your organization on our '
                                                    'website?'),
@@ -795,7 +797,7 @@ class OrganizationMetricModelForm(BaseOnboardingModelForm):
                                                                   "is available to the public. You should not give nonpublic or "
                                                                   "confidential information."))
 
-    def __init__(self,  *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(OrganizationMetricModelForm, self).__init__(*args, **kwargs)
         self.fields['actual_data'].empty_label = None
         self.fields['actual_data'].required = False
@@ -839,7 +841,7 @@ class OrganizationMetricModelForm(BaseOnboardingModelForm):
                                          "that you should only give information that you are allowed to share and that "
                                          "is available to the public. You should not give nonpublic or confidential "
                                          "information."),
-            "total_clients" : ugettext_noop("A client or direct beneficiary is any person benefiting directly from your "
+            "total_clients": ugettext_noop("A client or direct beneficiary is any person benefiting directly from your "
                                            "organization's activities through face-to-face contact with program staff, "
                                            "often in a one-on-one or small-group setting. Please do not include "
                                            "indirect beneficiaries or people your organization reaches on a lighter "
@@ -890,7 +892,7 @@ class OrganizationMetricModelForm(BaseOnboardingModelForm):
             raise forms.ValidationError(ugettext_noop(EMPTY_FIELD_ERROR.format("End date for Last Fiscal Year")))
 
         if last_fiscal_year_end_date and \
-            last_fiscal_year_end_date > datetime.now().date():
+                last_fiscal_year_end_date > datetime.now().date():
             raise forms.ValidationError(ugettext_noop("Please enter a valid End date for Last Fiscal Year"))
 
         return last_fiscal_year_end_date
@@ -918,7 +920,7 @@ class OrganizationMetricModelForm(BaseOnboardingModelForm):
         all_currency_codes = Currency.objects.values_list('alphabetic_code', flat=True)
         currency_input = self.cleaned_data['local_currency']
 
-        if can_provide_info and not currency_input in all_currency_codes:
+        if can_provide_info and currency_input not in all_currency_codes:
             raise forms.ValidationError(ugettext_noop('Please select Currency Code.'))
 
         return currency_input
@@ -1003,7 +1005,7 @@ class OrganizationMetricModelUpdateForm(OrganizationMetricModelForm):
                                               "is available to the public. You should not give nonpublic or "
                                               "confidential information."))
 
-    def __init__(self,  *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(OrganizationMetricModelForm, self).__init__(*args, **kwargs)
         self.fields['actual_data'].empty_label = None
         self.fields['actual_data'].required = False
@@ -1096,7 +1098,7 @@ class OrganizationMetricModelUpdateForm(OrganizationMetricModelForm):
             raise forms.ValidationError(ugettext_noop(EMPTY_FIELD_ERROR.format("End date for Last Fiscal Year")))
 
         if last_fiscal_year_end_date and \
-            last_fiscal_year_end_date > datetime.now().date():
+                last_fiscal_year_end_date > datetime.now().date():
             raise forms.ValidationError(ugettext_noop("Please enter a valid End date for Last Fiscal Year"))
 
         return last_fiscal_year_end_date
@@ -1121,7 +1123,7 @@ class OrganizationMetricModelUpdateForm(OrganizationMetricModelForm):
         all_currency_codes = Currency.objects.values_list('alphabetic_code', flat=True)
         currency_input = self.cleaned_data['local_currency']
 
-        if not currency_input in all_currency_codes:
+        if currency_input not in all_currency_codes:
             raise forms.ValidationError(ugettext_noop('Please select currency code.'))
 
         return currency_input

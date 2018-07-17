@@ -61,7 +61,7 @@ class TestUserInfoForm(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
               Mock(return_value=MagicMock())).start()
 
         patch('nodebb.signals.handlers.get_current_request',
-               Mock(return_value=MagicMock())).start()
+              Mock(return_value=MagicMock())).start()
 
     def setUp(self):
         """ Create a course and user, then log in. """
@@ -170,9 +170,9 @@ class TestUserInfoForm(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
 
         for (key, _field) in self.form_data.items():
             if key in ["year_of_birth", "gender", "level_of_education", "language", "city"]:
-                self.assertEqual(getattr(user_extended_profile.user.profile, key) , self.form_data[key])
+                self.assertEqual(getattr(user_extended_profile.user.profile, key), self.form_data[key])
             elif key in ["not_listed_gender", "english_proficiency"]:
-                self.assertEqual(getattr(user_extended_profile, key) , self.form_data[key])
+                self.assertEqual(getattr(user_extended_profile, key), self.form_data[key])
             elif key in ["country"]:
                 self.assertEqual(getattr(user_extended_profile.user.profile, key).name, self.form_data[key])
 
@@ -292,7 +292,7 @@ class TestOnBoardingSteps(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
               Mock(return_value=MagicMock())).start()
 
         patch('nodebb.signals.handlers.get_current_request',
-               Mock(return_value=MagicMock())).start()
+              Mock(return_value=MagicMock())).start()
 
     def setUp(self):
         """ Create a course and user, then log in. """
