@@ -108,22 +108,21 @@ class UserInfoModelForm(BaseOnboardingModelForm):
                                            choices=LEVEL_OF_EDUCATION_CHOICES,
                                            error_messages={
                                                'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
-                                                   'Level of Education')),
-                                           },
+                                                   'Level of Education'))},
                                            required=True)
     english_proficiency = forms.ChoiceField(label=ugettext_noop('English Language Proficiency'), label_suffix="*",
                                             choices=ENGLISH_PROFICIENCY_CHOICES,
                                             error_messages={
                                                 'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
-                                                    'English Language Proficiency')),
-                                            })
+                                                    'English Language Proficiency'))}
+                                            )
     role_in_org = forms.ChoiceField(label=ugettext_noop('Role in the Organization'),
                                     label_suffix="*",
                                     choices=ROLE_IN_ORG_CHOICES,
                                     error_messages={
                                         'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
-                                            'Role in the Organization')),
-                                    })
+                                            'Role in the Organization'))}
+                                    )
 
     def __init__(self, *args, **kwargs):
         super(UserInfoModelForm, self).__init__(*args, **kwargs)
@@ -359,29 +358,29 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
                                                                  "give the address for this page."),
                                          error_messages={
                                              'required': ugettext_noop('Please select an option for "Does your organization have a'
-                                                                       ' webpage?"'),
-                                         })
+                                                                       ' webpage?"')}
+                                         )
 
     org_type = forms.ChoiceField(label=ugettext_noop('Organization Type'), label_suffix="*",
                                  choices=ORG_TYPE_CHOICES,
                                  error_messages={
                                      'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
-                                         'Organization Type')),
-                                 })
+                                         'Organization Type'))}
+                                 )
 
     level_of_operation = forms.ChoiceField(label=ugettext_noop('Level of Operation'), label_suffix="*",
                                            choices=OPERATION_LEVEL_CHOICES,
                                            error_messages={
                                                'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
-                                                   'Level of Operation')),
-                                           })
+                                                   'Level of Operation'))}
+                                           )
 
     focus_area = forms.ChoiceField(label=ugettext_noop('Primary Focus Area'), label_suffix="*",
                                    choices=FOCUS_AREA_CHOICES,
                                    error_messages={
                                        'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
-                                           'Primary Focus Areas')),
-                                   })
+                                           'Primary Focus Areas'))}
+                                   )
 
     total_employees = forms.ChoiceField(label=ugettext_noop('Total Employees'), label_suffix="*",
                                         help_text="An employee is a member of your staff who is paid for their work. "
@@ -390,8 +389,8 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
                                                   "include yourself in your organization's employee count.",
                                         choices=TOTAL_EMPLOYEES_CHOICES,
                                         error_messages={
-                                            'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format('Total Employees')),
-                                        })
+                                            'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format('Total Employees'))}
+                                        )
 
     partner_networks = forms.ChoiceField(label=ugettext_noop("Is your organization currently working with any of "
                                                              "Philanthropy University's partners? "
@@ -407,8 +406,8 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
                                          widget=forms.CheckboxSelectMultiple,
                                          required=False,
                                          error_messages={
-                                             'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format("Partner's")),
-                                         })
+                                             'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format("Partner's"))}
+                                         )
 
     def __init__(self, *args, **kwargs):
         super(OrganizationInfoForm, self).__init__(*args, **kwargs)
@@ -776,8 +775,8 @@ class OrganizationMetricModelForm(BaseOnboardingModelForm):
                                          initial=1,
                                          error_messages={
                                              'required': ugettext_noop('Please select an option for Are you able to '
-                                                                       'provide information'),
-                                         })
+                                                                       'provide information')}
+                                         )
     effective_date = forms.DateField(input_formats=['%m/%d/%Y'],
                                      required=False,
                                      label=ugettext_noop('End Date of Last Fiscal Year'),
