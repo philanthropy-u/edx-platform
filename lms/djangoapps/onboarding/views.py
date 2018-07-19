@@ -399,7 +399,7 @@ def update_account_settings(request):
             return redirect(reverse('update_account_settings'))
 
     else:
-        email_preferences = request.user.email_preferences
+        email_preferences = getattr(request.user, 'email_preferences', None)
         form = forms.UpdateRegModelForm(
             instance=user_extended_profile,
             initial={
