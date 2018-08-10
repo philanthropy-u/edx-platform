@@ -22,6 +22,8 @@ from lms.djangoapps.onboarding.models import (
     OrganizationAdminHashKeys, EducationLevel, EnglishProficiency, RoleInsideOrg, OperationLevel,
     FocusArea, TotalEmployee, OrgSector, PartnerNetwork, OrganizationPartner, OrganizationMetric, Currency)
 
+from nodebb.helpers import update_nodebb_for_user_status
+
 NO_OPTION_SELECT_ERROR = 'Please select an option for {}'
 EMPTY_FIELD_ERROR = 'Please enter your {}'
 log = logging.getLogger("edx.onboarding")
@@ -639,6 +641,7 @@ class RegModelForm(BaseOnboardingModelForm):
         if (not user_email_preferences.opt_in and opt_in in ['yes', 'no']) or (
                 user_email_preferences.opt_in in ['yes', 'no']):
             user_email_preferences.opt_in = opt_in
+            update_nodebb_for_user_status(user.username, email_pref='y')
             user_email_preferences.save()
 
     def clean_organization_name(self):
