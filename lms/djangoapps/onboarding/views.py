@@ -389,15 +389,15 @@ def update_account_settings(request):
 
         form = forms.UpdateRegModelForm(request.POST, instance=user_extended_profile)
         if form.is_valid():
-            opt_in = request.user.email_preferences.opt_in
+
             user_extended_profile = form.save(user=user_extended_profile.user, commit=True)
             unattended_surveys = user_extended_profile.unattended_surveys(_type='list')
             are_forms_complete = not (bool(unattended_surveys))
 
             if not are_forms_complete:
                 return redirect(reverse(unattended_surveys[0]))
-
-            if user_extended_profile.opt_in == 'yes':
+            user_email_pref_opt_in = user_extended_profile.user.email_preferences.opt_in
+            if user_email_pref_opt_in in ['yes', 'no']:
                 update_nodebb_for_user_status(request.user.username, email_pref='y')
 
             return redirect(reverse('update_account_settings'))
