@@ -397,7 +397,8 @@ def update_account_settings(request):
             if not are_forms_complete:
                 return redirect(reverse(unattended_surveys[0]))
 
-            update_nodebb_for_user_status(request.user.username, email_pref='y')
+            if user_extended_profile.opt_in == 'yes':
+                update_nodebb_for_user_status(request.user.username, email_pref='y')
 
             return redirect(reverse('update_account_settings'))
 
