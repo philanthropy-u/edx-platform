@@ -65,6 +65,7 @@ class CurrencyAdmin(admin.ModelAdmin):
 
 class EmailPreferenceAdmin(admin.ModelAdmin):
     list_display = ('user', 'opt_in', 'modified_time', )
+    search_fields = ['user__email']
 
     def modified_time(self, obj):
         return "{}".format(obj.modified.strftime("%B %d, %Y %H:%M:%S"))

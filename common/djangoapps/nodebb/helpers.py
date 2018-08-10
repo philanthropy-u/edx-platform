@@ -83,11 +83,11 @@ def get_room_id(user_info):
     return room_info
 
 
-def update_nodebb_for_user_status(username):
+def update_nodebb_for_user_status(username, email_pref='n'):
     """
     Call nodebb client to update NodeBB for survey status update
     """
-    status_code, response_body = NodeBBClient().users.update_onboarding_surveys_status(username)
+    status_code, response_body = NodeBBClient().users.update_onboarding_surveys_status(username, email_pref)
     if status_code != 200:
         log.error('Surveys completion status sending failed')
     else:

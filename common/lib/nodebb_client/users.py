@@ -42,8 +42,9 @@ class ForumUser(User):
         kwargs['_uid'] = 1
         return self.client.delete('/api/v2/user/delete', **kwargs)
 
-    def update_onboarding_surveys_status(self, username):
+    def update_onboarding_surveys_status(self, username, email_pref='n'):
         """
         Update NodeBB when user successfully completed all required onboarding surveys
         """
-        return self.client.get('/api/v2/users/update-visibility-status?username=%s' % username)
+        return self.client.get('/api/v2/users/update-visibility-status?username=%s&emailPref=%s' %
+                               (username, email_pref))
