@@ -16,4 +16,9 @@ class Migration(migrations.Migration):
             name='enable_welcome_email',
             field=models.BooleanField(default=True),
         ),
+        migrations.AddField(
+            model_name='customsettings',
+            name='show_grades',
+            field=models.BooleanField(default=True),
+        ),
     ]
