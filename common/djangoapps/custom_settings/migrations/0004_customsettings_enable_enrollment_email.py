@@ -15,10 +15,5 @@ class Migration(migrations.Migration):
             model_name='customsettings',
             name='enable_enrollment_email',
             field=models.BooleanField(default=True),
-        ),
-        migrations.AddField(
-            model_name='customsettings',
-            name='show_grades',
-            field=models.BooleanField(default=True),
-        ),
+        )
     ]
