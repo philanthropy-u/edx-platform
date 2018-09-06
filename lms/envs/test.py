@@ -200,7 +200,7 @@ DATABASES = {
     },
     'student_module_history': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'student_module_history',
+        'NAME': 'edxtest',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': '127.0.0.1',
@@ -603,3 +603,6 @@ COMPREHENSIVE_THEME_DIRS = [REPO_ROOT / "themes", REPO_ROOT / "common/test"]
 COMPREHENSIVE_THEME_LOCALE_PATHS = [REPO_ROOT / "themes/conf/locale", ]
 
 LMS_ROOT_URL = "http://localhost:8000"
+NODEBB_RETRY_DELAY = 60
+NODEBB_ENDPOINT = "http://local.philanthropyu.org:4567"
+NODEBB_MASTER_TOKEN = "b4f6c9c3-d778-4b47-bdbc-73535cfdbe3b"

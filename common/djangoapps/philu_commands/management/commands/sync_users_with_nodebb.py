@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand
 from requests.exceptions import ConnectionError
 
 from common.djangoapps.nodebb.tasks import (task_create_user_on_nodebb, task_activate_user_on_nodebb,
-                                            task_update_user_profile_on_nodebb)
+                                            task_update_user_profile_on_nodebb, task_update_onboarding_surveys_status)
 from common.lib.nodebb_client.client import NodeBBClient
 from lms.djangoapps.onboarding.helpers import COUNTRIES
 from lms.djangoapps.onboarding.models import UserExtendedProfile
@@ -58,24 +58,26 @@ class Command(BaseCommand):
 
             nodebb_data = nodebb_users.get(user.username)
 
+            if not nodebb_data:
+                try:
+                    nodebb_client.users.create(username=user.username, user_data=edx_data)
+                    nodebb_client.users.update_onboarding_surveys_status(username=user.username)
+                    nodebb_client.users.activate(username=user.username, active=user.is_active)
+                    continue
+                except ConnectionError:
+                    task_create_user_on_nodebb.delay(username=user.username, user_data=edx_data)
+                    task_update_onboarding_surveys_status.delay(username=user.username)
+                    task_activate_user_on_nodebb.delay(username=user.username, active=user.is_active)
+
             # filter nodebb_data to ensure compatibility with edx_data
             for key in nodebb_data:
-                if str(nodebb_data[key]) == 'None':
+                if unicode(nodebb_data[key]) == u'None':
                     nodebb_data[key] = None
             if not nodebb_data.get('self_prioritize_areas'):
                 nodebb_data['self_prioritize_areas'] = []
 
-            if not nodebb_data:
-                try:
-                    nodebb_client.users.create(username=user.username, kwargs=edx_data)
-                    nodebb_client.users.activate(username=user.username, active=user.is_active)
-                    continue
-                except ConnectionError:
-                    task_create_user_on_nodebb.apply_async(username=user.username, kwargs=edx_data)
-                    task_activate_user_on_nodebb.apply_async(username=user.username, active=user.is_active)
-
             if not edx_data.viewitems() <= nodebb_data.viewitems():
                 try:
-                    nodebb_client.users.update_profile(username=user.username, kwargs=edx_data)
+                    nodebb_client.users.update_profile(username=user.username, profile_data=edx_data)
                 except ConnectionError:
-                    task_update_user_profile_on_nodebb(username=user.username, kwargs=edx_data)
+                    task_update_user_profile_on_nodebb.delay(username=user.username, profile_data=edx_data)
