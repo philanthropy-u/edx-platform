@@ -532,7 +532,8 @@ class TestStudentModuleGrading(SharedModuleStoreTestCase):
             display_name="Test Problem",
             data=problem_xml
         )
-        cls.request = get_mock_request(UserFactory())
+        cls.request = get_mock_request()
+        cls.request.user = UserFactory()
         cls.user = cls.request.user
         cls.instructor = UserFactory(username='staff', is_staff=True)
 
@@ -552,8 +553,9 @@ class TestStudentModuleGrading(SharedModuleStoreTestCase):
         self.assertEqual(grade.all_total.possible, all_possible)
         self.assertEqual(grade.graded_total.possible, graded_possible)
 
-    @patch('crum.get_current_request')
+    @patch('edxmako.request_context.get_current_request')
     def test_delete_student_state(self, _crum_mock):
+        _crum_mock.return_value = self.request
         problem_location = self.problem.location
         self._get_subsection_grade_and_verify(0, 1, 0, 1)
         answer_problem(course=self.course, request=self.request, problem=self.problem, score=1, max_value=1)

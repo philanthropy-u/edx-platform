@@ -73,12 +73,16 @@ def get_logger_config(log_dir,
         'filters': {
             'require_debug_false': {
                 '()': 'django.utils.log.RequireDebugFalse',
+            },
+            'remove_recurring_polling_logs': {
+                '()': 'openedx.core.lib.log_utils.RemoveRecurringPollingLogsFilter'
             }
         },
         'handlers': {
             'console': {
                 'level': console_loglevel,
                 'class': 'logging.StreamHandler',
+                'filters': ['remove_recurring_polling_logs'],
                 'formatter': 'standard',
                 'stream': sys.stderr,
             },
@@ -111,6 +115,7 @@ def get_logger_config(log_dir,
             'syslogger-remote': {
                 'level': 'INFO',
                 'class': 'logging.handlers.SysLogHandler',
+                'filters': ['remove_recurring_polling_logs'],
                 'address': syslog_addr,
                 'formatter': 'syslog_format',
             },
@@ -123,6 +128,7 @@ def get_logger_config(log_dir,
             'local': {
                 'class': 'logging.handlers.RotatingFileHandler',
                 'level': local_loglevel,
+                'filters': ['remove_recurring_polling_logs'],
                 'formatter': 'standard',
                 'filename': edx_file_loc,
                 'maxBytes': 1024 * 1024 * 2,
@@ -145,6 +151,7 @@ def get_logger_config(log_dir,
             'local': {
                 'level': local_loglevel,
                 'class': 'logging.handlers.SysLogHandler',
+                'filters': ['remove_recurring_polling_logs'],
                 'address': '/dev/log',
                 'formatter': 'syslog_format',
                 'facility': SysLogHandler.LOG_LOCAL0,

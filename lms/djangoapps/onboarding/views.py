@@ -70,7 +70,7 @@ def user_info(request):
         'gender': userprofile.gender,
         'language': userprofile.language,
         'country': COUNTRIES.get(userprofile.country) if not request.POST.get('country') else request.POST.get('country'),
-        'country_of_employment': COUNTRIES.get(user_extended_profile.country_of_employment, '') if not request.POST.get('country_of_employment') else request.POST.get('country_of_employment') ,
+        'country_of_employment': COUNTRIES.get(user_extended_profile.country_of_employment, '') if not request.POST.get('country_of_employment') else request.POST.get('country_of_employment'),
         'city': userprofile.city,
         'level_of_education': userprofile.level_of_education,
         'hours_per_week': user_extended_profile.hours_per_week if user_extended_profile.hours_per_week else '',
@@ -116,7 +116,7 @@ def user_info(request):
         'is_under_age': is_under_age,
         'non_profile_organization': Organization.is_non_profit(user_extended_profile),
         'is_poc': user_extended_profile.is_organization_admin,
-        'is_first_user': user_extended_profile.is_first_signup_in_org \
+        'is_first_user': user_extended_profile.is_first_signup_in_org
         if user_extended_profile.organization else False,
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
 
@@ -450,7 +450,7 @@ def suggest_org_admin(request):
                     if already_an_admin:
                         status = 400
                         message = ugettext_noop('%s is already admin of organization "%s"'
-                                                      % (org_admin_email, already_an_admin.label))
+                                                % (org_admin_email, already_an_admin.label))
                     elif already_suggested_as_admin:
                         message = ugettext_noop('%s is already suggested as admin of "%s" organization'
                                                 % (org_admin_email, already_suggested_as_admin.organization.label))
@@ -524,7 +524,7 @@ def get_currencies(request):
         term = request.GET.get('term', '')
         currencies = Currency.objects.filter(Q(country__icontains=term) | Q(name__icontains=term) |
                                              Q(alphabetic_code__icontains=term)).values_list('alphabetic_code',
-                                                                                               flat=True).distinct()
+                                                                                             flat=True).distinct()
     data = json.dumps(list(currencies))
     return HttpResponse(data, 'application/json')
 
@@ -651,5 +651,3 @@ def admin_activation(request, activation_key):
     context['username'] = new_admin.username if new_admin else None
 
     return render_to_response('onboarding/admin_change_confirmation.html', context)
-
-

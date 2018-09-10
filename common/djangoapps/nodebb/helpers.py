@@ -1,11 +1,13 @@
 import collections
 
 from django.core.urlresolvers import reverse
+from requests.exceptions import ConnectionError
 
 from courseware.tabs import get_course_tab_list
 from common.lib.nodebb_client.client import NodeBBClient
 from lms.djangoapps.grades.new.course_grade import CourseGradeFactory
 from nodebb.models import DiscussionCommunity, TeamGroupChat
+from nodebb.tasks import task_update_onboarding_surveys_status
 
 from logging import getLogger
 log = getLogger(__name__)
@@ -90,5 +92,6 @@ def update_nodebb_for_user_status(username):
     status_code, response_body = NodeBBClient().users.update_onboarding_surveys_status(username)
     if status_code != 200:
         log.error('Surveys completion status sending failed')
+        task_update_onboarding_surveys_status.delay(username=username)
     else:
         log.info('Surveys completion status sent for %s' % username)

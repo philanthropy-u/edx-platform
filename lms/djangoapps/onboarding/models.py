@@ -241,7 +241,7 @@ class OrganizationPartner(models.Model):
 
         # Set unchecked partners end date to today
         cls.objects.filter(organization=organization,
-            partner__in=removed_partners, end_date__gt=datetime.utcnow()).update(
+                           partner__in=removed_partners, end_date__gt=datetime.utcnow()).update(
             end_date=datetime.now(utc))
 
         # Mark removed partner affliation flag to False if not selected in any organization
@@ -254,7 +254,9 @@ class OrganizationPartner(models.Model):
 
         # Get already added partners for an organization
         no_updated_selections = cls.objects.filter(organization=organization,
-            partner__in=partners, end_date__gt=datetime.utcnow()).values_list('partner', flat=True)
+                                                   partner__in=partners,
+                                                   end_date__gt=datetime.utcnow()).values_list(
+            'partner', flat=True)
 
         # Filter out new/reselected Partners
         new_selections = [p for p in partners if p not in no_updated_selections]
@@ -476,7 +478,7 @@ class UserExtendedProfile(TimeStampedModel):
         :param selected_values: selected values list
         """
 
-        for function_area_field, label in self.FUNCTIONS_LABELS.items():
+        for function_area_field, _label in self.FUNCTIONS_LABELS.items():
             function_area_field = function_area_field.split("=")[1]
             if function_area_field in selected_values:
                 _updated_value = 1
@@ -491,7 +493,7 @@ class UserExtendedProfile(TimeStampedModel):
         :param selected_values: selected values list
         """
 
-        for interest_field, label in self.INTERESTS_LABELS.items():
+        for interest_field, _label in self.INTERESTS_LABELS.items():
             interest_field = interest_field.split("=")[1]
             if interest_field in selected_values:
                 _updated_value = 1
@@ -506,7 +508,7 @@ class UserExtendedProfile(TimeStampedModel):
         :param selected_values: selected values list
         """
 
-        for interested_learner_field, label in self.INTERESTED_LEARNERS_LABELS.items():
+        for interested_learner_field, _label in self.INTERESTED_LEARNERS_LABELS.items():
             interested_learner_field = interested_learner_field.split("=")[1]
             if interested_learner_field in selected_values:
                 _updated_value = 1
@@ -520,7 +522,7 @@ class UserExtendedProfile(TimeStampedModel):
         Return status for registration third step completion
         """
         return self.organization.org_type and self.organization.focus_area and self.organization.level_of_operation \
-               and self.organization.total_employees
+            and self.organization.total_employees
 
     def is_organization_details_filled(self):
         """
@@ -534,7 +536,7 @@ class UserExtendedProfile(TimeStampedModel):
         :param selected_values: list of selected goals
         """
 
-        for goal_field, label in self.GOALS_LABELS.items():
+        for goal_field, _label in self.GOALS_LABELS.items():
             goal_field = goal_field.split("=")[1]
             if goal_field in selected_values:
                 _updated_value = 1
@@ -623,8 +625,8 @@ class UserExtendedProfile(TimeStampedModel):
 
     def admin_has_pending_admin_suggestion_request(self):
         pending_suggestion_request = OrganizationAdminHashKeys.objects.filter(organization=self.organization,
-                                                                               suggested_by=self.user,
-                                                                               is_hash_consumed=False).first()
+                                                                              suggested_by=self.user,
+                                                                              is_hash_consumed=False).first()
         return bool(self.is_organization_admin and pending_suggestion_request)
 
     @property
@@ -667,7 +669,7 @@ class OrganizationMetric(TimeStampedModel):
     org = models.ForeignKey(Organization, related_name="organization_metrics")
     user = models.ForeignKey(User, related_name="organization_metrics")
     submission_date = models.DateTimeField(auto_now_add=True)
-    actual_data= models.NullBooleanField(choices=ACTUAL_DATA_CHOICES, blank=True, null=True)
+    actual_data = models.NullBooleanField(choices=ACTUAL_DATA_CHOICES, blank=True, null=True)
     effective_date = models.DateField(blank=True, null=True)
     total_clients = models.PositiveIntegerField(blank=True, null=True)
     total_employees = models.PositiveIntegerField(blank=True, null=True)
@@ -676,6 +678,3 @@ class OrganizationMetric(TimeStampedModel):
     total_donations = models.BigIntegerField(blank=True, null=True)
     total_expenses = models.BigIntegerField(blank=True, null=True)
     total_program_expenses = models.BigIntegerField(blank=True, null=True)
-
-
-
