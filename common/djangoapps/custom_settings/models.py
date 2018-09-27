@@ -31,6 +31,8 @@ class CustomSettings(models.Model):
             if last_id is not None:
                 course_short_id = last_id + 1
                 self.course_short_id = course_short_id
+            else:
+                self.course_short_id = 100
 
         super(CustomSettings, self).save(*args, **kwargs)
 
