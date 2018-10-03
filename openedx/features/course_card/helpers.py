@@ -88,6 +88,7 @@ def initialize_course_settings(source_course_key, destination_course_key):
 
     if source_course_key:
         _settings = CustomSettings.objects.filter(id=source_course_key).first()
-        tags = _settings.tags
-        CustomSettings.objects.filter(id=destination_course_key).update(tags=tags)
+        if _settings and _settings.tags:
+            tags = _settings.tags
+            CustomSettings.objects.filter(id=destination_course_key).update(tags=tags)
 
