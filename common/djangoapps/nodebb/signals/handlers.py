@@ -90,6 +90,12 @@ def update_user_profile_on_nodebb(sender, instance, created, **kwargs):
     """
     Create/update user account at nodeBB when user created/updated at edx Platform
     """
+
+    # In case user login, no need to update user info on nodebb or mailchimp
+    updated_fields = kwargs['update_fields']
+    if updated_fields is not None and updated_fields.__len__() is 1 and 'last_login' in updated_fields:
+        return
+
     send_user_info_to_mailchimp(sender, instance, created, kwargs)
 
     request = get_current_request()
