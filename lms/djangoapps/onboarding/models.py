@@ -723,4 +723,13 @@ class OrganizationMetric(TimeStampedModel):
     total_program_expenses = models.BigIntegerField(blank=True, null=True)
 
 
+class OrganizationMetricUpdatePrompt(models.Model):
+    org = models.ForeignKey(Organization, related_name="organization_metrics_update_prompts")
+    responsible_user = models.ForeignKey(User, related_name="organization_metrics_update_prompts")
+    latest_metric_submission = models.DateTimeField()
+    year = models.BooleanField(default=False)
+    year_month = models.BooleanField(default=False)
+    year_three_month = models.BooleanField(default=False)
+    year_six_month = models.BooleanField(default=False)
+
 

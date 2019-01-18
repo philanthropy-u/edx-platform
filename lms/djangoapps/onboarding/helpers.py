@@ -4,6 +4,11 @@ from difflib import SequenceMatcher
 from lms.djangoapps.onboarding.models import Organization
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from django.conf import settings
+from dateutil.relativedelta import relativedelta
+import datetime
+import pytz
+
+utc = pytz.UTC
 
 COUNTRIES = {
     'AD': 'Andorra',
@@ -7870,3 +7875,47 @@ def get_alquity_community_url():
     :return: url of alquity private community
     """
     return u'{}{}'.format(settings.NODEBB_ENDPOINT, configuration_helpers.get_value('ALQUITY_PRIVATE_COMMUNITY'))
+
+
+def get_diff_from_current_date(submission_date):
+    """
+    :param: submission_date
+    :return: relative delta of python aware(UTC) current datetime and submission date
+    """
+    return relativedelta(utc.localize(datetime.datetime.now()), submission_date)
+
+
+def its_been_year(submission_date):
+    """
+    :param submission_date:
+    :return: True if latest submission is an year ago else False
+    """
+    time_delta = get_diff_from_current_date(submission_date)
+    return time_delta.years >= 1
+
+
+def its_been_year_month(submission_date):
+    """
+    :param submission_date:
+    :return: True if latest submission is an year and month ago else False
+    """
+    time_delta = get_diff_from_current_date(submission_date)
+    return time_delta.years >= 1 and time_delta.months >= 1
+
+
+def its_been_year_three_month(submission_date):
+    """
+    :param submission_date:
+    :return: True if latest submission is an year and three months ago else False
+    """
+    time_delta = get_diff_from_current_date(submission_date)
+    return time_delta.years >= 1 and time_delta.months >= 3
+
+
+def its_been_year_six_month(submission_date):
+    """
+    :param submission_date:
+    :return: True if latest submission is an year and six months ago else False
+    """
+    time_delta = get_diff_from_current_date(submission_date)
+    return time_delta.years >= 1 and time_delta.months >= 6
