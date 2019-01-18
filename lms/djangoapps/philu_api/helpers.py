@@ -27,9 +27,16 @@ def get_social_sharing_urls(course_url, meta_tags):
     share_url = add_or_replace_parameter(share_url, 'utm_source', 'Facebook')
     social_sharing_urls['facebook'] = add_or_replace_parameter(facebook_share_url, 'u', share_url)
 
-    # LinkedIn url
+    # LinkedIn
     linkedin_share_url = 'http://www.linkedin.com/shareArticle?mini=true'
     share_url = add_or_replace_parameter(share_url, 'utm_source', 'LinkedIn')
     social_sharing_urls['linkedin'] = add_or_replace_parameter(linkedin_share_url, 'url', share_url)
+
+    # Twitter
+    twitter_share_url = 'https://twitter.com/share'
+    share_url = add_or_replace_parameter(share_url, 'utm_source', 'Twitter')
+    twitter_message = 'Check out {} on @PhilanthropyUni'.format(meta_tags['title'])
+    twitter_url = add_or_replace_parameter(twitter_share_url, 'url', share_url)
+    social_sharing_urls['twitter'] = add_or_replace_parameter(twitter_url, 'text', twitter_message)
 
     return social_sharing_urls
