@@ -2311,6 +2311,16 @@ SOCIAL_SHARING_SETTINGS = {
     'DASHBOARD_TWITTER_TEXT': None
 }
 
+# Each tuple represents social share url, the parameter for course url
+SOCIAL_SHARING_URLS = {
+    'facebook': {'url': 'https://www.facebook.com/sharer/sharer.php', 'url_param': 'u', 'utm_source': 'Facebook'},
+    'linkedin': {'url': 'http://www.linkedin.com/shareArticle?mini=true', 'url_param': 'url', 'utm_source': 'LinkedIn'},
+    'twitter': {'url': 'https://twitter.com/share', 'url_param': 'url', 'utm_source': 'Twitter'}
+}
+
+TWITTER_MESSAGE_FORMAT = 'Check out {} on @PhilanthropyUni'
+DEFAULT_IMAGE_NAME = 'images_course_image.jpg'
+
 ################# Social Media Footer Links #######################
 # The names list controls the order of social media
 # links in the footer.

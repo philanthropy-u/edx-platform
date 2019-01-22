@@ -526,6 +526,7 @@ def course_about(request, course_id):
         get_course_by_id,
         sort_by_announcement
     )
+    from lms.envs.common import DEFAULT_IMAGE_NAME
     import shoppingcart
     from shoppingcart.utils import is_shopping_cart_enabled
     from openedx.core.djangoapps.coursetalk.helpers import inject_coursetalk_keys_into_context
@@ -623,9 +624,9 @@ def course_about(request, course_id):
         meta_tags = custom_settings.get_course_meta_tags()
 
         meta_tags['description'] = meta_tags['description'] or course_details.short_description
-        meta_tags['title'] = meta_tags['title'] or course.display_name
+        meta_tags['title'] = meta_tags['title'] or course_details.title or course.display_name
 
-        if course_details.banner_image_name != 'images_course_image.jpg':
+        if course_details.banner_image_name != DEFAULT_IMAGE_NAME:
             meta_tags['image'] = settings.LMS_ROOT_URL + course_details.banner_image_asset_path
 
         social_sharing_urls = get_social_sharing_urls(request.build_absolute_uri(), meta_tags)

@@ -6,7 +6,7 @@ from w3lib.url import add_or_replace_parameter
 
 
 def get_encoded_token(username, email, id):
-    return jwt.encode({'id': id, 'username': username, 'email': email }, 'secret', algorithm='HS256')
+    return jwt.encode({'id': id, 'username': username, 'email': email}, 'secret', algorithm='HS256')
 
 
 def get_course_custom_settings(course_key):
@@ -18,25 +18,32 @@ def get_course_custom_settings(course_key):
 
 
 def get_social_sharing_urls(course_url, meta_tags):
-    social_sharing_urls = {}
+    from lms.envs.common import (SOCIAL_SHARING_URLS, TWITTER_MESSAGE_FORMAT)
+
     utm_params = meta_tags['utm_params'].copy()
-    share_url = '{}?{}'.format(course_url, urlencode(utm_params))
+    course_share_url = '{}?{}'.format(course_url, urlencode(utm_params))
 
-    # Facebook
-    facebook_share_url = 'https://www.facebook.com/sharer/sharer.php'
-    share_url = add_or_replace_parameter(share_url, 'utm_source', 'Facebook')
-    social_sharing_urls['facebook'] = add_or_replace_parameter(facebook_share_url, 'u', share_url)
+    return {
+        'facebook': _compile_social_sharing_url(SOCIAL_SHARING_URLS['facebook']['url'], course_share_url,
+                                                SOCIAL_SHARING_URLS['facebook']['url_param'],
+                                                SOCIAL_SHARING_URLS['facebook']['utm_source']),
 
-    # LinkedIn
-    linkedin_share_url = 'http://www.linkedin.com/shareArticle?mini=true'
-    share_url = add_or_replace_parameter(share_url, 'utm_source', 'LinkedIn')
-    social_sharing_urls['linkedin'] = add_or_replace_parameter(linkedin_share_url, 'url', share_url)
+        'linkedin': _compile_social_sharing_url(SOCIAL_SHARING_URLS['linkedin']['url'], course_share_url,
+                                                SOCIAL_SHARING_URLS['linkedin']['url_param'],
+                                                SOCIAL_SHARING_URLS['linkedin']['utm_source']),
 
-    # Twitter
-    twitter_share_url = 'https://twitter.com/share'
-    share_url = add_or_replace_parameter(share_url, 'utm_source', 'Twitter')
-    twitter_message = 'Check out {} on @PhilanthropyUni'.format(meta_tags['title'])
-    twitter_url = add_or_replace_parameter(twitter_share_url, 'url', share_url)
-    social_sharing_urls['twitter'] = add_or_replace_parameter(twitter_url, 'text', twitter_message)
+        'twitter': _compile_social_sharing_url(SOCIAL_SHARING_URLS['twitter']['url'], course_share_url,
+                                               SOCIAL_SHARING_URLS['twitter']['url_param'],
+                                               SOCIAL_SHARING_URLS['twitter']['utm_source'],
+                                               text=TWITTER_MESSAGE_FORMAT.format(meta_tags['title']))
+    }
 
-    return social_sharing_urls
+
+def _compile_social_sharing_url(share_url, course_url, url_param, utm_source, text=None):
+    course_url_with_utm = add_or_replace_parameter(course_url, 'utm_source', utm_source)
+    url = add_or_replace_parameter(share_url, url_param, course_url_with_utm)
+
+    if text:
+        url = add_or_replace_parameter(url, 'text', text)
+
+    return url
