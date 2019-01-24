@@ -98,6 +98,7 @@ class OrganizationPartnerAdmin(admin.ModelAdmin):
 class OrganizationMetricUpdatePromptAdmin(admin.ModelAdmin):
     list_display = ('latest_metric_submission', 'year', 'year_month', 'year_three_month', 'year_six_month',
                     'org', 'responsible_user')
+    search_fields = ('org__label', 'responsible_user__username')
 
 
 admin.site.register(Currency, CurrencyAdmin)
