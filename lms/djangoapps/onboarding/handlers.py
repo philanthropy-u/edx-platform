@@ -33,19 +33,18 @@ def sync_metric_update_prompts_in_mailchimp(sender, instance, update_fields, **k
 
 
 @receiver(post_save, sender=Organization)
-def update_responsible_user_to_admin(instance, created, update_fields, **kwargs):
-    if not created and 'admin_id' in update_fields:
+def update_responsible_user_to_admin(sender, instance, update_fields, **kwargs):
+    if not kwargs['created'] and instance.admin_id:
         try:
-            # TODO: clear the first responsible user in mailchimp after jassica's answer
-            prompt = OrganizationMetricUpdatePrompt.objects.get(org_id=instance.org_id)
-            prompt.admin_id = instance.admin_id
+            prompt = OrganizationMetricUpdatePrompt.objects.get(org_id=instance.id)
+            prompt.responsible_user_id = instance.admin_id
             prompt.save()
         except ObjectDoesNotExist:
             pass
 
 
 @receiver(post_save, sender=OrganizationMetric)
-def update_responsible_user_to_admin(instance, created, update_fields, **kwargs):
+def update_metric_prompts(instance, created, update_fields, **kwargs):
     this_metric_prompts = OrganizationMetricUpdatePrompt.objects.filter(org_id=instance.org_id)
 
     # Prepare date for prompt against this save in Organization Metric

@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from lms.djangoapps.onboarding.models import OrganizationMetricUpdatePrompt
-from lms.djangoapps.onboarding.helpers import its_been_year, its_been_year_month, \
+from lms.djangoapps.onboarding.helpers import get_current_utc_date, its_been_year, its_been_year_month, \
     its_been_year_three_month, its_been_year_six_month
 from mailchimp_pipeline.signals.handlers import sync_metric_update_prompt_with_mail_chimp
 
@@ -33,20 +33,23 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options):
-        prompts = OrganizationMetricUpdatePrompt.objects.all()
+        current_date = get_current_utc_date()
+
+        # Select those prompts whose lates_metric submission is atle
+        prompts = OrganizationMetricUpdatePrompt.objects.filter(latest_metric_submission__lte=current_date.replace(year=current_date.year-1))
         for prompt in prompts:
             submission_date = prompt.latest_metric_submission
             updated_year = its_been_year(submission_date)
             updated_year_month = its_been_year_month(submission_date)
             updated_year_three_month = its_been_year_three_month(submission_date)
             updated_year_six_month = its_been_year_six_month(submission_date)
-            is_prompt_updated = is_prompt_values_are_same(prompt,
+            is_prompt_same = is_prompt_values_are_same(prompt,
                                                           year=updated_year,
                                                           year_month=updated_year_month,
                                                           year_three_month=updated_year_three_month,
                                                           year_six_month=updated_year_six_month)
 
-            if not is_prompt_updated:
+            if not is_prompt_same:
                 prompt.year = updated_year
                 prompt.year_month = updated_year_month
                 prompt.year_three_month = updated_year_three_month

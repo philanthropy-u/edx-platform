@@ -11,7 +11,7 @@ def get_latest_metric(org):
     :param org:
     :return: latest organization metrics submitted by user
     """
-    return org.organization_metrics.order_by('-submission_date')[0]
+    return org.organization_metrics.order_by('-submission_date').first()
 
 
 def get_latest_submission_date(org):
@@ -43,7 +43,17 @@ def create_org_metric_prompts(apps, schema_editor):
 
     Organization = apps.get_model("onboarding", "Organization")
     Prompt = apps.get_model("onboarding", "OrganizationMetricUpdatePrompt")
-    organizations = Organization.objects.all()
+
+    # raw query is just for performance optimization. We pick only those organizations which have so
+    organizations = Organization.objects.raw(
+        """
+        SELECT  `onboarding_organization`.*
+        FROM `onboarding_organization` 
+        INNER JOIN `onboarding_organizationmetric` 
+        ON (`onboarding_organization`.`id` = `onboarding_organizationmetric`.`org_id`)
+        group by `onboarding_organization`.`id`
+        """
+    )
 
     Prompt.objects.all().delete()
     for org in organizations:

@@ -7877,12 +7877,19 @@ def get_alquity_community_url():
     return u'{}{}'.format(settings.NODEBB_ENDPOINT, configuration_helpers.get_value('ALQUITY_PRIVATE_COMMUNITY'))
 
 
+def get_current_utc_date():
+    """
+    :return: current date in utc
+    """
+    return utc.localize(datetime.datetime.now())
+
+
 def get_diff_from_current_date(submission_date):
     """
     :param: submission_date
     :return: relative delta of python aware(UTC) current datetime and submission date
     """
-    return relativedelta(utc.localize(datetime.datetime.now()), submission_date)
+    return relativedelta(get_current_utc_date(), submission_date)
 
 
 def its_been_year(submission_date):
