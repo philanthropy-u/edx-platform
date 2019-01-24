@@ -20,7 +20,8 @@ from lms.djangoapps.onboarding.models import (
     EmailPreference,
     FunctionArea,
     OrganizationPartner,
-    OrganizationMetric
+    OrganizationMetric,
+    OrganizationMetricUpdatePrompt,
 )
 
 
@@ -94,6 +95,11 @@ class OrganizationPartnerAdmin(admin.ModelAdmin):
     list_filter = ('organization', 'partner', 'start_date', 'end_date',)
 
 
+class OrganizationMetricUpdatePromptAdmin(admin.ModelAdmin):
+    list_display = ('latest_metric_submission', 'year', 'year_month', 'year_three_month', 'year_six_month',
+                    'org', 'responsible_user')
+
+
 admin.site.register(Currency, CurrencyAdmin)
 admin.site.register(RoleInsideOrg, RoleInsideOrgAdmin)
 admin.site.register(OrgSector, OrgSectorAdmin)
@@ -109,3 +115,4 @@ admin.site.register(EmailPreference, EmailPreferenceAdmin)
 admin.site.register(FunctionArea, FunctionAreaAdmin)
 admin.site.register(OrganizationPartner, OrganizationPartnerAdmin)
 admin.site.register(OrganizationMetric, OrganizationMetricAdmin)
+admin.site.register(OrganizationMetricUpdatePrompt, OrganizationMetricUpdatePromptAdmin)
