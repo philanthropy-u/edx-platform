@@ -1,7 +1,8 @@
 import re
+from django.core.exceptions import ObjectDoesNotExist
 from datetime import date
 from difflib import SequenceMatcher
-from lms.djangoapps.onboarding.models import Organization
+from lms.djangoapps.onboarding.models import Organization, OrganizationMetricUpdatePrompt
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from django.conf import settings
 from dateutil.relativedelta import relativedelta
@@ -7926,3 +7927,18 @@ def its_been_year_six_month(submission_date):
     """
     time_delta = get_diff_from_current_date(submission_date)
     return time_delta.years >= 1 and time_delta.months >= 6
+
+
+def should_we_show_org_update_prompt(user):
+    """
+    :param user:
+    :return: True if user is not reponsible for some org OR he is responsible for some org
+    but it's not been more than a year user submitted org metrics, otherwise False
+    """
+
+    try:
+        prompt = OrganizationMetricUpdatePrompt.objects.get(responsible_user_id=user.id)
+        return prompt.year or prompt.year_month or prompt.year_three_month or prompt.year_six_month
+
+    except ObjectDoesNotExist:
+        return False
