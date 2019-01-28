@@ -7929,16 +7929,23 @@ def its_been_year_six_month(submission_date):
     return time_delta.years >= 1 and time_delta.months >= 6
 
 
-def should_we_show_org_update_prompt(user):
+def get_org_metric_update_prompt(user):
+    """
+    :param user:
+    :return: org_metric_update_prompt object if user is responsible for some org
+             other-wise return None
+    """
+    return OrganizationMetricUpdatePrompt.objects.filter(responsible_user_id=user.id).first()
+
+
+def is_org_detail_prompt_available(prompt):
     """
     :param user:
     :return: True if user is not reponsible for some org OR he is responsible for some org
     but it's not been more than a year user submitted org metrics, otherwise False
     """
 
-    try:
-        prompt = OrganizationMetricUpdatePrompt.objects.get(responsible_user_id=user.id)
-        return prompt.year or prompt.year_month or prompt.year_three_month or prompt.year_six_month
-
-    except ObjectDoesNotExist:
+    if prompt:
+        return prompt.year or prompt.year_month or prompt.year_three_month or prompt.year_six_month or True
+    else:
         return False
