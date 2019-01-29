@@ -3,7 +3,7 @@ from django.conf import settings
 from lms.djangoapps.onboarding.helpers import get_org_metric_update_prompt, \
     is_org_detail_prompt_available
 from lms.djangoapps.philu_overrides.constants import ACTIVATION_ERROR, ACTIVATION_ALERT_TYPE, \
-    ORG_DETAILS_UPDARE_ALERT
+    ORG_DETAILS_UPDATE_ALERT
 
 
 def get_global_alert_messages(request):
@@ -27,7 +27,7 @@ def get_global_alert_messages(request):
             and is_org_detail_prompt_available(metric_update_prompt):
         alert_messages.append({
             "type": ACTIVATION_ALERT_TYPE,
-            "alert": ORG_DETAILS_UPDARE_ALERT
+            "alert": ORG_DETAILS_UPDATE_ALERT
         })
 
     return {"alert_messages": alert_messages}
