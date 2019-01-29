@@ -7934,7 +7934,13 @@ def get_org_metric_update_prompt(user):
     :return: org_metric_update_prompt object if user is responsible for some org
              other-wise return None
     """
-    return OrganizationMetricUpdatePrompt.objects.filter(responsible_user_id=user.id).first()
+
+    # If user is responsible for multiple organization we are picking the latest one
+    # becuase according to the scenario
+    # https://philanthropyu.atlassian.net/browse/LP-1222?focusedCommentId=15084&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-15084
+    # the user will be the admin of the organization of latest prompt
+    return OrganizationMetricUpdatePrompt.objects.filter(responsible_user_id=user.id)\
+        .order_by('-latest_metric_submission').first()
 
 
 def is_org_detail_prompt_available(prompt):
