@@ -47,6 +47,7 @@ def get_social_sharing_urls(course_url, meta_tags):
 def _compile_social_sharing_url(share_url, course_url, url_param, utm_source, text=None):
     course_url_with_utm = add_or_replace_parameter(course_url, 'utm_source', utm_source)
 
+    # Introduced for the email case where the addThis widget is being used
     if not share_url:
         return course_url_with_utm
 
