@@ -7946,6 +7946,6 @@ def is_org_detail_prompt_available(prompt):
     """
 
     if prompt:
-        return prompt.year or prompt.year_month or prompt.year_three_month or prompt.year_six_month or True
+        return prompt.year or prompt.year_month or prompt.year_three_month or prompt.year_six_month
     else:
         return False
