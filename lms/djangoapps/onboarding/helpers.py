@@ -1,5 +1,4 @@
 import re
-from django.core.exceptions import ObjectDoesNotExist
 from datetime import date
 from difflib import SequenceMatcher
 from lms.djangoapps.onboarding.models import Organization, OrganizationMetricUpdatePrompt
