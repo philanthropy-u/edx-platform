@@ -73,7 +73,7 @@ class @HTMLEditingDescriptor
           code: {inline: 'code'}
         },
         # Disable visual aid on borderless table.
-        visual: true,
+        visual: false,
         plugins: "textcolor, link, image, codemirror, table, media",
         codemirror: {
           path: "#{baseUrl}/js/vendor"
