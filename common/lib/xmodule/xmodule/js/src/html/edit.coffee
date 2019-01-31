@@ -65,6 +65,7 @@ class @HTMLEditingDescriptor
         schema: "html5",
         # Necessary to preserve relative URLs to our images.
         convert_urls : false,
+        body_class : "xmodule_display xmodule_HtmlModule",
         # Sniff UI direction from `.wrapper-view` in studio or `.window-wrap` in LMS
         directionality: $(".wrapper-view, .window-wrap").prop('dir'),
         content_css : tiny_mce_css_links.join(", "),
