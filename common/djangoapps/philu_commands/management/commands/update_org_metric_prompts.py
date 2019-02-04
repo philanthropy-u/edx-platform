@@ -54,6 +54,10 @@ class Command(BaseCommand):
                 prompt.year_month = updated_year_month
                 prompt.year_three_month = updated_year_three_month
                 prompt.year_six_month = updated_year_six_month
+                # if remind_me_later is True it's means that now we have to set it to None
+                # Because it's next trigger now
+                if prompt.remind_me_later:
+                    prompt.remind_me_later = None
                 prompt.save()
                 sync_metric_update_prompt_with_mail_chimp(prompt)
             else:
