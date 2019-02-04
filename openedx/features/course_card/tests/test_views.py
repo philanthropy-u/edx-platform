@@ -163,5 +163,3 @@ class CourseCardBaseClass(ModuleStoreTestCase):
 
         # Desired Result is one since only one ongoing course
         self.assertEqual(pq(response.content)('span.text:contains("Start Date")').length, 1)
-
-    def test_start_date_value(self):
