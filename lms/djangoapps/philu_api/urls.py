@@ -5,7 +5,8 @@ from django.conf.urls import url, patterns
 
 from lms.djangoapps.philu_api.views import PlatformSyncService, \
     get_user_chat, mark_user_chat_read, get_user_data, MailChimpDataSyncAPI, \
-    ThirdPartyResultDataSyncAPI, download_pdf_file, send_alquity_fake_confirmation_email
+    ThirdPartyResultDataSyncAPI, download_pdf_file, send_alquity_fake_confirmation_email, \
+    UpdatePromptClickRecord
 
 urlpatterns = patterns(
     'philu_api.views',
@@ -18,4 +19,5 @@ urlpatterns = patterns(
     url(r'profile/chats/mark/?$', mark_user_chat_read, name='mark_user_chat_read'),
     url(r'download_pdf_file/$', download_pdf_file, name='download_pdf_file'),
     url(r'send_alquity_email/$', send_alquity_fake_confirmation_email, name='send_alquity_fake_confirmation_email'),
+    url(r'record_prompt_click/$', UpdatePromptClickRecord.as_view(), name='record_prompt_click'),
 )

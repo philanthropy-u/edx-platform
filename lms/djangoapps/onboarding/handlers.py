@@ -9,7 +9,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.dispatch import receiver
 from mailchimp_pipeline.signals.handlers import sync_metric_update_prompt_with_mail_chimp
 from lms.djangoapps.onboarding.models import Organization, OrganizationMetric,\
-        OrganizationMetricUpdatePrompt
+        OrganizationMetricUpdatePrompt, MetricUpdatePromptRecord
+from lms.djangoapps.onboarding.constants import  REMIND_ME_LATER_KEY, TAKE_ME_THERE_KEY, NOT_INTERESTED_KEY
 from lms.djangoapps.onboarding.helpers import its_been_year, its_been_year_month, \
     its_been_year_three_month, its_been_year_six_month
 
@@ -77,6 +78,20 @@ def update_metric_prompts(instance, created, update_fields, **kwargs):
                                                 year_three_month=year_three_month,
                                                 year_six_month=year_six_month
                                                 )
+        prompt.save()
+
+
+@receiver(post_save, sender=MetricUpdatePromptRecord)
+def update_remind_me_later(instance, **kwargs):
+    prompt = instance.prompt
+    click = str(instance.click)
+    if prompt:
+        if click == REMIND_ME_LATER_KEY:
+            prompt.remind_me_later = True
+        elif click == TAKE_ME_THERE_KEY:
+            prompt.remind_me_later = None
+        elif click == NOT_INTERESTED_KEY:
+            prompt.remind_me_later = False
         prompt.save()
 
 

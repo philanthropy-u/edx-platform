@@ -7945,8 +7945,8 @@ def get_org_metric_update_prompt(user):
 
 def is_org_detail_prompt_available(prompt):
     """
-    :param user:
-    :return: True if user is not reponsible for some org OR he is responsible for some org
+    :param prompt:
+    :return: True if user is not responsible for some org OR he is responsible for some org
     but it's not been more than a year user submitted org metrics, otherwise False
     """
 
@@ -7954,3 +7954,12 @@ def is_org_detail_prompt_available(prompt):
         return prompt.year or prompt.year_month or prompt.year_three_month or prompt.year_six_month
     else:
         return False
+
+
+def is_org_detail_platform_overlay_available(prompt):
+    """
+    :param prompt:
+    :return: True if we can prompt learner
+     False if learner had clicked `No thanks` or `remind me later`
+    """
+    return prompt and prompt.remind_me_later is None
