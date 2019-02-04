@@ -596,8 +596,10 @@ JWT_AUTH.update({
 
 COURSE_CATALOG_API_URL = 'https://catalog.example.com/api/v1'
 
-COMPREHENSIVE_THEME_DIRS = [REPO_ROOT / "themes", REPO_ROOT / "common/test"]
-COMPREHENSIVE_THEME_LOCALE_PATHS = [REPO_ROOT / "themes/conf/locale", ]
+# COMPREHENSIVE_THEME_DIRS = [REPO_ROOT / "themes", REPO_ROOT / "common/test"]
+# COMPREHENSIVE_THEME_LOCALE_PATHS = [REPO_ROOT / "themes/conf/locale", ]
+COMPREHENSIVE_THEME_DIRS = ["/edx/app/edxapp/philu-edx-theme/edx-platform"]
+COMPREHENSIVE_THEME_LOCALE_PATHS = []
 
 SERVICE_VARIANT = os.environ.get('SERVICE_VARIANT', None)
 
