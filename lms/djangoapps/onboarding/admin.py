@@ -101,8 +101,9 @@ class OrganizationMetricUpdatePromptAdmin(admin.ModelAdmin):
                     'org', 'responsible_user')
     search_fields = ('org__label', 'responsible_user__username')
 
+
 class MetricUpdatePromptRecordAdmin(admin.ModelAdmin):
-    list_display = ('prompt', 'click')
+    list_display = ('prompt', 'created', 'click')
     search_fields = ('prompt__responsible_user__username', 'prompt__org__label')
 
 
