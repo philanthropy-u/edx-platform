@@ -3,7 +3,7 @@ from django.conf import settings
 from lms.djangoapps.onboarding.helpers import get_org_metric_update_prompt, \
     is_org_detail_prompt_available, is_org_detail_platform_overlay_available
 from lms.djangoapps.philu_overrides.constants import ACTIVATION_ERROR, ACTIVATION_ALERT_TYPE, \
-    ORG_DETAILS_UPDATE_ALERT, ORG_DETAILS_UPDATE_OVERLAY_ALERT
+    ORG_DETAILS_UPDATE_ALERT
 
 
 def get_global_alert_messages(request):
@@ -33,9 +33,7 @@ def get_global_alert_messages(request):
 
     elif metric_update_prompt and show_org_detail_prompt\
             and is_org_detail_platform_overlay_available(metric_update_prompt):
-        overlay_message = {
-            "alert": ORG_DETAILS_UPDATE_OVERLAY_ALERT,
-        }
+        overlay_message = True
 
     return {"alert_messages": alert_messages, "overlay_message": overlay_message}
 

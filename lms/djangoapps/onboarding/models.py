@@ -737,6 +737,10 @@ class OrganizationMetricUpdatePrompt(models.Model):
     # False:  learner clicked `No Thanks`
     remind_me_later = models.NullBooleanField()
 
+    def __str__(self):
+        return '{}, {}'.format(self.responsible_user.username, self.org.label)
+
+
 
 class MetricUpdatePromptRecord(TimeStampedModel):
     prompt = models.ForeignKey(OrganizationMetricUpdatePrompt, related_name="metrics_update_prompt_records")
