@@ -1,33 +1,25 @@
-from django.contrib.auth.models import User
-from django.test import TestCase
-
-from ..views import get_course_cards
-from ..models import CourseCard
+from pyquery import PyQuery as pq
+from datetime import datetime, timedelta
 from django.core.urlresolvers import reverse
+from django.contrib.sites.models import Site
 
-from xmodule.modulestore.django import modulestore
+
 from xmodule.modulestore.tests.factories import CourseFactory
 from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
-
-from datetime import datetime, timedelta
-from pyquery import PyQuery as pq
-
 from openedx.core.djangoapps.theming.models import SiteTheme
-from django.contrib.sites.models import Site
-
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from student.tests.factories import UserFactory, CourseEnrollmentFactory
-
 from student.models import UserProfile
 from lms.djangoapps.onboarding.models import UserExtendedProfile, EmailPreference, Organization
-from common.lib.nodebb_client.client import NodeBBClient
+
+from ..models import CourseCard
 
 
 class CourseCardBaseClass(ModuleStoreTestCase):
 
     password = 'test'
-    # Always keep greater than equal to 2
+    # Always keep NUMBER_OF_COURSES greater than equal to 2
     NUMBER_OF_COURSES = 4
 
     def setUp(self):
@@ -81,12 +73,6 @@ class CourseCardBaseClass(ModuleStoreTestCase):
             course.save()
             CourseCard(course_id=course.id, course_name=course.display_name, is_enabled=True).save()
 
-
-
-
-        # CourseOverview.get_from_id(self.course.id)
-        # CourseEnrollmentFactory.create(user=student, course_id=self.course.id)
-
     @classmethod
     def setUpClass(cls):
         super(CourseCardBaseClass, cls).setUpClass()
@@ -94,6 +80,9 @@ class CourseCardBaseClass(ModuleStoreTestCase):
         site.save()
         theme = SiteTheme(site=site, theme_dir_name='philu')
         theme.save()
+
+
+class CourseCardViewBaseClass(CourseCardBaseClass):
 
     def test_enabled_courses_view(self):
         course = self.courses[0]
