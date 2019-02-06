@@ -51,7 +51,6 @@ class @HTMLEditingDescriptor
       $("link[rel=stylesheet][href*='tinymce']").filter("[href*='content']").each ->
           tiny_mce_css_links.push $(this).attr("href")
           return
-
   #   This is a workaround for the fact that tinyMCE's baseURL property is not getting correctly set on AWS
   #   instances (like sandbox). It is not necessary to explicitly set baseURL when running locally.
       tinyMCE.baseURL = "#{baseUrl}/js/vendor/tinymce/js/tinymce"
@@ -66,6 +65,7 @@ class @HTMLEditingDescriptor
         schema: "html5",
         # Necessary to preserve relative URLs to our images.
         convert_urls : false,
+        body_class : "xmodule_display xmodule_HtmlModule",
         # Sniff UI direction from `.wrapper-view` in studio or `.window-wrap` in LMS
         directionality: $(".wrapper-view, .window-wrap").prop('dir'),
         content_css : tiny_mce_css_links.join(", "),
@@ -75,16 +75,18 @@ class @HTMLEditingDescriptor
         },
         # Disable visual aid on borderless table.
         visual: false,
-        plugins: "textcolor, link, image, codemirror",
+        plugins: "textcolor, link, image, codemirror, table, media",
         codemirror: {
           path: "#{baseUrl}/js/vendor"
         },
         image_advtab: true,
         # We may want to add "styleselect" when we collect all styles used throughout the LMS
         toolbar: "formatselect | fontselect | bold italic underline forecolor wrapAsCode | bullist numlist outdent indent blockquote | link unlink image | code",
-        block_formats: interpolate("%(paragraph)s=p;%(preformatted)s=pre;%(heading3)s=h3;%(heading4)s=h4;%(heading5)s=h5;%(heading6)s=h6", {
+        block_formats: interpolate("%(paragraph)s=p;%(preformatted)s=pre;%(heading1)s=h1;%(heading2)s=h2;%(heading3)s=h3;%(heading4)s=h4;%(heading5)s=h5;%(heading6)s=h6", {
             paragraph: gettext("Paragraph"),
             preformatted: gettext("Preformatted"),
+            heading1: gettext("Heading 1"),
+            heading2: gettext("Heading 2"),
             heading3: gettext("Heading 3"),
             heading4: gettext("Heading 4"),
             heading5: gettext("Heading 5"),
@@ -92,7 +94,7 @@ class @HTMLEditingDescriptor
           }, true),
         width: '100%',
         height: '400px',
-        menubar: false,
+        menubar: true,
         statusbar: false,
 
         # Necessary to avoid stripping of style tags.

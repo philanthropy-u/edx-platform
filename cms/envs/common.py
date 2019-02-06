@@ -597,7 +597,8 @@ PIPELINE_CSS = {
         'source_filenames': [
             'css/tinymce-studio-content-fonts.css',
             'js/vendor/tinymce/js/tinymce/skins/studio-tmce4/content.min.css',
-            'css/tinymce-studio-content.css'
+            'css/tinymce-studio-content.css',
+            'css/tinymce-content-philu-overrides.css'
         ],
         'output_filename': 'css/cms-style-vendor-tinymce-content.css',
     },
