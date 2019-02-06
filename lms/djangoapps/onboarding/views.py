@@ -327,6 +327,7 @@ def org_detail_survey(request):
     next_page_url = reverse('recommendations')
     org_metric_form = forms.OrganizationMetricModelForm
     redirect_to_next = True
+    update_org_url = reverse('update_organization_details')
 
     if request.path == reverse('update_organization_details'):
         redirect_to_next = False
@@ -334,6 +335,11 @@ def org_detail_survey(request):
         org_metric_form = forms.OrganizationMetricModelUpdateForm
 
     if request.method == 'POST':
+        available_next = request.POST.get('next', None)
+        is_user_coming_from_overlay = available_next and available_next == 'oef'
+        if is_user_coming_from_overlay:
+            redirect_to_next = True
+
         if latest_survey:
             form = org_metric_form(request.POST, instance=latest_survey, initial=initial)
         else:
@@ -348,6 +354,8 @@ def org_detail_survey(request):
                 update_nodebb_for_user_status(request.user.username)
                 if user_extended_profile.is_alquity_user:
                     next_page_url = get_alquity_community_url()
+                if is_user_coming_from_overlay:
+                    next_page_url = reverse('oef_dashboard')
 
                 return redirect(next_page_url)
 
@@ -357,7 +365,8 @@ def org_detail_survey(request):
         else:
             form = org_metric_form()
 
-    context = {'form': form, 'are_forms_complete': are_forms_complete}
+    next_url = request.GET.get('next', None)
+    context = {'form': form, 'are_forms_complete': are_forms_complete, 'next': next_url}
     context.update(user_extended_profile.unattended_surveys())
 
     context.update({
