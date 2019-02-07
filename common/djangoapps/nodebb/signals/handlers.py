@@ -209,7 +209,7 @@ def manage_membership_on_nodebb_group(instance, **kwargs):  # pylint: disable=un
     if instance.is_active is True:
         task_join_group_on_nodebb.delay(
             category_id=community_id, username=username)
-    elif instance.is_active is False:
+    elif instance.is_active is False and not kwargs['created']:
         task_un_join_group_on_nodebb.delay(
             category_id=community_id, username=username)
         # We have to sync user enrollments only in case of
