@@ -1,5 +1,4 @@
 from crum import set_current_request
-from datetime import timedelta
 from django.test.client import RequestFactory
 
 from course_action_state.models import CourseRerunState
@@ -7,9 +6,9 @@ from custom_settings.models import CustomSettings
 from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.tests.factories import CourseFactory
 
-from .test_views import CourseCardBaseClass
 from ..helpers import *
-from ..models import CourseCard
+from .test_views import CourseCardBaseClass
+from .helpers import set_course_dates, disable_course_card
 
 
 class CourseCardHelperBaseClass(CourseCardBaseClass):
@@ -58,55 +57,18 @@ class CourseCardHelperBaseClass(CourseCardBaseClass):
     def test_get_future_courses(self):
         CourseRerunState.objects.succeeded(course_key=self.re_run_course.id)
 
-        re_run_course_overview = CourseOverview.get_from_id(course_id=self.re_run_course.id)
-
-        re_run_course_overview.end = datetime.utcnow() - timedelta(days=120)
-        re_run_course_overview.start = datetime.utcnow() - timedelta(days=150)
-        re_run_course_overview.enrollment_start = datetime.utcnow() - timedelta(days=180)
-        re_run_course_overview.enrollment_end = datetime.utcnow() - timedelta(days=152)
-
-        re_run_course_overview.save()
-
-        rerun_parent_course_overview = CourseOverview.get_from_id(course_id=self.rerun_parent_course.id)
-
-        rerun_parent_course_overview.end = datetime.utcnow() - timedelta(days=60)
-        rerun_parent_course_overview.start = datetime.utcnow() - timedelta(days=75)
-        rerun_parent_course_overview.enrollment_start = datetime.utcnow() - timedelta(days=90)
-        rerun_parent_course_overview.enrollment_end = datetime.utcnow() - timedelta(days=76)
-
-        rerun_parent_course_overview.save()
+        set_course_dates(self.re_run_course, -180, -152, -150, -120)
+        set_course_dates(self.rerun_parent_course, -90, -76, -75, -60)
 
         self.assertIsNone(get_future_courses(self.rerun_parent_course.id))
 
-        re_run_course_overview.end = datetime.utcnow() + timedelta(days=30)
-        re_run_course_overview.start = datetime.utcnow() + timedelta(days=16)
-        re_run_course_overview.enrollment_start = datetime.utcnow() + timedelta(days=5)
-        re_run_course_overview.enrollment_end = datetime.utcnow() + timedelta(days=15)
-
-        re_run_course_overview.save()
-
-        rerun_parent_course_overview.end = datetime.utcnow() - timedelta(days=60)
-        rerun_parent_course_overview.start = datetime.utcnow() - timedelta(days=75)
-        rerun_parent_course_overview.enrollment_start = datetime.utcnow() - timedelta(days=90)
-        rerun_parent_course_overview.enrollment_end = datetime.utcnow() - timedelta(days=76)
-
-        rerun_parent_course_overview.save()
+        re_run_course_overview = set_course_dates(self.re_run_course, 5, 15, 16, 30)
+        set_course_dates(self.rerun_parent_course, -90, -76, -75, -60)
 
         self.assertEqual(get_future_courses(self.rerun_parent_course.id), re_run_course_overview)
 
-        re_run_course_overview.end = datetime.utcnow() + timedelta(days=300)
-        re_run_course_overview.start = datetime.utcnow() + timedelta(days=160)
-        re_run_course_overview.enrollment_start = datetime.utcnow() + timedelta(days=50)
-        re_run_course_overview.enrollment_end = datetime.utcnow() + timedelta(days=150)
-
-        re_run_course_overview.save()
-
-        rerun_parent_course_overview.end = datetime.utcnow() + timedelta(days=30)
-        rerun_parent_course_overview.start = datetime.utcnow() + timedelta(days=16)
-        rerun_parent_course_overview.enrollment_start = datetime.utcnow() + timedelta(days=5)
-        rerun_parent_course_overview.enrollment_end = datetime.utcnow() + timedelta(days=15)
-
-        rerun_parent_course_overview.save()
+        re_run_course_overview = set_course_dates(self.re_run_course, 50, 150, 160, 300)
+        set_course_dates(self.rerun_parent_course, 5, 15, 16, 30)
 
         self.assertEqual(get_future_courses(self.rerun_parent_course.id), re_run_course_overview)
 
@@ -127,9 +89,7 @@ class CourseCardHelperBaseClass(CourseCardBaseClass):
     def test_get_course_cards_list(self):
         # Disable a course's course card
         course = self.courses[-1]
-        course_card = CourseCard.objects.get(course_id=course.id)
-        course_card.is_enabled = False
-        course_card.save()
+        disable_course_card(course)
 
         request = RequestFactory().get('/dummy-url')
         request.user = self.user

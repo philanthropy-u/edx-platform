@@ -1,19 +1,16 @@
 from pyquery import PyQuery as pq
-from datetime import datetime, timedelta
 from django.core.urlresolvers import reverse
 from django.contrib.sites.models import Site
-
 
 from xmodule.modulestore.tests.factories import CourseFactory
 from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from openedx.core.djangoapps.theming.models import SiteTheme
-from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
-from student.tests.factories import UserFactory, CourseEnrollmentFactory
-from student.models import UserProfile
-from lms.djangoapps.onboarding.models import UserExtendedProfile, EmailPreference, Organization
+from student.models import CourseEnrollment
+from course_action_state.models import CourseRerunState
 
 from ..models import CourseCard
+from .helpers import set_course_dates, disable_course_card, initialize_test_user
 
 
 class CourseCardBaseClass(ModuleStoreTestCase):
@@ -25,38 +22,8 @@ class CourseCardBaseClass(ModuleStoreTestCase):
     def setUp(self):
         super(CourseCardBaseClass, self).setUp()
 
-        self.user = UserFactory(password=self.password)
-        self.staff = UserFactory(is_staff=True, password=self.password)
-
-        for user in [self.user, self.staff]:
-            email_preference = EmailPreference(
-                user=user,
-                opt_in="no",
-
-            )
-            email_preference.save()
-
-            user_profile = UserProfile.objects.get(user=user)
-            user_profile.name = "{} {}".format(user.first_name, user.last_name)
-            user_profile.level_of_education = 'b'
-
-            user_profile.save()
-
-            extended_profile = UserExtendedProfile(
-                user=user,
-                is_interests_data_submitted=True,
-                english_proficiency="Master",
-            )
-            extended_profile.save()
-
-            organization = Organization(
-                admin=user,
-                alternate_admin_email=user.email,
-            )
-            organization.save()
-            organization.unclaimed_org_admin_email = user.email
-            organization.alternate_admin_email = None
-            organization.save()
+        self.user = initialize_test_user(password=self.password)
+        self.staff = initialize_test_user(is_staff=True, password=self.password)
 
         org = 'edX'
         course_number_f = 'CS10{}'
@@ -86,10 +53,7 @@ class CourseCardViewBaseClass(CourseCardBaseClass):
 
     def test_enabled_courses_view(self):
         course = self.courses[0]
-        course_card = CourseCard.objects.get(course_id=course.id)
-        course_card.is_enabled = False
-
-        course_card.save()
+        disable_course_card(course)
 
         self.client.login(username=self.staff.username, password=self.password)
         response = self.client.get(reverse('courses'))
@@ -111,24 +75,10 @@ class CourseCardViewBaseClass(CourseCardBaseClass):
         ended_course = self.courses[0]
         scheduled_courses = self.courses[2:]
 
-        ended_course_overview = CourseOverview.get_from_id(course_id=ended_course.id)
-
-        ended_course_overview.end = datetime.utcnow() - timedelta(days=60)
-        ended_course_overview.start = datetime.utcnow() - timedelta(days=75)
-        ended_course_overview.enrollment_start = datetime.utcnow() - timedelta(days=90)
-        ended_course_overview.enrollment_end = datetime.utcnow() - timedelta(days=76)
-
-        ended_course_overview.save()
+        set_course_dates(ended_course, -90, -76, -75, -60)
 
         for scheduled_course in scheduled_courses:
-            scheduled_course_overview = CourseOverview.get_from_id(course_id=scheduled_course.id)
-
-            scheduled_course_overview.end = datetime.utcnow() + timedelta(days=75)
-            scheduled_course_overview.start = datetime.utcnow() + timedelta(days=60)
-            scheduled_course_overview.enrollment_start = datetime.utcnow() + timedelta(days=30)
-            scheduled_course_overview.enrollment_end = datetime.utcnow() + timedelta(days=59)
-
-            scheduled_course_overview.save()
+            set_course_dates(scheduled_course, 30, 59, 60, 75)
 
         response = self.client.get(reverse('courses'))
 
@@ -138,17 +88,97 @@ class CourseCardViewBaseClass(CourseCardBaseClass):
 
     def test_ongoing_course_start_date(self):
         ongoing_course = self.courses[0]
-
-        ongoing_course_overview = CourseOverview.get_from_id(course_id=ongoing_course.id)
-
-        ongoing_course_overview.end = datetime.utcnow() + timedelta(days=30)
-        ongoing_course_overview.start = datetime.utcnow() + timedelta(days=16)
-        ongoing_course_overview.enrollment_start = datetime.utcnow() - timedelta(days=15)
-        ongoing_course_overview.enrollment_end = datetime.utcnow() + timedelta(days=5)
-
-        ongoing_course_overview.save()
+        set_course_dates(ongoing_course, -15, 5, 16, 30)
 
         response = self.client.get(reverse('courses'))
 
         # Desired Result is one since only one ongoing course
         self.assertEqual(pq(response.content)('span.text:contains("Start Date")').length, 1)
+
+    def test_invitaion_only_course(self):
+        org = 'edX'
+        course_number = 'CS10' + str(self.NUMBER_OF_COURSES + 1)
+        course_run = '2015_Q1'
+        display_name = 'test course ' + str(self.NUMBER_OF_COURSES + 1)
+
+        course = CourseFactory.create(
+            org=org,
+            number=course_number,
+            run=course_run,
+            display_name=display_name,
+            default_store=ModuleStoreEnum.Type.split,
+            metadata={"invitation_only": True}
+        )
+
+        course.save()
+        CourseCard(course_id=course.id, course_name=course.display_name, is_enabled=True).save()
+
+        self.client.login(username=self.staff.username, password=self.password)
+        response = self.client.get(reverse('courses'))
+
+        # desired output is NUMBER_OF_COURSES since despite the newly added course, the course being
+        # invitation only means only users enrolled in it can see them and not even staff members (which aren't
+        # enrolled can view
+        self.assertEqual(pq(response.content)("article.course").length, self.NUMBER_OF_COURSES)
+
+        self.client.logout()
+
+        self.client.login(username=self.user.username, password=self.password)
+        response = self.client.get(reverse('courses'))
+
+        # desired output is NUMBER_OF_COURSES since one course's course card is invitation only,
+        # and normal user will not be able to see invitation only courses unless enrolled
+        self.assertEqual(pq(response.content)("article.course").length, self.NUMBER_OF_COURSES)
+
+        CourseEnrollment.enroll(self.user, course.id)
+
+        response = self.client.get(reverse('courses'))
+
+        # desired output is NUMBER_OF_COURSES + 1 since user is enrolled in the invitation only course
+        self.assertEqual(pq(response.content)("article.course").length, self.NUMBER_OF_COURSES + 1)
+
+    def test_enrolled_course_date(self):
+        date_time_format = '%b %-d, %Y'
+        course = self.courses[0]
+
+        self.client.login(username=self.user.username, password=self.password)
+
+        # disable all other courses
+        for c in self.courses[1:]:
+            disable_course_card(c)
+
+        course_overview = set_course_dates(course, -30, -10, -1, 30)
+
+        response = self.client.get(reverse('courses'))
+
+        self.assertContains(response, course_overview.start.strftime(date_time_format))
+
+        course_overview = set_course_dates(course, -30, -5, -1, 30)
+
+        CourseEnrollment.enroll(self.user, course.id)
+
+        response = self.client.get(reverse('courses'))
+
+        self.assertContains(response, course_overview.start.strftime(date_time_format))
+
+        re_run_course = CourseFactory.create(
+            org=course.org,
+            number=course.number,
+            run='2015_Q2',
+            display_name=course.display_name + ' - re run',
+            default_store=ModuleStoreEnum.Type.split
+        )
+
+        CourseRerunState.objects.initiated(course.id, re_run_course.id, self.staff,
+                                           display_name=re_run_course.display_name)
+        CourseRerunState.objects.succeeded(course_key=re_run_course.id)
+
+        re_run_course.save()
+
+        set_course_dates(course, -30, -15, -10, -1)
+
+        re_run_course_overview = set_course_dates(re_run_course, 1, 10, 15, 30)
+
+        response = self.client.get(reverse('courses'))
+
+        self.assertContains(response, re_run_course_overview.start.strftime(date_time_format))
