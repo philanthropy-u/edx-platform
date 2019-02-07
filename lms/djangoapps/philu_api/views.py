@@ -152,13 +152,13 @@ class UpdatePromptClickRecord(APIView):
         # make sure user is responsible for some organization
         metric_update_prompt = get_org_metric_update_prompt(request.user)
         if (metric_update_prompt):
-            click = request.POST['click']
+            click = request.POST.get('click', None)
             if click in dict(MetricUpdatePromptRecord.CLICK_CHOICES):
                 record = MetricUpdatePromptRecord()
                 record.prompt = metric_update_prompt
                 record.click = click
                 record.save()
-            return JsonResponse({'success': True})
+                return JsonResponse({'success': True})
         return JsonResponse({'success': False}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
