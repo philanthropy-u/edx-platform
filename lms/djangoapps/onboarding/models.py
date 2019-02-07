@@ -5,9 +5,11 @@ import re
 
 from pytz import utc
 
-from constants import ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
+from constants import ORG_PARTNERSHIP_END_DATE_PLACEHOLDER, REMIND_ME_LATER_KEY, REMIND_ME_LATER_VAL, \
+    TAKE_ME_THERE_KEY, TAKE_ME_THERE_VAL, NOT_INTERESTED_KEY, NOT_INTERESTED_VAL
 from datetime import datetime
 from django.contrib.auth.models import User
+from django.utils.translation import ugettext_noop
 from model_utils.models import TimeStampedModel
 from simple_history import register
 from simple_history.models import HistoricalRecords
@@ -723,4 +725,30 @@ class OrganizationMetric(TimeStampedModel):
     total_program_expenses = models.BigIntegerField(blank=True, null=True)
 
 
+class OrganizationMetricUpdatePrompt(models.Model):
+    org = models.ForeignKey(Organization, related_name="organization_metrics_update_prompts")
+    responsible_user = models.ForeignKey(User, related_name="organization_metrics_update_prompts")
+    latest_metric_submission = models.DateTimeField()
+    year = models.BooleanField(default=False)
+    year_month = models.BooleanField(default=False)
+    year_three_month = models.BooleanField(default=False)
+    year_six_month = models.BooleanField(default=False)
+    # None(Python)/Null(MySQL): we can remind learner, True: learner clicked `Remind Me Later`,
+    # False:  learner clicked `No Thanks`
+    remind_me_later = models.NullBooleanField()
 
+    def __str__(self):
+        return '{}, {}'.format(self.responsible_user.username, self.org.label)
+
+
+
+class MetricUpdatePromptRecord(TimeStampedModel):
+    prompt = models.ForeignKey(OrganizationMetricUpdatePrompt, related_name="metrics_update_prompt_records")
+    CLICK_CHOICES = (
+        (REMIND_ME_LATER_KEY, ugettext_noop(REMIND_ME_LATER_VAL)),
+        (TAKE_ME_THERE_KEY, ugettext_noop(TAKE_ME_THERE_VAL)),
+        (NOT_INTERESTED_KEY, ugettext_noop(NOT_INTERESTED_VAL))
+    )
+    click = models.CharField(
+        null=True, max_length=3, db_index=True, choices=CLICK_CHOICES
+    )

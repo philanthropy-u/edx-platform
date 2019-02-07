@@ -89,6 +89,24 @@ def sync_organization_with_mailchimp(sender, instance, **kwargs):
         org_label, org_type, work_area, settings.MAILCHIMP_LEARNERS_LIST_ID)
 
 
+def sync_metric_update_prompt_with_mail_chimp(update_prompt):
+    year = 'TRUE' if update_prompt.year else 'FALSE'
+    year_month = 'TRUE' if update_prompt.year_month else 'FALSE'
+    year_three_months = 'TRUE' if update_prompt.year_three_month else 'FALSE'
+    year_six_months = 'TRUE' if update_prompt.year_six_month else 'FALSE'
+
+    user_json = {
+        "merge_fields": {
+            "YEAR": year,
+            "Y_MONTH": year_month,
+            "Y_3MONTHS": year_three_months,
+            "Y_6MONTHS": year_six_months
+        }
+    }
+
+    update_mailchimp(update_prompt.responsible_user.email, user_json)
+
+
 def send_user_info_to_mailchimp(sender, user, created, kwargs):
     """ Create user account at nodeBB when user created at edx Platform """
 

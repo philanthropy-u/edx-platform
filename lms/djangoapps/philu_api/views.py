@@ -13,6 +13,8 @@ from rest_framework.views import APIView
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 
 from mailchimp_pipeline.tasks import update_enrollments_completions_at_mailchimp
+from lms.djangoapps.onboarding.helpers import get_org_metric_update_prompt
+from lms.djangoapps.onboarding.models import MetricUpdatePromptRecord
 from student.models import User
 import urllib
 from django.http import HttpResponse, Http404
@@ -142,6 +144,22 @@ class PlatformSyncService(APIView):
             return JsonResponse({"message": "user info updated successfully"}, status=status.HTTP_200_OK)
         except Exception as ex:
             return JsonResponse({"message": str(ex.args)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdatePromptClickRecord(APIView):
+    def post(self, request):
+        user = request.user
+        # make sure user is responsible for some organization
+        metric_update_prompt = get_org_metric_update_prompt(request.user)
+        if (metric_update_prompt):
+            click = request.POST.get('click', None)
+            if click in dict(MetricUpdatePromptRecord.CLICK_CHOICES):
+                record = MetricUpdatePromptRecord()
+                record.prompt = metric_update_prompt
+                record.click = click
+                record.save()
+                return JsonResponse({'success': True})
+        return JsonResponse({'success': False}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
 def get_user_chat(request):

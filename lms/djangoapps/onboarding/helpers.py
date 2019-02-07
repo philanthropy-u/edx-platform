@@ -1,9 +1,14 @@
 import re
 from datetime import date
 from difflib import SequenceMatcher
-from lms.djangoapps.onboarding.models import Organization
+from lms.djangoapps.onboarding.models import Organization, OrganizationMetricUpdatePrompt
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from django.conf import settings
+from dateutil.relativedelta import relativedelta
+import datetime
+import pytz
+
+utc = pytz.UTC
 
 COUNTRIES = {
     'AD': 'Andorra',
@@ -7870,3 +7875,91 @@ def get_alquity_community_url():
     :return: url of alquity private community
     """
     return u'{}{}'.format(settings.NODEBB_ENDPOINT, configuration_helpers.get_value('ALQUITY_PRIVATE_COMMUNITY'))
+
+
+def get_current_utc_date():
+    """
+    :return: current date in utc
+    """
+    return utc.localize(datetime.datetime.now())
+
+
+def get_diff_from_current_date(submission_date):
+    """
+    :param: submission_date
+    :return: relative delta of python aware(UTC) current datetime and submission date
+    """
+    return relativedelta(get_current_utc_date(), submission_date)
+
+
+def its_been_year(submission_date):
+    """
+    :param submission_date:
+    :return: True if latest submission is an year ago else False
+    """
+    time_delta = get_diff_from_current_date(submission_date)
+    return time_delta.years >= 1
+
+
+def its_been_year_month(submission_date):
+    """
+    :param submission_date:
+    :return: True if latest submission is an year and month ago else False
+    """
+    time_delta = get_diff_from_current_date(submission_date)
+    return time_delta.years >= 1 and time_delta.months >= 1
+
+
+def its_been_year_three_month(submission_date):
+    """
+    :param submission_date:
+    :return: True if latest submission is an year and three months ago else False
+    """
+    time_delta = get_diff_from_current_date(submission_date)
+    return time_delta.years >= 1 and time_delta.months >= 3
+
+
+def its_been_year_six_month(submission_date):
+    """
+    :param submission_date:
+    :return: True if latest submission is an year and six months ago else False
+    """
+    time_delta = get_diff_from_current_date(submission_date)
+    return time_delta.years >= 1 and time_delta.months >= 6
+
+
+def get_org_metric_update_prompt(user):
+    """
+    :param user:
+    :return: org_metric_update_prompt object if user is responsible for some org
+             other-wise return None
+    """
+
+    # If user is responsible for multiple organization we are picking the latest one
+    # becuase according to the scenario
+    # https://philanthropyu.atlassian.net/browse/LP-1222?focusedCommentId=15084&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-15084
+    # the user will be the admin of the organization of latest prompt
+    return OrganizationMetricUpdatePrompt.objects.filter(responsible_user_id=user.id)\
+        .order_by('-latest_metric_submission').first()
+
+
+def is_org_detail_prompt_available(prompt):
+    """
+    :param prompt:
+    :return: True if user is not responsible for some org OR he is responsible for some org
+    but it's not been more than a year user submitted org metrics, otherwise False
+    """
+
+    if prompt:
+        return prompt.year or prompt.year_month or prompt.year_three_month or prompt.year_six_month
+    else:
+        return False
+
+
+def is_org_detail_platform_overlay_available(prompt):
+    """
+    :param prompt:
+    :return: True if we can prompt learner
+     False if learner had clicked `No thanks` or `remind me later`
+    """
+    return prompt and prompt.remind_me_later is None
