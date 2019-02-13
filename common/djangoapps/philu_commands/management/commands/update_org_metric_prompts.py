@@ -35,7 +35,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         current_date = get_current_utc_date()
 
-        # Select those prompts whose lates_metric submission is atle
+        # Select those prompts whose lates_metric submission is at least a year back from now
         prompts = OrganizationMetricUpdatePrompt.objects.filter(latest_metric_submission__lte=current_date.replace(year=current_date.year-1))
         for prompt in prompts:
             submission_date = prompt.latest_metric_submission
