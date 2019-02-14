@@ -11,6 +11,8 @@ git:
 branches:
   only:
     - develop
+    - master
+    - sadan/LP-1302
 
 services:
   - mysql
