@@ -200,9 +200,9 @@ def download_pdf_file(request):
     query_string = request.META.get('QUERY_STRING')
     page_url = query_string.split('page_url=')[-1]
     if page_url:
-        result = urllib.urlopen(page_url)
         filename = page_url.split("/")[-1]
         filename = filename.replace(" ", "_")
+        result = urllib.urlopen(page_url)
         response = HttpResponse(FileWrapper(result.fp), content_type='application/pdf')
         response['Content-Length'] = result.headers['content-length']
         response['Content-Disposition'] = "attachment; filename={}".format(filename)
