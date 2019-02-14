@@ -11,7 +11,7 @@ def oef_exists(org):
     :param org:
     :return: True if some oef exists against this organization, otherwise False
     """
-    return bool(org.organization_oef_scores.all())
+    return org.organization_oef_scores.count() > 0
 
 
 def get_latest_oef(org):
