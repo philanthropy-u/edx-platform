@@ -197,11 +197,12 @@ def get_user_data(request):
 
 def download_pdf_file(request):
     """ Download pdf file (Worksheet) instead of opening in the browser """
-    page_url = request.GET.get("page_url", None)
+    query_string = request.META.get('QUERY_STRING')
+    page_url = query_string.split('page_url=')[-1]
     if page_url:
+        result = urllib.urlopen(page_url)
         filename = page_url.split("/")[-1]
         filename = filename.replace(" ", "_")
-        result = urllib.urlopen(page_url)
         response = HttpResponse(FileWrapper(result.fp), content_type='application/pdf')
         response['Content-Length'] = result.headers['content-length']
         response['Content-Disposition'] = "attachment; filename={}".format(filename)
