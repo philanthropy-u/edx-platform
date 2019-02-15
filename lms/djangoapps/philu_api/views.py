@@ -199,7 +199,7 @@ def download_pdf_file(request):
     """ Download pdf file (Worksheet) instead of opening in the browser """
     query_string = request.META.get('QUERY_STRING')
     page_url = query_string.split('page_url=')[-1]
-    if page_url:
+    if page_url and request.GET:
         filename = page_url.split("/")[-1]
         filename = filename.replace(" ", "_")
         result = urllib.urlopen(page_url)
