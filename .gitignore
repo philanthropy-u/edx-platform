@@ -127,3 +127,6 @@ autodeploy.properties
 .ws_migrations_complete
 dist
 .vscode/
+
+### Configuration jsons
+lms.auth.json
