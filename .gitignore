@@ -128,5 +128,6 @@ autodeploy.properties
 dist
 .vscode/
 
-### Configuration jsons
+### LMS Configuration jsons
 lms.auth.json
+lms.env.json
