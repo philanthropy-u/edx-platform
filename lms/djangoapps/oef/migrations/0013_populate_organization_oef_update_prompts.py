@@ -49,8 +49,8 @@ def create_org_oef_prompts(apps, schema_editor):
         FROM `onboarding_organization` 
         INNER JOIN `oef_organizationoefscore` 
         ON (`onboarding_organization`.`id` = `oef_organizationoefscore`.`org_id`)
-        group by `onboarding_organization`.`id`, `oef_organizationoefscore`.`finish_date`
-        HAVING `oef_organizationoefscore`.`finish_date` IS NOT NULL
+        WHERE `oef_organizationoefscore`.`finish_date` IS NOT NULL
+        group by `onboarding_organization`.`id`
         """
     )
 
@@ -58,12 +58,12 @@ def create_org_oef_prompts(apps, schema_editor):
     for org in organizations:
         if oef_exists(org):
             prompt = OefPrompt()
-            finish_date = convert_date_to_utcdatetime(get_latest_finish_date(org))
+            finish_date = get_latest_finish_date(org)
 
             prompt.org = org
             prompt.responsible_user = get_responsible_user(org)
             prompt.latest_finish_date = finish_date
-            prompt.year = its_been_year(finish_date)
+            prompt.year = its_been_year(convert_date_to_utcdatetime(finish_date))
             prompt.save()
 
 class Migration(migrations.Migration):
