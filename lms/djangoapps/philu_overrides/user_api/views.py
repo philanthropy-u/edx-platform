@@ -39,7 +39,7 @@ from openedx.core.djangoapps.user_api.accounts.api import check_account_exists
 from openedx.core.djangoapps.user_api.preferences import api as preferences_api
 from openedx.core.djangoapps.user_api.views import RegistrationView, LoginSessionView
 
-from ..helpers import get_register_form_data
+from ..helpers import get_register_form_data_override
 
 log = logging.getLogger("edx.student")
 AUDIT_LOG = logging.getLogger("audit")
@@ -530,10 +530,6 @@ class RegistrationViewCustom(RegistrationView):
         the registration form with any info that we get from the
         provider.
 
-        This will also hide the password field, since we assign users a default
-        (random) password on the assumption that they will be using
-        third-party auth to log in.
-
         Arguments:
             request (HttpRequest): The request for the registration form, used
                 to determine if the user has successfully authenticated
@@ -549,7 +545,7 @@ class RegistrationViewCustom(RegistrationView):
 
                 if current_provider:
                     # Override username / email / full name
-                    field_overrides = get_register_form_data(
+                    field_overrides = get_register_form_data_override(
                         running_pipeline.get('kwargs')
                     )
 

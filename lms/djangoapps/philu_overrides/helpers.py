@@ -217,7 +217,7 @@ def get_next_url_for_login_page_override(request):
     return redirect_to
 
 
-def get_register_form_data(pipeline_kwargs):
+def get_register_form_data_override(pipeline_kwargs):
     """Gets dict of data to display on the register form.
 
     lms.djangoapps.philu_overides.user_api.views.RegistrationViewCustom
