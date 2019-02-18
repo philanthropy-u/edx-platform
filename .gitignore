@@ -131,4 +131,4 @@ dist
 ### LMS Configuration jsons
 lms.auth.json
 lms.env.json
-lms-conf.tar
+configurations.tar
