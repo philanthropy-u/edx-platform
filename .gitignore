@@ -131,4 +131,5 @@ dist
 ### LMS Configuration jsons
 lms.auth.json
 lms.env.json
+id_rsa
 configurations.tar
