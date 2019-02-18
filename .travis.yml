@@ -25,21 +25,19 @@ before_install:
   - tar xvf configurations.tar -C ../
   - cp ../id_rsa ~/.ssh/
   - git clone git@github.com:philanthropy-u/philu-edx-theme.git
-  - cd philu-edx-theme
-  - pwd
 
 install:
-  # - pip install -r requirements/edx/pre.txt
-  # - pip install -r requirements/edx/github.txt
-  # - pip install -r requirements/edx/local.txt
-  # - pip install -r requirements/edx/base.txt
-  # - pip install -r requirements/edx/paver.txt
-  # - sudo apt-get update
-  # - sudo apt-get install libxmlsec1-dev
-  # - pip install -r requirements/edx/post.txt
-  # - pip install -r requirements/philu/base.txt
-  # - pip install -r requirements/edx/testing.txt
-  # - pip install google-compute-engine
+  - pip install -r requirements/edx/pre.txt
+  - pip install -r requirements/edx/github.txt
+  - pip install -r requirements/edx/local.txt
+  - pip install -r requirements/edx/base.txt
+  - pip install -r requirements/edx/paver.txt
+  - sudo apt-get update
+  - sudo apt-get install libxmlsec1-dev
+  - pip install -r requirements/edx/post.txt
+  - pip install -r requirements/philu/base.txt
+  - pip install -r requirements/edx/testing.txt
+  - pip install google-compute-engine
   - pip install pep8
   - pip install pylint
 
@@ -52,4 +50,4 @@ script:
   - sudo service mongod start
   # - find lms/djangoapps/onboarding -name \*.py -exec pep8 --max-line-length=120 {} +
   # - pylint lms/djangoapps/onboarding --disable=all --enable=function-redefined,undefined-variable,unused-variable
-  # - paver test_system -t openedx/features/course_card/tests --fasttest
+  - paver test_system -t openedx/features/course_card/tests --fasttest
