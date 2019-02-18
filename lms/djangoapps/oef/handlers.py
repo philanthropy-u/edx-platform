@@ -25,7 +25,7 @@ def update_oef_prompts(instance, **kwargs):
     # If prompts against this Oef already exists, update that prompt
     if oef_prompt:
         oef_prompt.responsible_user = responsible_user
-        oef_prompt.latest_finish_date = latest_finish_date
+        oef_prompt.latest_finish_date = finish_date
         oef_prompt.year = year
         oef_prompt.save()
     else:
