@@ -25,6 +25,8 @@ before_install:
   - tar xvf configurations.tar -C ../
   - cp ../id_rsa ~/.ssh/
   - git clone git@github.com:philanthropy-u/philu-edx-theme.git
+  - cd philu-edx-theme
+  - pwd
 
 install:
   - pip install -r requirements/edx/pre.txt
