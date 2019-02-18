@@ -110,7 +110,7 @@ class LoginSessionView(APIView):
         form_desc.add_field(
             "remember",
             field_type="checkbox",
-            label=_("Remeber my login credentials so i don't need to fill up these fields every time I log in."),
+            label=_("Remember my login credentials so I don't need to fill up these fields every time I log in."),
             default=False,
             required=False,
         )
