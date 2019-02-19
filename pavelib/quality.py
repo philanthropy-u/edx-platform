@@ -103,7 +103,9 @@ def run_pylint(options):
         # This makes the folder if it doesn't already exist.
         report_dir = (Env.REPORT_DIR / system).makedirs_p()
 
-        flags = []
+        flags = [
+            "--disable=C0111"
+        ]
         if errors:
             flags.append("--errors-only")
 
