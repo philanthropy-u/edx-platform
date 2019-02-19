@@ -47,18 +47,18 @@ install:
   - pip install pylint
 
   # Install coveralls dependency
-  - pip install coveralls
+  - pip install coveralls==1.0
 
 before_script:
   - mysql -e 'create database edxtest;' -u root
-  
+
   # Give executable permission to the script
   - chmod +x scripts/travis-ci-tests.sh
 
 script:
-  # Run pep8 on all .py files in all subfolders
-  # ignore E402: module level import not at top of file
   - sudo service mongod start
+
+  # Run test script
   - ./scripts/all-tests.sh
 
 env:
