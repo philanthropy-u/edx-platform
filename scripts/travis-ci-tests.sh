@@ -45,11 +45,6 @@ else
             echo "Finding pep8 violations and storing report..."
             paver run_pep8 > pep8.log || { cat pep8.log; EXIT=1; }
 
-            echo "Finding pylint violations and storing in report..."
-            # HACK: we need to print something to the console, otherwise ci
-            # fails and aborts the job because nothing is displayed for > 10 minutes.
-            paver run_pylint -l $PYLINT_THRESHOLD | tee pylint.log || EXIT=1
-
             mkdir -p reports
             PATH=$PATH:node_modules/.bin
 
@@ -57,6 +52,7 @@ else
             paver run_quality -p 90 || EXIT=1
 
             # TODO: paver run_eslint
+            # TODO: paver run_pylint
             # TODO: paver run_complexity
             exit $EXIT
             ;;
