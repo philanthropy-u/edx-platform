@@ -625,14 +625,14 @@ def run_quality(options):
             )
             violations_str = HTML('<ul>\n{bullets}</ul>\n').format(bullets=HTML(violations_bullets))
             violations_count_str = "<b>Violations</b>: {count}<br/>\n"
-            fail_line = "<b>FAILURE</b>: pep8 count should be 0<br/>\n"
+            fail_line = "<b>WARNING</b>: pep8 count should be 0<br/>\n"
         else:
             lines = []
             sep = '-------------\n'
             title = "Quality Report: pep8\n"
             violations_str = ''.join(violations_list)
             violations_count_str = "Violations: {count}\n"
-            fail_line = "FAILURE: pep8 count should be 0\n"
+            fail_line = "WARNING: pep8 count should be 0\n"
 
         violations_count_str = violations_count_str.format(count=count)
 
@@ -656,8 +656,9 @@ def run_quality(options):
     with open(dquality_dir / "diff_quality_pep8.html", "w") as f:
         f.write(_pep8_output(count, violations_list, is_html=True))
 
-    if count > 0:
-        diff_quality_percentage_pass = False
+    # TODO: Skipping this for now
+    # if count > 0:
+    #     diff_quality_percentage_pass = False
 
     # ----- Set up for diff-quality pylint call -----
     # Set the string, if needed, to be used for the diff-quality --compare-branch switch.

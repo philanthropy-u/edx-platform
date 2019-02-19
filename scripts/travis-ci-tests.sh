@@ -35,7 +35,7 @@ if [ "$CI_NODE_TOTAL" == "1" ] ; then
     echo "Only 1 container is being used to run the tests."
 
     echo "Running python tests for openedx/features/course_cards"
-    paver test_system -t openedx/features/course_card/tests --fasttest --with-flaky --cov-args="-p" --with-xunitmp || EXIT=1
+    paver test_system -t openedx/features/course_card/tests --fasttest --cov-args="-p" --with-xunitmp || EXIT=1
 
     exit $EXIT
 else
@@ -54,7 +54,7 @@ else
             PATH=$PATH:node_modules/.bin
 
             # Run quality task. Pass in the 'fail-under' percentage to diff-quality
-            paver run_quality -p 80 || EXIT=1
+            paver run_quality -p 90 || EXIT=1
 
             # TODO: paver run_eslint
             # TODO: paver run_complexity
