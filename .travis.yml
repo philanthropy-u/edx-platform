@@ -53,9 +53,7 @@ script:
   # Run pep8 on all .py files in all subfolders
   # ignore E402: module level import not at top of file
   - sudo service mongod start
-  # - find openedx/features/course_card -name \*.py -exec pep8 --max-line-length=120 {} +
-  # - pylint openedx/features/course_card --disable R,C,W,E --enable=function-redefined,undefined-variable,unused-variable
-  - ./scripts/travis-ci-tests.sh
+  - ./scripts/all-tests.sh
 
 env:
   global:

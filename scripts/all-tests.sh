@@ -18,13 +18,14 @@ SAFELINT_THRESHOLDS=`cat scripts/safelint_thresholds.json`
 export SAFELINT_THRESHOLDS=${SAFELINT_THRESHOLDS//[[:space:]]/}
 
 doCheckVars() {
-    if [ -n "$CIRCLECI" ] ; then
-        SCRIPT_TO_RUN=scripts/circle-ci-tests.sh
+    SCRIPT_TO_RUN=scripts/travis-ci-tests.sh
+    # if [ -n "$CIRCLECI" ] ; then
+    #     SCRIPT_TO_RUN=scripts/circle-ci-tests.sh
 
-    elif [ -n "$JENKINS_HOME" ] ; then
-        source scripts/jenkins-common.sh
-        SCRIPT_TO_RUN=scripts/generic-ci-tests.sh
-    fi
+    # elif [ -n "$JENKINS_HOME" ] ; then
+    #     source scripts/jenkins-common.sh
+    #     SCRIPT_TO_RUN=scripts/generic-ci-tests.sh
+    # fi
 }
 
 # Determine the CI system for the environment
