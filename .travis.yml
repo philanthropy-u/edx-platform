@@ -46,8 +46,12 @@ install:
   - pip install pep8
   - pip install pylint
 
+  # Install coveralls dependency
+  - pip install coveralls
+
 before_script:
   - mysql -e 'create database edxtest;' -u root
+  
   # Give executable permission to the script
   - chmod +x scripts/travis-ci-tests.sh
 
@@ -63,3 +67,11 @@ env:
   matrix:
     - CI_NODE_INDEX=0
     - CI_NODE_INDEX=1
+
+after_success:
+  # If you have enabled coveralls for your repo, configure your COVERALLS_REPO_TOKEN
+  # as an Environment Variable in the Project Settings on TravisCI, and coverage
+  # data will automatically be sent to coveralls. See https://coveralls.io/
+  # If you have not set up set up coveralls then the following statement will
+  # print a message but not affect the pass/fail status of the build.
+  - if [ -z $COVERALLS_REPO_TOKEN ]; then echo "Coveralls token not defined."; else coveralls; fi

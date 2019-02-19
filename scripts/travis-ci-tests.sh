@@ -53,15 +53,11 @@ else
             mkdir -p reports
             PATH=$PATH:node_modules/.bin
 
-            # echo "Finding ESLint violations and storing report..."
-            # paver run_eslint -l $ESLINT_THRESHOLD > eslint.log || { cat eslint.log; EXIT=1; }
-
             # Run quality task. Pass in the 'fail-under' percentage to diff-quality
             paver run_quality -p 80 || EXIT=1
 
-            echo "Running code complexity report (python)."
-            paver run_complexity > reports/code_complexity.log || echo "Unable to calculate code complexity. Ignoring error."
-
+            # TODO: paver run_eslint
+            # TODO: paver run_complexity
             exit $EXIT
             ;;
 
