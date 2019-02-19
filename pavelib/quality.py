@@ -679,8 +679,9 @@ def run_quality(options):
     pylint_files = get_violations_reports("pylint")
     pylint_reports = u' '.join(pylint_files)
 
-    eslint_files = get_violations_reports("eslint")
-    eslint_reports = u' '.join(eslint_files)
+    # TODO: skipping eslint for now
+    # eslint_files = get_violations_reports("eslint")
+    # eslint_reports = u' '.join(eslint_files)
 
     pythonpath_prefix = (
         "PYTHONPATH=$PYTHONPATH:lms:lms/djangoapps:cms:cms/djangoapps:"
@@ -699,15 +700,15 @@ def run_quality(options):
         diff_quality_percentage_pass = False
 
     # run diff-quality for eslint.
-    if not run_diff_quality(
-            violations_type="eslint",
-            prefix=pythonpath_prefix,
-            reports=eslint_reports,
-            percentage_string=percentage_string,
-            branch_string=compare_branch_string,
-            dquality_dir=dquality_dir
-    ):
-        diff_quality_percentage_pass = False
+    # if not run_diff_quality(
+    #         violations_type="eslint",
+    #         prefix=pythonpath_prefix,
+    #         reports=eslint_reports,
+    #         percentage_string=percentage_string,
+    #         branch_string=compare_branch_string,
+    #         dquality_dir=dquality_dir
+    # ):
+    #     diff_quality_percentage_pass = False
 
     # If one of the quality runs fails, then paver exits with an error when it is finished
     if not diff_quality_percentage_pass:
