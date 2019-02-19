@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 ###############################################################################
 #
-#   circle-ci-tests.sh
+#   travis-ci-tests.sh
 #
-#   Execute tests for edx-platform on circleci.com
+#   Execute tests for edx-platform on travis-ci.org
 #
 #   Forks should configure parallelism, and use this script
 #   to define which tests to run in each of the containers.
@@ -25,8 +25,7 @@ set -e
 # piped command, or a zero if they all succeed.
 set -o pipefail
 
-# There is no need to install the prereqs, as this was already
-# just done via the dependencies override section of circle.yml.
+# There is no need to install the prereqs
 export NO_PREREQ_INSTALL='true'
 
 EXIT=0
@@ -49,7 +48,7 @@ else
             paver run_pep8 > pep8.log || { cat pep8.log; EXIT=1; }
 
             echo "Finding pylint violations and storing in report..."
-            # HACK: we need to print something to the console, otherwise circleci
+            # HACK: we need to print something to the console, otherwise ci
             # fails and aborts the job because nothing is displayed for > 10 minutes.
             paver run_pylint -l $PYLINT_THRESHOLD | tee pylint.log || EXIT=1
 

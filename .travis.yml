@@ -55,7 +55,7 @@ script:
   - sudo service mongod start
   # - find openedx/features/course_card -name \*.py -exec pep8 --max-line-length=120 {} +
   # - pylint openedx/features/course_card --disable R,C,W,E --enable=function-redefined,undefined-variable,unused-variable
-  - ./scripts/all-tests.sh
+  - ./scripts/travis-ci-tests.sh
 
 env:
   global:
