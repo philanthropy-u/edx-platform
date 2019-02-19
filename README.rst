@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/philanthropy-u/edx-platform.svg?branch=develop)](https://travis-ci.org/philanthropy-u/edx-platform)
+[![Coverage Status](https://coveralls.io/repos/github/philanthropy-u/edx-platform/badge.svg?branch=develop)](https://coveralls.io/github/philanthropy-u/edx-platform?branch=develop)
 
 This is the main edX platform which consists of LMS and Studio.
 
