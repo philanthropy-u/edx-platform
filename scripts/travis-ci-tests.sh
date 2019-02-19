@@ -58,8 +58,8 @@ else
             ;;
 
         1)  # run all of the tests
-            echo "Running python tests for openedx/features/course_cards"
-            paver test_system -t openedx/features/course_card/tests --fasttest --with-flaky --cov-args="-p" --with-xunitmp
+            echo "Running python tests for openedx/features/course_card"
+            paver test_system -t openedx/features/course_card/tests --fasttest --cov-args="-p"
             ;;
 
     esac
