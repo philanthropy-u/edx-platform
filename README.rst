@@ -1,5 +1,6 @@
-This is the main edX platform which consists of LMS and Studio.
+[![Build Status](https://travis-ci.org/philanthropy-u/edx-platform.svg?branch=develop)](https://travis-ci.org/philanthropy-u/edx-platform)
 
+This is the main edX platform which consists of LMS and Studio.
 
 Installation
 ------------

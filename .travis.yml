@@ -21,9 +21,14 @@ before_install:
   - sudo apt-get update -qq
   - sudo xargs -a requirements/system/ubuntu/apt-packages.txt
   - sudo apt-get install -qq --fix-missing
+
+  # Decrypt configuration file
   - openssl aes-256-cbc -K $encrypted_347d15b64587_key -iv $encrypted_347d15b64587_iv -in configurations.tar.enc -out configurations.tar -d
+  # Extract configuration files
   - tar xvf configurations.tar -C ../
+  # Copy ssh token
   - cp ../id_rsa ~/.ssh/
+  # Clone PhilU custom theme
   - git clone git@github.com:philanthropy-u/philu-edx-theme.git
 
 install:
@@ -48,6 +53,13 @@ script:
   # Run pep8 on all .py files in all subfolders
   # ignore E402: module level import not at top of file
   - sudo service mongod start
-  # - find lms/djangoapps/onboarding -name \*.py -exec pep8 --max-line-length=120 {} +
-  # - pylint lms/djangoapps/onboarding --disable=all --enable=function-redefined,undefined-variable,unused-variable
-  - paver test_system -t openedx/features/course_card/tests --fasttest
+  # - find openedx/features/course_card -name \*.py -exec pep8 --max-line-length=120 {} +
+  # - pylint openedx/features/course_card --disable R,C,W,E --enable=function-redefined,undefined-variable,unused-variable
+  - ./scripts/all-tests.sh
+
+env:
+  global:
+    - CI_NODE_TOTAL=2
+  matrix:
+    - CI_NODE_INDEX=0
+    - CI_NODE_INDEX=1
