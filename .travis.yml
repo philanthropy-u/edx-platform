@@ -48,6 +48,8 @@ install:
 
 before_script:
   - mysql -e 'create database edxtest;' -u root
+  # Give executable permission to the script
+  - chmod +x scripts/travis-ci-tests.sh
 
 script:
   # Run pep8 on all .py files in all subfolders
