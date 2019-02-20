@@ -59,7 +59,7 @@ else
 
         1)  # run all of the tests
             echo "Running python tests for openedx/features/course_card"
-            paver test_system -t openedx/features/course_card/tests --fasttest --cov-args="-p"
+            paver test_system -t openedx/features/course_card/tests --fasttest --cov-args="-p" --with-xunitmp
 
             echo "Generating coverage report"
             paver coverage
