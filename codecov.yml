@@ -1,8 +1,16 @@
 comment: off
+
+codecov:
+  notify:
+    require_ci_to_pass: yes
+
 coverage:
+  precision: 2
+  round: down
+
   status:
-    patch: false
     project:
       default:
         target: 85%
         threshold: 10%
+    patch: false

@@ -47,7 +47,7 @@ install:
   - pip install pylint
 
   # Install coveralls dependency
-  - pip install coveralls
+  - pip install codecov
   - pip freeze
 
 before_script:
@@ -75,7 +75,4 @@ after_success:
   # data will automatically be sent to coveralls. See https://coveralls.io/
   # If you have not set up set up coveralls then the following statement will
   # print a message but not affect the pass/fail status of the build.
-  - if [ -z $COVERALLS_REPO_TOKEN ]; then echo "Coveralls token not defined."; else COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN COVERALLS_PARALLEL=true coveralls; fi
-
-notifications:
-  webhooks: https://coveralls.io/webhook?repo_token=$COVERALLS_REPO_TOKEN
+  - if [ -z $CODECOV_TOKEN ]; then echo "Codecov token not defined."; else codecov --token=$CODECOV_TOKEN; fi
