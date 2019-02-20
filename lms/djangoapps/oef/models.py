@@ -62,6 +62,13 @@ class OrganizationOefScore(TimeStampedModel):
     systems_score = models.PositiveIntegerField(null=True, blank=True)
 
 
+class OrganizationOefUpdatePrompt(models.Model):
+    org = models.ForeignKey(Organization, related_name="organization_oef_update_prompts")
+    responsible_user = models.ForeignKey(User, related_name="organization_oef_update_prompts")
+    latest_finish_date = models.DateTimeField()
+    year = models.BooleanField(default=False)
+
+
 class Instruction(TimeStampedModel):
     question_index = models.IntegerField()
     question = models.TextField()

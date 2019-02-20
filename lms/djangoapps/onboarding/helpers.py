@@ -1,12 +1,15 @@
 import re
-from datetime import date
-from difflib import SequenceMatcher
-from lms.djangoapps.onboarding.models import Organization, OrganizationMetricUpdatePrompt
-from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
-from django.conf import settings
-from dateutil.relativedelta import relativedelta
-import datetime
 import pytz
+from dateutil.relativedelta import relativedelta
+from datetime import date, datetime
+from difflib import SequenceMatcher
+
+from django.conf import settings
+
+from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
+from lms.djangoapps.onboarding.models import Organization, OrganizationMetricUpdatePrompt
+from lms.djangoapps.oef.models import OrganizationOefUpdatePrompt
+
 
 utc = pytz.UTC
 
@@ -7877,11 +7880,19 @@ def get_alquity_community_url():
     return u'{}{}'.format(settings.NODEBB_ENDPOINT, configuration_helpers.get_value('ALQUITY_PRIVATE_COMMUNITY'))
 
 
+def convert_date_to_utcdatetime(date):
+    """
+    :param date:
+    :return: return utc datetime object of current date object
+    """
+    return pytz.UTC.localize(datetime(year=date.year,month=date.month, day=date.day))
+
+
 def get_current_utc_date():
     """
     :return: current date in utc
     """
-    return utc.localize(datetime.datetime.now())
+    return utc.localize(datetime.now())
 
 
 def get_diff_from_current_date(submission_date):
@@ -7963,3 +7974,24 @@ def is_org_detail_platform_overlay_available(prompt):
      False if learner had clicked `No thanks` or `remind me later`
     """
     return prompt and prompt.remind_me_later is None
+
+
+def get_org_oef_update_prompt(user):
+    """
+    :param user:
+    :return: org_oef_update_prompt object if user is responsible for some org
+             other-wise return None
+    """
+    return OrganizationOefUpdatePrompt.objects.filter(responsible_user_id=user.id) \
+        .order_by('-latest_finish_date').first()
+
+
+def is_org_oef_prompt_available(prompt):
+    """
+    :param prompt:
+    :return: True if it's more than a year since last oef update
+    """
+    if prompt:
+        return prompt.year
+    else:
+        return False
