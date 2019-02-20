@@ -70,7 +70,6 @@ env:
     - CI_NODE_INDEX=1
 
 after_success:
-  - paver coverage
   # If you have enabled coveralls for your repo, configure your COVERALLS_REPO_TOKEN
   # as an Environment Variable in the Project Settings on TravisCI, and coverage
   # data will automatically be sent to coveralls. See https://coveralls.io/
