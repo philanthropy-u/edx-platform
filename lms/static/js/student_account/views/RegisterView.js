@@ -5,10 +5,9 @@
         'underscore',
         'gettext',
         'js/student_account/views/FormView',
-        'edx-ui-toolkit/js/utils/html-utils',
         'text!templates/student_account/form_status.underscore'
     ],
-        function($, _, gettext, FormView, HtmlUtils, formStatusTpl) {
+        function($, _, gettext, FormView, formStatusTpl) {
             return FormView.extend({
                 el: '#register-form',
 
@@ -115,21 +114,18 @@
                 },
 
                 renderAuthWarning: function() {
-                    var fullMsgHtml = HtmlUtils.interpolateHtml(
-                        gettext('{paragraphStart}You have successfully signed into {currentProvider}. We just need a ' +
-                            'little more information before you start learning with {platformName}.{paragraphEnd}' +
-                            '{paragraphStart}Please check your information and complete the fields below to create ' +
-                            'an account.{paragraphEnd}'),
-                        { // eslint-disable-line max-len
-                                paragraphStart: HtmlUtils.HTML('<p>'),
-                                paragraphEnd: HtmlUtils.HTML('</p>'),
-                                platformName: this.platformName,
-                                currentProvider: this.currentProvider
-                        }
+                    var msgPart1 = gettext('You\'ve successfully signed into %(currentProvider)s.'),
+                        msgPart2 = gettext(
+                            'We just need a little more information before you start learning with %(platformName)s.'
+                        ),
+                        fullMsg = _.sprintf(
+                            msgPart1 + ' ' + msgPart2,
+                            {currentProvider: this.currentProvider, platformName: this.platformName}
                         );
+
                     this.renderFormFeedback(this.formStatusTpl, {
                         jsHook: this.authWarningJsHook,
-                        messageHtml: fullMsgHtml
+                        message: fullMsg
                     });
                 }
             });
