@@ -39,8 +39,6 @@ from openedx.core.djangoapps.user_api.accounts.api import check_account_exists
 from openedx.core.djangoapps.user_api.preferences import api as preferences_api
 from openedx.core.djangoapps.user_api.views import RegistrationView, LoginSessionView
 
-from ..helpers import get_register_form_data_override
-
 log = logging.getLogger("edx.student")
 AUDIT_LOG = logging.getLogger("audit")
 
@@ -162,20 +160,15 @@ def create_account_with_params_custom(request, params, is_alquity_user):
         getattr(settings, 'REGISTRATION_EXTRA_FIELDS', {})
     )
 
-    if third_party_auth.is_enabled() and pipeline.running(request):
-        running_pipeline = pipeline.get(request)
-
-        if running_pipeline.get('backend'):
-            params['provider'] = running_pipeline.get('backend')
-
-        params['access_token'] = running_pipeline['kwargs']['response']['access_token']
-
     # Boolean of whether a 3rd party auth provider and credentials were provided in
     # the API so the newly created account can link with the 3rd party account.
     #
     # Note: this is orthogonal to the 3rd party authentication pipeline that occurs
     # when the account is created via the browser and redirect URLs.
     should_link_with_social_auth = third_party_auth.is_enabled() and 'provider' in params
+
+    if should_link_with_social_auth or (third_party_auth.is_enabled() and pipeline.running(request)):
+        params["password"] = pipeline.make_random_password()
 
     # Add a form requirement for data sharing consent if the EnterpriseCustomer
     # for the request requires it at login
@@ -420,7 +413,6 @@ def task_enroll_user_in_pending_courses(data):
 
 class RegistrationViewCustom(RegistrationView):
     """HTTP custom end-points for creating a new user. """
-    THIRD_PARTY_OVERRIDE_FIELDS = RegistrationView.DEFAULT_FIELDS + ["first_name", "last_name"]
 
     @method_decorator(csrf_exempt)
     def post(self, request):
@@ -521,39 +513,6 @@ class RegistrationViewCustom(RegistrationView):
         except Exception as ex:
             log.error("There is some error saving UTM {}".format(str(ex)))
             pass
-
-    def _apply_third_party_auth_overrides(self, request, form_desc):
-        """Modify the registration form if the user has authenticated with a third-party provider.
-
-        If a user has successfully authenticated with a third-party provider,
-        but does not yet have an account with PhilU, we want to fill in
-        the registration form with any info that we get from the
-        provider.
-
-        Arguments:
-            request (HttpRequest): The request for the registration form, used
-                to determine if the user has successfully authenticated
-                with a third-party provider.
-
-            form_desc (FormDescription): The registration form description
-
-        """
-        if third_party_auth.is_enabled():
-            running_pipeline = third_party_auth.pipeline.get(request)
-            if running_pipeline:
-                current_provider = third_party_auth.provider.Registry.get_from_pipeline(running_pipeline)
-
-                if current_provider:
-                    # Override username / email / full name
-                    field_overrides = get_register_form_data_override(
-                        running_pipeline.get('kwargs')
-                    )
-
-                    for field_name in self.THIRD_PARTY_OVERRIDE_FIELDS:
-                        if field_name in field_overrides:
-                            form_desc.override_field_properties(
-                                field_name, default=field_overrides[field_name]
-                            )
 
 
 class LoginSessionViewCustom(LoginSessionView):

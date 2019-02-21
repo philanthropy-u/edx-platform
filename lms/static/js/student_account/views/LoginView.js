@@ -164,25 +164,17 @@
                 },
 
                 renderAuthWarning: function() {
-                    var fullMsgHtml = HtmlUtils.interpolateHtml(
-                        gettext('{paragraphStart}You have successfully signed into {currentProvider} but we couldn’t ' +
-                            'find a linked {platformName} account.{paragraphEnd}{paragraphStart}Please sign in with ' +
-                            'your email and password if you have an {platformName} account. Or ' +
-                            '{registerRedirectUrlStart}click here{registerRedirectUrlEnd} to go to the registration ' +
-                            'page and create a {platformName} account.{paragraphEnd}'),
-                        { // eslint-disable-line max-len
-                                paragraphStart: HtmlUtils.HTML('<p>'),
-                                paragraphEnd: HtmlUtils.HTML('</p>'),
-                                registerRedirectUrlStart: HtmlUtils.HTML('<a href="/register">'),
-                                registerRedirectUrlEnd: HtmlUtils.HTML('</a>'),
-                                platformName: this.platformName,
-                                currentProvider: this.currentProvider
-                        }
-                        );
+                    var message = _.sprintf(
+                        gettext('You have successfully signed into %(currentProvider)s, but your %(currentProvider)s' +
+                                ' account does not have a linked %(platformName)s account. To link your accounts,' +
+                                ' sign in now using your %(platformName)s password.'),
+                        {currentProvider: this.currentProvider, platformName: this.platformName}
+                    );
+
                     this.clearAuthWarning();
                     this.renderFormFeedback(this.formStatusTpl, {
                         jsHook: this.authWarningJsHook,
-                        messageHtml: fullMsgHtml
+                        message: message
                     });
                 },
 
