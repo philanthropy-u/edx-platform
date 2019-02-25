@@ -5,4 +5,4 @@ pyminizip==0.2.1
 channels==1.1.8
 asgi-redis==1.4.3
 -e git+https://github.com/philanthropy-u/xblock-poll#egg=xblock-poll
--e git+https://github.com/philanthropy-u/edx-notifications.git@ebea0429151f8bebf3cee8b838af0488f7f44865#egg=edx-notifications
+-e git+https://github.com/philanthropy-u/edx-notifications.git@8f8e8abef37be4b7edf85a12f354c1567372d152#egg=edx-notifications
