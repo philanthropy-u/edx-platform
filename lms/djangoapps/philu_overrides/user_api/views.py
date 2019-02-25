@@ -12,7 +12,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.core.urlresolvers import reverse
-from django.core.validators import validate_email, ValidationError
+from django.core.validators import validate_email, ValidationError, validate_slug
 from django.db import IntegrityError, transaction
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, get_language
@@ -263,6 +263,12 @@ def create_account_with_params_custom(request, params, is_alquity_user):
                 # Ensure user does not re-enter the pipeline
                 request.social_strategy.clean_partial_pipeline()
                 raise ValidationError({'access_token': [error_message]})
+            else:
+                if pipeline_user.first_name != params.get('first_name') or \
+                        pipeline_user.last_name != params.get('last_name'):
+                    pipeline_user.first_name = params.get('first_name')
+                    pipeline_user.last_name = params.get('last_name')
+                    pipeline_user.save()
 
     # Perform operations that are non-critical parts of account creation
     preferences_api.set_user_preference(user, LANGUAGE_KEY, get_language())
@@ -551,6 +557,13 @@ class RegistrationViewCustom(RegistrationView):
 
                     for field_name in self.THIRD_PARTY_OVERRIDE_FIELDS:
                         if field_name in field_overrides:
+
+                            if field_name == 'username':
+                                try:
+                                    validate_slug(field_overrides[field_name])
+                                except ValidationError:
+                                    continue
+
                             form_desc.override_field_properties(
                                 field_name, default=field_overrides[field_name]
                             )

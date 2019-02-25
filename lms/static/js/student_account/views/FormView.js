@@ -34,6 +34,8 @@
 
                 fields: [],
 
+                createPasswordMessage: '',
+
             // String to append to required label fields
                 requiredStr: '*',
 
@@ -76,6 +78,7 @@
                     this.$form = $container.find('form');
                     this.$formFeedback = $container.find('.js-form-feedback');
                     this.$submitButton = $container.find(this.submitButton);
+                    this.$createPasswordMessage = $container.find('.create-password-message');
                 },
 
                 buildForm: function(data) {
@@ -198,6 +201,13 @@
                 renderFormFeedback: function(template, context) {
                     var tpl = HtmlUtils.template(template);
                     HtmlUtils.prepend(this.$formFeedback, tpl(context));
+
+                    if (this.$createPasswordMessage){
+                        if (context.jsHook === 'js-auth-warning'){
+                            HtmlUtils.append(this.$createPasswordMessage, context.createPasswordMessage);
+                            this.$createPasswordMessage.removeClass('hidden');
+                        }
+                    }
 
                 // Scroll to feedback container
                     $('html,body').animate({

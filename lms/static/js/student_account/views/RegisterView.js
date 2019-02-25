@@ -127,9 +127,14 @@
                                 currentProvider: this.currentProvider
                         }
                         );
+                    var createPasswordMessage = _.sprintf(
+                            'Please create a password for your %(platformName)s account',
+                            {platformName: this.platformName}
+                        );
                     this.renderFormFeedback(this.formStatusTpl, {
                         jsHook: this.authWarningJsHook,
-                        messageHtml: fullMsgHtml
+                        messageHtml: fullMsgHtml,
+                        createPasswordMessage: createPasswordMessage
                     });
                 }
             });
