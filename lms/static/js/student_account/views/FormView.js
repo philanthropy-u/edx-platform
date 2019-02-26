@@ -34,8 +34,6 @@
 
                 fields: [],
 
-                createPasswordMessage: '',
-
             // String to append to required label fields
                 requiredStr: '*',
 
