@@ -57,7 +57,7 @@
                     );
 
                     this.renderTeamMembers();
-                    debugger;
+
                     // TODO: WRITE THE FOLLOWING CODE USING PROPER BACKBONE LOGIC
                     var nodeBBUrl = localStorage.getItem('nodebbUrl');
                     var rooms = JSON.parse(localStorage.getItem('rooms'));
