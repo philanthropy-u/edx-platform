@@ -135,7 +135,10 @@ if settings.FEATURES["ENABLE_COMBINED_LOGIN_REGISTRATION"]:
             {'initial_mode': 'login'}, name="signin_user"),
         url(r'^register$', 'philu_overrides.views.login_and_registration_form',
             {'initial_mode': 'register'}, name="register_user"),
-        url(r'^register/(?P<org_name>[^/]*)/(?P<admin_email>[^/]*)/$', 'philu_overrides.views.login_and_registration_form',
+        url(r'^signup', 'philu_overrides.views.login_and_registration_form',
+            {'initial_mode': 'register'}, name="register_user"),
+        url(r'^register/(?P<org_name>[^/]*)/(?P<admin_email>[^/]*)/$',
+            'philu_overrides.views.login_and_registration_form',
             {'initial_mode': 'register'}, name="register_user"),
     )
 else:
