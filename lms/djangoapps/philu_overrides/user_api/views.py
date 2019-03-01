@@ -263,12 +263,6 @@ def create_account_with_params_custom(request, params, is_alquity_user):
                 # Ensure user does not re-enter the pipeline
                 request.social_strategy.clean_partial_pipeline()
                 raise ValidationError({'access_token': [error_message]})
-            else:
-                if pipeline_user.first_name != params.get('first_name') or \
-                        pipeline_user.last_name != params.get('last_name'):
-                    pipeline_user.first_name = params.get('first_name')
-                    pipeline_user.last_name = params.get('last_name')
-                    pipeline_user.save()
 
     # Perform operations that are non-critical parts of account creation
     preferences_api.set_user_preference(user, LANGUAGE_KEY, get_language())
