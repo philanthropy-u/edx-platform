@@ -7,7 +7,6 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from edxmako.shortcuts import render_to_response
-from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls
 
 from certificates import api as certs_api
 from lms.djangoapps.grades.models import PersistentCourseGrade
@@ -60,7 +59,6 @@ def student_certificates(request):
 
     for certificate in available_certificates:
         certificate_url = None
-        # course = _get_course_and_check_access(course_id, request.user)
         course_id = certificate.course_id
         course = get_course(course_id)
         cert_downloadable_status = certs_api.certificate_downloadable_status(user, course_id)
@@ -81,10 +79,7 @@ def student_certificates(request):
 
         course_name = course.display_name
 
-        try:
-            start_date = course.start
-        except Exception as ex:
-            start_date = datetime.now()
+        start_date = course.start
 
         try:
             completion_date = course.end
@@ -92,14 +87,14 @@ def student_certificates(request):
             completion_date = datetime.now()
 
         try:
-            course_title = course.certificates['certificates'][0]['course_title']
+            course_title = course.certificates['certificates'].pop()['course_title']
         except Exception as ex:
             course_title = course.display_name
 
         user_certificates.append({
             'course_name': course_name,
             'course_title': course_title,
-            'certificate_url': settings.LMS_ROOT_URL + certificate_url,
+            'certificate_url': "%s%s" % (settings.LMS_ROOT_URL, certificate_url),
             'course_start': start_date.strftime('%b %d, %Y') if completion_date else None,
             'completion_date': completion_date.strftime('%b %d, %Y') if completion_date else None,
         })
