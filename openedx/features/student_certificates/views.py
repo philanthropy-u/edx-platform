@@ -88,8 +88,11 @@ def student_certificates(request):
 
         try:
             course_title = course.certificates['certificates'].pop()['course_title']
-        except Exception as ex:
+        except IndexError as ex:
             course_title = course.display_name
+        except TypeError as ex:
+            course_title = course.display_name
+
 
         user_certificates.append({
             'course_name': course_name,
