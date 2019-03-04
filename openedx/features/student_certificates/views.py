@@ -93,12 +93,11 @@ def student_certificates(request):
         except TypeError as ex:
             course_title = course.display_name
 
-
         user_certificates.append({
             'course_name': course_name,
             'course_title': course_title,
             'certificate_url': "%s%s" % (settings.LMS_ROOT_URL, certificate_url),
-            'course_start': start_date.strftime('%b %d, %Y') if completion_date else None,
+            'course_start': start_date.strftime('%b %d, %Y') if start_date else None,
             'completion_date': completion_date.strftime('%b %d, %Y') if completion_date else None,
         })
 
