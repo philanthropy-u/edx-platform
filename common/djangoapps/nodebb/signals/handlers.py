@@ -50,7 +50,7 @@ def sync_user_profile_info_with_nodebb(sender, instance, created, **kwargs):
     birth_year = instance.year_of_birth
     language = instance.language
 
-    if not created and (city_of_residence or country_of_residence or birth_year or language):
+    if not created and (country_of_residence or birth_year or language):
         user = instance.user
         data_to_sync = {
             "city_of_residence": city_of_residence,
@@ -64,6 +64,7 @@ def sync_user_profile_info_with_nodebb(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=UserExtendedProfile)
 def sync_extended_profile_info_with_nodebb(sender, instance, **kwargs):
+    request = get_current_request()
     user = instance.user
     data_to_sync = {
         "country_of_employment": COUNTRIES.get(instance.country_of_employment, ''),
@@ -75,8 +76,8 @@ def sync_extended_profile_info_with_nodebb(sender, instance, **kwargs):
     if instance.organization:
         data_to_sync["organization"] = instance.organization.label
 
-    # sanity to confirm that some data actually exists to sync
-    if any(data_to_sync.values()):
+    # sanity to confirm that some data actually exists to sync, during registration
+    if 'registration' not in request.path or any(data_to_sync.values()):
         task_update_user_profile_on_nodebb.delay(
             username=user.username, profile_data=data_to_sync)
 
@@ -93,10 +94,7 @@ def sync_organization_info_with_nodebb(sender, instance, created, **kwargs):  # 
     focus_area = FocusArea.objects.get(code=instance.focus_area).label if instance.focus_area else ''
 
     # For anonymous user username is empty('') so we can't sync with mailchimp
-    if request is None or not focus_area or not request.user.username:
-        return
-
-    if 'login' in request.path or 'logout' in request.path:
+    if request is None or not focus_area or not request.user.is_anonymous():
         return
 
     data_to_sync = {
