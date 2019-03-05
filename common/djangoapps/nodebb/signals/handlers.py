@@ -44,16 +44,22 @@ def handle_course_cert_awarded(sender, user, course_key, **kwargs):  # pylint: d
 
 
 @receiver(post_save, sender=UserProfile)
-def sync_user_profile_info_with_nodebb(sender, instance, **kwargs):
-    user = instance.user
-    data_to_sync = {
-        "city_of_residence": instance.city,
-        "country_of_residence": COUNTRIES.get(instance.country.code, ''),
-        "birthday": "01/01/%s" % instance.year_of_birth,
-        "language": instance.language,
-    }
-    task_update_user_profile_on_nodebb.delay(
-        username=user.username, profile_data=data_to_sync)
+def sync_user_profile_info_with_nodebb(sender, instance, created, **kwargs):
+    city_of_residence = instance.city
+    country_of_residence = COUNTRIES.get(instance.country.code, '')
+    birth_year = instance.year_of_birth
+    language = instance.language
+
+    if not created and (city_of_residence or country_of_residence or birth_year or language):
+        user = instance.user
+        data_to_sync = {
+            "city_of_residence": city_of_residence,
+            "country_of_residence": country_of_residence,
+            "birthday": "01/01/%s" % birth_year,
+            "language": language,
+        }
+        task_update_user_profile_on_nodebb.delay(
+            username=user.username, profile_data=data_to_sync)
 
 
 @receiver(post_save, sender=UserExtendedProfile)
@@ -69,8 +75,10 @@ def sync_extended_profile_info_with_nodebb(sender, instance, **kwargs):
     if instance.organization:
         data_to_sync["organization"] = instance.organization.label
 
-    task_update_user_profile_on_nodebb.delay(
-        username=user.username, profile_data=data_to_sync)
+    # sanity to confirm that some data actually exists to sync
+    if any(data_to_sync.values()):
+        task_update_user_profile_on_nodebb.delay(
+            username=user.username, profile_data=data_to_sync)
 
 
 @receiver(post_save, sender=Organization)
@@ -82,15 +90,17 @@ def sync_organization_info_with_nodebb(sender, instance, created, **kwargs):  # 
     # To prevent unnecessary API calls in case Django only updates
     # updated_at etc.
     request = get_current_request()
+    focus_area = FocusArea.objects.get(code=instance.focus_area).label if instance.focus_area else ''
 
-    if request is None:
+    # For anonymous user username is empty('') so we can't sync with mailchimp
+    if request is None or not focus_area or not request.user.username:
         return
 
     if 'login' in request.path or 'logout' in request.path:
         return
 
     data_to_sync = {
-        "focus_area": FocusArea.objects.get(code=instance.focus_area).label if instance.focus_area else ""
+        "focus_area": focus_area
     }
 
     user = request.user
@@ -124,13 +134,17 @@ def update_user_profile_on_nodebb(sender, instance, created, **kwargs):
         task_create_user_on_nodebb.delay(
             username=instance.username, user_data=data_to_sync)
     else:
-        data_to_sync = {
-            'first_name': instance.first_name,
-            'last_name': instance.last_name
-        }
+        # This sanity blocks two extra syncs because during 'registration'
+        # we sync first_name and last_name under above 'created' sanity block
+        # so no need to sync first_name and last_name again.
+        if 'registration' not in request.path:
+            data_to_sync = {
+                'first_name': instance.first_name,
+                'last_name': instance.last_name
+            }
 
-        task_update_user_profile_on_nodebb.delay(
-            username=instance.username, profile_data=data_to_sync)
+            task_update_user_profile_on_nodebb.delay(
+                username=instance.username, profile_data=data_to_sync)
 
 
 
