@@ -32,7 +32,7 @@ def handle_response(caller, task_name, status_code, response, username):
         print('Success: {} task for user: {}'.format(task_name, username))
 
 
-@task(default_retry_delay=RETRY_DELAY, max_retries=None)
+@task(default_retry_delay=RETRY_DELAY, max_retries=None, routing_key=settings.HIGH_PRIORITY_QUEUE)
 def task_create_user_on_nodebb(username, user_data):
     """
     Celery task to create user on NodeBB
@@ -52,7 +52,7 @@ def task_create_user_on_nodebb(username, user_data):
             task_update_onboarding_surveys_status.delay(username)
 
 
-@task(default_retry_delay=RETRY_DELAY, max_retries=None)
+@task(default_retry_delay=RETRY_DELAY, max_retries=None, routing_key=settings.HIGH_PRIORITY_QUEUE)
 def task_update_user_profile_on_nodebb(username, profile_data):
     """
     Celery task to update user profile info on NodeBB
