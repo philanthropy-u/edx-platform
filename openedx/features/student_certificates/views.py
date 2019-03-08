@@ -7,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from edxmako.shortcuts import render_to_response
+from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls
 
 from certificates import api as certs_api
 from lms.djangoapps.grades.models import PersistentCourseGrade
@@ -93,10 +94,25 @@ def student_certificates(request):
         except TypeError as ex:
             course_title = course.display_name
 
+        custom_settings = get_course_custom_settings(course_id)
+        meta_tags = custom_settings.get_course_meta_tags()
+
+        # meta_tags['description'] = meta_tags['description'] or course_details.short_description
+        # meta_tags['title'] = meta_tags['title'] or course_details.title or course.display_name
+        meta_tags['title'] = meta_tags['title'] or 'I just completed Philanthropy University\'s ' \
+                                 + course.display_name + ' course! '
+
+        # if course_details.banner_image_name != DEFAULT_IMAGE_NAME:
+        #     meta_tags['image'] = settings.LMS_ROOT_URL + course_details.banner_image_asset_path
+
+        social_sharing_urls = get_social_sharing_urls(settings.LMS_ROOT_URL + certificate_url, meta_tags)
+
         user_certificates.append({
             'course_name': course_name,
             'course_title': course_title,
-            'certificate_url': "%s%s" % (settings.LMS_ROOT_URL, certificate_url),
+            'social_sharing_urls': social_sharing_urls,
+            # 'certificate_url': "%s%s" % (settings.LMS_ROOT_URL, certificate_url),
+            'certificate_url': "http://local.philanthropyu.org:8000/shared_certificates/",
             'course_start': start_date.strftime('%b %d, %Y') if start_date else None,
             'completion_date': completion_date.strftime('%b %d, %Y') if completion_date else None,
         })
@@ -106,4 +122,26 @@ def student_certificates(request):
     }
 
     response = render_to_response('certificates.html', context)
+    return response
+
+
+@login_required
+@ensure_csrf_cookie
+def shared_student_certificate(request):
+    """
+    Provides the User with the shared certificate page
+
+    Arguments:
+        request: The request object.
+
+    Returns:
+        The generated shared certificate response.
+
+    """
+    user = request.user
+
+    context = {
+    }
+
+    response = render_to_response('shared_certificate.html', context)
     return response
