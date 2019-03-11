@@ -1,3 +1,174 @@
+""" Views for a student's account information. """
+import base64
+from datetime import datetime
+import json
+import third_party_auth
+import logging
+import urlparse
+from pytz import utc
+
+from django.http import HttpResponseNotFound, HttpResponse, Http404, HttpResponseServerError
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.urlresolvers import reverse
+from django.shortcuts import redirect
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_http_methods
+from django.utils.translation import ugettext as _
+from edxmako.shortcuts import render_to_response, render_to_string
+from opaque_keys.edx.locations import SlashSeparatedCourseKey
+from openedx.core.djangoapps.catalog.utils import get_programs_data
+from philu_overrides.helpers import reactivation_email_for_user_custom, get_course_next_classes, \
+    get_user_current_enrolled_class, get_next_url_for_login_page_override, is_user_enrolled_in_any_class
+from lms.djangoapps.courseware.views.views import add_tag_to_enrolled_courses
+from student.views import (
+    signin_user as old_login_view,
+    register_user as old_register_view
+)
+from third_party_auth.decorators import xframe_allow_whitelisted
+from util.cache import cache_if_anonymous
+from util.enterprise_helpers import set_enterprise_branding_filter_param
+from xmodule.modulestore.django import modulestore
+from common.djangoapps.student.views import get_course_related_keys
+from lms.djangoapps.courseware.access import has_access, _can_enroll_courselike
+from lms.djangoapps.courseware.courses import get_courses, sort_by_start_date, get_course_by_id, sort_by_announcement
+from lms.djangoapps.courseware.views.views import get_last_accessed_courseware
+from lms.djangoapps.onboarding.helpers import reorder_registration_form_fields, get_alquity_community_url
+from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls
+from lms.djangoapps.student_account.views import _local_server_get, _get_form_descriptions, _external_auth_intercept, \
+    _third_party_auth_context
+from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
+from openedx.core.djangoapps.theming.helpers import is_request_in_themed_site
+from third_party_auth import pipeline, provider
+from util.json_request import JsonResponse
+from edxmako.shortcuts import marketing_link
+from openedx.core.djangoapps.external_auth.models import ExternalAuthMap
+from student.models import (LoginFailures, PasswordHistory, CourseEnrollment)
+from ratelimitbackend.exceptions import RateLimitException
+from django.contrib.auth import authenticate, login
+import analytics
+from eventtracking import tracker
+from student.cookies import set_logged_in_cookies
+
+AUDIT_LOG = logging.getLogger("audit")
+log = logging.getLogger(__name__)
+User = get_user_model()  # pylint:disable=invalid-name
+
+
+@require_http_methods(['GET'])
+@ensure_csrf_cookie
+@xframe_allow_whitelisted
+def login_and_registration_form(request, initial_mode="login", org_name=None, admin_email=None):
+    """Render the combined login/registration form, defaulting to login
+
+    This relies on the JS to asynchronously load the actual form from
+    the user_api.
+
+    Keyword Args:
+        initial_mode (string): Either "login" or "register".
+
+    """
+    # Determine the URL to redirect to following login/registration/third_party_auth
+    _local_server_get('/user_api/v2/account/registration/', request.session)
+    redirect_to = get_next_url_for_login_page_override(request)
+    # If we're already logged in, redirect to the dashboard
+    if request.user.is_authenticated():
+        return redirect(redirect_to)
+
+    # Retrieve the form descriptions from the user API
+    form_descriptions = _get_form_descriptions(request)
+
+    # Our ?next= URL may itself contain a parameter 'tpa_hint=x' that we need to check.
+    # If present, we display a login page focused on third-party auth with that provider.
+    third_party_auth_hint = None
+    if '?' in redirect_to:
+        try:
+            next_args = urlparse.parse_qs(urlparse.urlparse(redirect_to).query)
+            provider_id = next_args['tpa_hint'][0]
+            if third_party_auth.provider.Registry.get(provider_id=provider_id):
+                third_party_auth_hint = provider_id
+                initial_mode = "hinted_login"
+        except (KeyError, ValueError, IndexError):
+            pass
+
+    set_enterprise_branding_filter_param(request=request, provider_id=third_party_auth_hint)
+
+    # If this is a themed site, revert to the old login/registration pages.
+    # We need to do this for now to support existing themes.
+    # Themed sites can use the new logistration page by setting
+    # 'ENABLE_COMBINED_LOGIN_REGISTRATION' in their
+    # configuration settings.
+    if is_request_in_themed_site() and not configuration_helpers.get_value('ENABLE_COMBINED_LOGIN_REGISTRATION', False):
+        if initial_mode == "login":
+            return old_login_view(request)
+        elif initial_mode == "register":
+            return old_register_view(request)
+
+    # Allow external auth to intercept and handle the request
+    ext_auth_response = _external_auth_intercept(request, initial_mode)
+    if ext_auth_response is not None:
+        return ext_auth_response
+
+    # Otherwise, render the combined login/registration page
+    context = {
+        'data': {
+            'login_redirect_url': redirect_to,
+            'initial_mode': initial_mode,
+            'third_party_auth': _third_party_auth_context(request, redirect_to),
+            'third_party_auth_hint': third_party_auth_hint or '',
+            'platform_name': configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME),
+            'support_link': configuration_helpers.get_value('SUPPORT_SITE_LINK', settings.SUPPORT_SITE_LINK),
+
+            # Include form descriptions retrieved from the user API.
+            # We could have the JS client make these requests directly,
+            # but we include them in the initial page load to avoid
+            # the additional round-trip to the server.
+            'login_form_desc': json.loads(form_descriptions['login']),
+            'registration_form_desc': json.loads(form_descriptions['registration']),
+            'password_reset_form_desc': json.loads(form_descriptions['password_reset']),
+        },
+        'login_redirect_url': redirect_to,  # This gets added to the query string of the "Sign In" button in header
+        'responsive': True,
+        'allow_iframing': True,
+        'disable_courseware_js': True,
+        'disable_footer': not configuration_helpers.get_value(
+            'ENABLE_COMBINED_LOGIN_REGISTRATION_FOOTER',
+            settings.FEATURES['ENABLE_COMBINED_LOGIN_REGISTRATION_FOOTER']
+        ),
+        'fields_to_disable': []
+    }
+    # LP-1306
+    context['data']['registration_form_desc']['submit_url'] = reverse("user_api_registration_v2")
+
+    registration_fields = context['data']['registration_form_desc']['fields']
+    registration_fields = context['data']['registration_form_desc']['fields'] = reorder_registration_form_fields(registration_fields)
+
+    if org_name and admin_email:
+        org_name = base64.b64decode(org_name)
+        admin_email = base64.b64decode(admin_email)
+
+        email_field = get_form_field_by_name(registration_fields, 'email')
+        org_field = get_form_field_by_name(registration_fields, 'organization_name')
+        is_poc_field = get_form_field_by_name(registration_fields, 'is_poc')
+        email_field['defaultValue'] = admin_email
+        org_field['defaultValue'] = org_name
+        is_poc_field['defaultValue'] = "1"
+
+        context['fields_to_disable'] = json.dumps([email_field['name'], org_field['name'], is_poc_field['name']])
+    return render_to_response('features/account/login_and_register.html', context)
+
+
+def get_form_field_by_name(fields, name):
+    """
+    Get field object from list of form fields
+    """
+    for f in fields:
+        if f['name'] == name:
+            return f
+
+    return None
+
+
 import datetime
 import json
 import logging
@@ -30,7 +201,6 @@ from student.models import Registration, create_comments_service_user, PasswordH
 from third_party_auth import pipeline, provider
 from util.enterprise_helpers import data_sharing_consent_requirement_at_login
 from util.json_request import JsonResponse
-from lms.djangoapps.onboarding.models import RegistrationType
 
 from common.djangoapps.student.views import AccountValidationError, social_utils, REGISTER_USER, \
     _enroll_user_in_pending_courses, record_registration_attributions
@@ -485,7 +655,6 @@ class RegistrationViewCustom(RegistrationView):
             }
             return JsonResponse(errors, status=400)
 
-        RegistrationType.objects.create(choice=1, user=request.user)
         response = JsonResponse({"success": True})
         set_logged_in_cookies(request, response, user)
         return response
@@ -516,118 +685,3 @@ class RegistrationViewCustom(RegistrationView):
         except Exception as ex:
             log.error("There is some error saving UTM {}".format(str(ex)))
             pass
-
-
-class RegistrationViewCustomV2(RegistrationView):
-    """HTTP custom end-points for creating a new user. """
-
-    @method_decorator(csrf_exempt)
-    def post(self, request):
-        """Create the user's account.
-
-        You must send all required form fields with the request.
-
-        You can optionally send a "course_id" param to indicate in analytics
-        events that the user registered while enrolling in a particular course.
-
-        Arguments:
-        request (HTTPRequest)
-
-        Returns:
-        HttpResponse: 200 on success
-        HttpResponse: 400 if the request is not valid.
-        HttpResponse: 409 if an account with the given username or email
-        address already exists
-        """
-        data = request.POST.copy()
-
-        email = data.get('email')
-        username = data.get('username')
-        is_alquity_user = data.get('is_alquity_user') or False
-
-        # Handle duplicate email/username
-        conflicts = check_account_exists(email=email, username=username)
-        if conflicts:
-            conflict_messages = {
-                "email": _(
-                    # Translators: This message is shown to users who attempt to create a new
-                    # account using an email address associated with an existing account.
-                    u"It looks like {email_address} belongs to an existing account. "
-                    u"Try again with a different email address."
-                ).format(email_address=email),
-                "username": _(
-                    # Translators: This message is shown to users who attempt to create a new
-                    # account using a username associated with an existing account.
-                    u"The username you entered is already being used. Please enter another username."
-                ).format(username=username),
-            }
-            errors = {
-                field: [{"user_message": conflict_messages[field]}]
-                for field in conflicts
-            }
-            return JsonResponse(errors, status=409)
-
-        # Backwards compatibility: the student view expects both
-        # terms of service and honor code values.  Since we're combining
-        # these into a single checkbox, the only value we may get
-        # from the new view is "honor_code".
-        # Longer term, we will need to make this more flexible to support
-        # open source installations that may have separate checkboxes
-        # for TOS, privacy policy, etc.
-        if data.get("honor_code") and "terms_of_service" not in data:
-            data["terms_of_service"] = data["honor_code"]
-
-        try:
-            user = create_account_with_params_custom(request, data, is_alquity_user)
-            self.save_user_utm_info(user)
-        except ValidationError as err:
-            # Should only get non-field errors from this function
-            assert NON_FIELD_ERRORS not in err.message_dict
-            # Only return first error for each field
-            errors = {
-                field: [{"user_message": error} for error in error_list]
-                for field, error_list in err.message_dict.items()
-            }
-            return JsonResponse(errors, status=400)
-
-        RegistrationType.objects.create(choice=2, user=request.user)
-        response = JsonResponse({"success": True})
-        set_logged_in_cookies(request, response, user)
-        return response
-
-    def save_user_utm_info(self, user):
-
-        """
-        :param user:
-            user for which utm params are being saved + request to get all utm related params
-        :return:
-        """
-        try:
-            utm_source = self.request.POST.get("utm_source", None)
-            utm_medium = self.request.POST.get("utm_medium", None)
-            utm_campaign = self.request.POST.get("utm_campaign", None)
-            utm_content = self.request.POST.get("utm_content", None)
-            utm_term = self.request.POST.get("utm_term", None)
-
-            from openedx.features.user_leads.models import UserLeads
-            UserLeads.objects.create(
-                utm_source=utm_source,
-                utm_medium=utm_medium,
-                utm_campaign=utm_campaign,
-                utm_content=utm_content,
-                utm_term=utm_term,
-                user=user
-            )
-        except Exception as ex:
-            log.error("There is some error saving UTM {}".format(str(ex)))
-            pass
-
-
-class LoginSessionViewCustom(LoginSessionView):
-    @method_decorator(require_post_params(["email", "password"]))
-    @method_decorator(csrf_protect)
-    def post(self, request):
-        # For the initial implementation, shim the existing login view
-        # from the student Django app.
-        from philu_overrides.views import login_user_custom
-        return shim_student_view(login_user_custom, check_logged_in=True)(request)

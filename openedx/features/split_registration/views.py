@@ -58,12 +58,12 @@ def user_info(request):
     userprofile = request.user.profile
     is_under_age = False
 
-    template = 'onboarding/tell_us_more_survey.html'
+    template = 'features/onboarding/tell_us_more_survey.html'
     redirect_to_next = True
 
     if request.path == reverse('additional_information'):
         redirect_to_next = False
-        template = 'myaccount/additional_information.html'
+        template = 'features/account/additional_information.html'
 
     initial = {
         'year_of_birth': userprofile.year_of_birth,
@@ -105,7 +105,7 @@ def user_info(request):
 
             # this will only executed if user updated his/her employed status from account settings page
             # redirect user to account settings page where he come from
-            if not request.path == "/myaccount/additional_information/":
+            if not request.path == "features/account/additional_information/":
                 return redirect(reverse("update_account_settings"))
 
     else:
@@ -143,13 +143,13 @@ def interests(request):
     is_first_signup_in_org = user_extended_profile.is_first_signup_in_org \
         if user_extended_profile.organization else False
 
-    template = 'onboarding/interests_survey.html'
+    template = 'features/onboarding/interests_survey.html'
     next_page_url = reverse('organization')
     redirect_to_next = True
 
     if request.path == reverse('update_interests'):
         redirect_to_next = False
-        template = 'myaccount/interests.html'
+        template = 'features/account/interests.html'
 
     initial = {
         "interests": user_extended_profile.get_user_selected_interests(_type="fields"),
@@ -214,13 +214,13 @@ def organization(request):
     _organization = user_extended_profile.organization
     are_forms_complete = not(bool(user_extended_profile.unattended_surveys(_type='list')))
 
-    template = 'onboarding/organization_survey.html'
+    template = 'features/onboarding/organization_survey.html'
     next_page_url = reverse('recommendations')
     redirect_to_next = True
 
     if request.path == reverse('update_organization'):
         redirect_to_next = False
-        template = 'organization/update_organization.html'
+        template = 'features/organization/update_organization.html'
 
     initial = {
         'country': COUNTRIES.get(_organization.country),
@@ -271,44 +271,6 @@ def organization(request):
 
 
 @login_required
-def delete_my_account(request):
-    user = request.user
-
-    try:
-        logout(request)
-        user = User.objects.get(id=user.id)
-        user.delete()
-        data = json.dumps({"status": 200})
-    except User.DoesNotExist:
-        log.info("User does not exists")
-        data = json.dumps({"status": 200})
-
-    mime_type = 'application/json'
-    return HttpResponse(data, mime_type)
-
-
-@csrf_exempt
-def get_country_names(request):
-    """
-    Returns country names.
-    """
-    if request.is_ajax():
-        q = request.GET.get('term', '')
-        all_countries = COUNTRIES.values()
-
-        filtered_countries = [country for country in all_countries if country.lower().startswith(q.lower())]
-
-        data = json.dumps(filtered_countries)
-
-    else:
-        data = 'fail'
-
-    mime_type = 'application/json'
-
-    return HttpResponse(data, mime_type)
-
-
-@login_required
 @can_save_org_details
 @can_not_update_onboarding_steps
 @transaction.atomic
@@ -323,7 +285,7 @@ def org_detail_survey(request):
         "effective_date": datetime.strftime(latest_survey.effective_date, '%m/%d/%Y') if latest_survey else ""
     }
 
-    template = 'onboarding/organization_detail_survey.html'
+    template = 'features/onboarding/organization_detail_survey.html'
     next_page_url = reverse('recommendations')
     org_metric_form = forms.OrganizationMetricModelForm
     redirect_to_next = True
@@ -331,7 +293,7 @@ def org_detail_survey(request):
 
     if request.path == reverse('update_organization_details'):
         redirect_to_next = False
-        template = 'organization/update_organization_details.html'
+        template = 'features/organization/update_organization_details.html'
         org_metric_form = forms.OrganizationMetricModelUpdateForm
 
     if request.method == 'POST':
@@ -379,23 +341,6 @@ def org_detail_survey(request):
     return render(request, template, context)
 
 
-@csrf_exempt
-def get_languages(request):
-    """
-    Returns languages
-    """
-    if request.is_ajax():
-        q = request.GET.get('term', '')
-        filtered_languages = [language for language in LANGUAGES if language.lower().startswith(q.lower())]
-        data = json.dumps(filtered_languages)
-    else:
-        data = 'fail'
-
-    mime_type = 'application/json'
-
-    return HttpResponse(data, mime_type)
-
-
 @login_required
 def update_account_settings(request):
     """
@@ -414,7 +359,7 @@ def update_account_settings(request):
             if not are_forms_complete:
                 return redirect(reverse(unattended_surveys[0]))
 
-            return redirect(reverse('update_account_settings'))
+            return redirect(reverse('update_account'))
 
     else:
         email_preferences = getattr(request.user, 'email_preferences', None)
@@ -435,69 +380,7 @@ def update_account_settings(request):
         'org_url': reverse('get_organizations')
     }
 
-    return render(request, 'myaccount/registration_update.html', ctx)
-
-
-@login_required
-def suggest_org_admin(request):
-    """
-    Suggest a user as administrator of an organization
-    """
-    status = 200
-    message = 'E-mail successfully sent.'
-
-    if request.method == 'POST':
-        organization = request.POST.get('organization')
-        org_admin_email = request.POST.get('email')
-        try:
-            org_admin_first_name = User.objects.get(email=org_admin_email).first_name
-        except:
-            org_admin_first_name = ''
-
-        if organization:
-            try:
-                organization = Organization.objects.get(label__iexact=organization)
-                extended_profile = request.user.extended_profile
-
-                if org_admin_email:
-                    already_an_admin = Organization.objects.filter(admin__email=org_admin_email).first()
-
-                    already_suggested_as_admin = OrganizationAdminHashKeys.objects.filter(
-                        suggested_admin_email=org_admin_email, is_hash_consumed=False).first()
-
-                    if already_an_admin:
-                        status = 400
-                        message = ugettext_noop('%s is already admin of organization "%s"'
-                                                      % (org_admin_email, already_an_admin.label))
-                    elif already_suggested_as_admin:
-                        message = ugettext_noop('%s is already suggested as admin of "%s" organization'
-                                                % (org_admin_email, already_suggested_as_admin.organization.label))
-                    else:
-                        hash_key = OrganizationAdminHashKeys.assign_hash(organization, request.user, org_admin_email)
-                        org_id = extended_profile.organization_id
-                        org_name = extended_profile.organization.label
-                        organization.unclaimed_org_admin_email = org_admin_email
-                        claimed_by_name = "{first_name} {last_name}".format(first_name=request.user.first_name,
-                                                                            last_name=request.user.last_name)
-                        claimed_by_email = request.user.email
-
-                        send_admin_activation_email(org_admin_first_name, org_id, org_name, claimed_by_name,
-                                                    claimed_by_email, org_admin_email, hash_key)
-                else:
-                    hash_key = OrganizationAdminHashKeys.assign_hash(organization, organization.admin, request.user.email)
-                    send_admin_update_email(organization.id, organization.label, organization.admin.email,
-                                            organization.admin.first_name, hash_key, request.user.email,
-                                            request.user.username
-                                            )
-
-            except Organization.DoesNotExist:
-                log.info("Organization does not exists: %s" % organization)
-                status = 400
-            except Exception as ex:
-                log.info(ex.args)
-                status = 400
-
-    return JsonResponse({'status': status, 'message': message})
+    return render(request, 'features/account/registration_update.html', ctx)
 
 
 @csrf_exempt
@@ -534,140 +417,5 @@ def get_organizations(request):
     return JsonResponse(final_result)
 
 
-@csrf_exempt
-def get_currencies(request):
-    currencies = []
-
-    if request.is_ajax():
-        term = request.GET.get('term', '')
-        currencies = Currency.objects.filter(Q(country__icontains=term) | Q(name__icontains=term) |
-                                             Q(alphabetic_code__icontains=term)).values_list('alphabetic_code',
-                                                                                               flat=True).distinct()
-    data = json.dumps(list(currencies))
-    return HttpResponse(data, 'application/json')
-
-
-@login_required
-def recommendations(request):
-    """
-    Display recommended courses and communities based on the survey
-
-    """
-    recommended_courses = get_recommended_xmodule_courses(request)
-    joined_communities = get_joined_communities(request.user)
-    user_extended_profile = request.user.extended_profile
-
-    context = {
-        'recommended_courses': recommended_courses,
-        'joined_communities': joined_communities,
-        'user_has_organization': bool(user_extended_profile.organization),
-        'is_nonprofit_org': Organization.is_non_profit(user_extended_profile),
-        'is_poc': user_extended_profile.is_organization_admin,
-        'oef_eligible_first_learner': oef_eligible_first_learner(user_extended_profile),
-    }
-
-    return render_to_response('onboarding/recommendations.html', context)
-
-
-@csrf_exempt
-@transaction.atomic
-def admin_activation(request, activation_key):
-    """
-        When clicked on link sent in email to make user admin.
-
-        activation_status can have values 1, 2, 3, 4, 5.
-        1 = Activated
-        2 = Already Active
-        3 = Invalid Hash
-        4 = To be Activated
-        5 = User not exist in platform
-
-    """
-    hash_key = None
-    context = {
-        'is_org_admin': False
-    }
-
-    admin_activation = True if request.GET.get('admin_activation') == 'True' else False
-
-    try:
-        hash_key = OrganizationAdminHashKeys.objects.get(activation_hash=activation_key)
-        admin_change_confirmation = True if request.GET.get('confirm') == 'True' else False
-        current_admin = request.user
-        user_extended_profile = UserExtendedProfile.objects.get(user__email=hash_key.suggested_admin_email)
-        new_admin = user_extended_profile.user
-
-        context['key'] = hash_key.activation_hash
-        context['is_org_admin'] = True if hash_key.suggested_by == hash_key.organization.admin else False
-
-        if hash_key.is_hash_consumed:
-            activation_status = 2
-        else:
-            activation_status = 4
-
-        # Proceed only if hash_key is not already consumed
-        if request.method == 'POST' and activation_status != 2:
-            hash_key.is_hash_consumed = True
-            hash_key.save()
-            # Consume all entries of hash keys where suggested_admin_email = hash_key.suggested_admin_email,
-            # so he can not use those links in future
-            unconsumed_hash_keys = OrganizationAdminHashKeys.objects.filter(
-                is_hash_consumed=False, suggested_admin_email=hash_key.suggested_admin_email
-            )
-            if unconsumed_hash_keys:
-                unconsumed_hash_keys.update(is_hash_consumed=True)
-
-            # Change the admin of the organization if admin is being activated or updated on user confirmation[True]
-            if admin_activation or admin_change_confirmation:
-
-                # If claimer's is admin of some other organization remove his privileges
-                # for that organization as he can only be an admin of single organization
-                if user_extended_profile.organization and user_extended_profile.organization.admin == new_admin:
-                    user_extended_profile.organization.admin = None
-                    user_extended_profile.organization.save()
-
-                hash_key.organization.unclaimed_org_admin_email = None
-                hash_key.organization.admin = new_admin
-                hash_key.organization.save()
-
-                # Update the claimer's organization if a user confirms
-                user_extended_profile.organization = hash_key.organization
-                user_extended_profile.save()
-                activation_status = 1
-
-            if not admin_activation:
-                # Send an email to claimer, on admin updation depending upon whether user accepts or rejects the request
-                send_admin_update_confirmation_email(hash_key.organization.label, current_admin, new_admin,
-                                                     confirm=1 if admin_change_confirmation else None,
-                                                     )
-                return HttpResponseRedirect('/myaccount/settings/')
-
-    except OrganizationAdminHashKeys.DoesNotExist:
-        activation_status = 3
-
-    except UserExtendedProfile.DoesNotExist:
-        activation_status = 5
-
-    if activation_status == 5 and admin_activation:
-        hash_key.is_hash_consumed = True
-        hash_key.save()
-
-        url = reverse('register_user', kwargs={
-            'initial_mode': 'register',
-            'org_name': base64.b64encode(str(hash_key.organization.label)),
-            'admin_email': base64.b64encode(str(hash_key.suggested_admin_email))})
-
-        messages.add_message(request, messages.INFO,
-                             _('Please signup here to become admin for %s' % hash_key.organization.label))
-        return HttpResponseRedirect(url)
-
-    context['activation_status'] = activation_status
-
-    if admin_activation:
-        return render_to_response('onboarding/admin_activation.html', context)
-
-    context['username'] = new_admin.username if new_admin else None
-
-    return render_to_response('onboarding/admin_change_confirmation.html', context)
 
 

@@ -2206,6 +2206,9 @@ INSTALLED_APPS = (
     # Unusual migrations
     'database_fixups',
 
+    # Split Registration
+    'openedx.features.split_registration',
+
     'lms.djangoapps.onboarding',
 
     # OEF survey
