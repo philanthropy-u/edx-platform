@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.exceptions import ObjectDoesNotExist
@@ -78,15 +79,26 @@ def student_certificates(request):
 
         course_name = course.display_name
 
+        start_date = course.start
+
         try:
             completion_date = course.end
         except Exception as ex:
             completion_date = datetime.now()
 
+        try:
+            course_title = course.certificates['certificates'].pop()['course_title']
+        except IndexError as ex:
+            course_title = course.display_name
+        except TypeError as ex:
+            course_title = course.display_name
+
         user_certificates.append({
-            'completion_date': completion_date.strftime('%b %d, %Y') if completion_date else None,
             'course_name': course_name,
-            'certificate_url': certificate_url
+            'course_title': course_title,
+            'certificate_url': "%s%s" % (settings.LMS_ROOT_URL, certificate_url),
+            'course_start': start_date.strftime('%b %d, %Y') if start_date else None,
+            'completion_date': completion_date.strftime('%b %d, %Y') if completion_date else None,
         })
 
     context = {

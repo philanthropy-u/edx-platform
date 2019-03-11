@@ -62,7 +62,7 @@
                     var nodeBBUrl = localStorage.getItem('nodebbUrl');
                     var rooms = JSON.parse(localStorage.getItem('rooms'));
                     var activeTeam = localStorage.getItem('activeTeam')
-                    var memberships = parseInt(localStorage.getItem('memberships'), 10);
+                    var memberships = this.model.get('membership').length || 0;
                     var teamDiscussionLink = nodeBBUrl + '/chats/' + rooms[activeTeam];
                     var discussionLinkElem = document.getElementById('discussion-link');
 

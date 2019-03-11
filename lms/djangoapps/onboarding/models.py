@@ -811,7 +811,8 @@ class OrganizationMetricUpdatePrompt(models.Model):
 
 
 class MetricUpdatePromptRecord(TimeStampedModel):
-    prompt = models.ForeignKey(OrganizationMetricUpdatePrompt, related_name="metrics_update_prompt_records")
+    prompt = models.ForeignKey(OrganizationMetricUpdatePrompt, on_delete=models.CASCADE,
+                               related_name="metrics_update_prompt_records")
     CLICK_CHOICES = (
         (REMIND_ME_LATER_KEY, ugettext_noop(REMIND_ME_LATER_VAL)),
         (TAKE_ME_THERE_KEY, ugettext_noop(TAKE_ME_THERE_VAL)),
