@@ -51,7 +51,7 @@ class RedirectMiddleware(object):
 
             user_extended_profile = user.extended_profile
 
-            if type == 1:
+            if reg_type == 1:
 
                 attended_surveys = user_extended_profile.attended_surveys()
                 unattended_surveys = user_extended_profile.unattended_surveys(_type="list")
@@ -70,7 +70,7 @@ class RedirectMiddleware(object):
 
                 elif unattended_surveys and current_view_accessed not in attended_surveys:
                     next_survey_to_complete = unattended_surveys[0]
-                    if not self.urls_to_redirect[next_survey_to_complete] == request.get_full_path():
+                    if not urls_to_redirect[next_survey_to_complete] == request.get_full_path():
                         return redirect(urls_to_redirect[next_survey_to_complete])
 
                     return None
