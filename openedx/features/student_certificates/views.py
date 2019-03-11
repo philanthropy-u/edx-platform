@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -12,7 +13,9 @@ from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_soc
 from certificates import api as certs_api
 from lms.djangoapps.grades.models import PersistentCourseGrade
 from courseware.courses import get_course
-from certificates.models import GeneratedCertificate
+from certificates.models import (
+    GeneratedCertificate,
+    CertificateStatuses)
 from common.djangoapps.student.views import get_course_enrollments
 
 
@@ -100,19 +103,20 @@ def student_certificates(request):
         # meta_tags['description'] = meta_tags['description'] or course_details.short_description
         # meta_tags['title'] = meta_tags['title'] or course_details.title or course.display_name
         meta_tags['title'] = meta_tags['title'] or 'I just completed Philanthropy University\'s ' \
-                                 + course.display_name + ' course! '
+                             + course.display_name + ' course! '
 
         # if course_details.banner_image_name != DEFAULT_IMAGE_NAME:
         #     meta_tags['image'] = settings.LMS_ROOT_URL + course_details.banner_image_asset_path
 
-        social_sharing_urls = get_social_sharing_urls(settings.LMS_ROOT_URL + certificate_url, meta_tags)
+        # social_sharing_urls = get_social_sharing_urls(settings.LMS_ROOT_URL + certificate_url, meta_tags)
+        social_sharing_urls = get_social_sharing_urls(
+            settings.LMS_ROOT_URL + "/shared_certificates/" + certificate.verify_uuid, meta_tags)
 
         user_certificates.append({
             'course_name': course_name,
             'course_title': course_title,
             'social_sharing_urls': social_sharing_urls,
-            # 'certificate_url': "%s%s" % (settings.LMS_ROOT_URL, certificate_url),
-            'certificate_url': "http://local.philanthropyu.org:8000/shared_certificates/",
+            'certificate_url': "%s%s" % (settings.LMS_ROOT_URL, certificate_url),
             'course_start': start_date.strftime('%b %d, %Y') if start_date else None,
             'completion_date': completion_date.strftime('%b %d, %Y') if completion_date else None,
         })
@@ -127,7 +131,7 @@ def student_certificates(request):
 
 @login_required
 @ensure_csrf_cookie
-def shared_student_certificate(request):
+def shared_student_certificate(request, certificate_uuid):
     """
     Provides the User with the shared certificate page
 
@@ -140,7 +144,16 @@ def shared_student_certificate(request):
     """
     user = request.user
 
+    try:
+        certificate = GeneratedCertificate.eligible_certificates.get(
+            verify_uuid=certificate_uuid,
+            status=CertificateStatuses.downloadable
+        )
+    except GeneratedCertificate.DoesNotExist:
+        raise Http404
+
     context = {
+        'course_url': "%s%s%s%s" % (settings.LMS_ROOT_URL, '/courses/', certificate.course_id, '/about'),
     }
 
     response = render_to_response('shared_certificate.html', context)
