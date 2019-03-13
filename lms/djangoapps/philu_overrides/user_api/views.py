@@ -8,15 +8,16 @@ import third_party_auth
 from celery.task import task
 from common.djangoapps.util.request import safe_get_host
 from django.conf import settings
+from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
-from django.core.exceptions import NON_FIELD_ERRORS
+from django.core.exceptions import NON_FIELD_ERRORS, ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.core.validators import validate_email, ValidationError, validate_slug
 from django.db import IntegrityError, transaction
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, get_language
-from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.views.decorators.csrf import csrf_exempt, csrf_protect, ensure_csrf_cookie
 from eventtracking import tracker
 from notification_prefs.views import enable_notifications
 from pytz import UTC
@@ -28,7 +29,7 @@ from openedx.core.djangoapps.user_api.helpers import shim_student_view, require_
 from student.forms import AccountCreationForm, get_registration_extension_form
 from student.models import Registration, create_comments_service_user, PasswordHistory, UserProfile
 from third_party_auth import pipeline, provider
-from util.enterprise_helpers import data_sharing_consent_requirement_at_login
+from util.enterprise_helpers import data_sharing_consent_requirement_at_login, insert_enterprise_fields
 from util.json_request import JsonResponse
 from lms.djangoapps.onboarding.models import RegistrationType
 
@@ -39,6 +40,8 @@ from openedx.core.djangoapps.site_configuration import helpers as configuration_
 from openedx.core.djangoapps.user_api.accounts.api import check_account_exists
 from openedx.core.djangoapps.user_api.preferences import api as preferences_api
 from openedx.core.djangoapps.user_api.views import RegistrationView, LoginSessionView
+from openedx.core.djangoapps.user_api.helpers import FormDescription
+from openedx.features.split_registration.forms import get_registration_extension_form_override
 
 from ..helpers import get_register_form_data_override
 
@@ -565,6 +568,80 @@ class RegistrationViewCustom(RegistrationView):
 class RegistrationViewCustomV2(RegistrationView):
     """HTTP custom end-points for creating a new user. """
     THIRD_PARTY_OVERRIDE_FIELDS = RegistrationView.DEFAULT_FIELDS + ["first_name", "last_name"]
+
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request):
+        """Return a description of the registration form.
+
+        This decouples clients from the API definition:
+        if the API decides to modify the form, clients won't need
+        to be updated.
+
+        This is especially important for the registration form,
+        since different edx-platform installations might
+        collect different demographic information.
+
+        See `user_api.helpers.FormDescription` for examples
+        of the JSON-encoded form description.
+
+        Arguments:
+            request (HttpRequest)
+
+        Returns:
+            HttpResponse
+
+        """
+        form_desc = FormDescription("post", reverse("user_api_registration"))
+        self._apply_third_party_auth_overrides(request, form_desc)
+
+        # Default fields are always required
+        for field_name in self.DEFAULT_FIELDS:
+            self.field_handlers[field_name](form_desc, required=True)
+
+        # Custom form fields can be added via the form set in settings.REGISTRATION_EXTENSION_FORM
+        custom_form = get_registration_extension_form_override()
+
+        if custom_form:
+            for field_name, field in custom_form.fields.items():
+                restrictions = {}
+                if getattr(field, 'max_length', None):
+                    restrictions['max_length'] = field.max_length
+                if getattr(field, 'min_length', None):
+                    restrictions['min_length'] = field.min_length
+                field_options = getattr(
+                    getattr(custom_form, 'Meta', None), 'serialization_options', {}
+                ).get(field_name, {})
+                field_type = field_options.get('field_type', FormDescription.FIELD_TYPE_MAP.get(field.__class__))
+                if not field_type:
+                    raise ImproperlyConfigured(
+                        "Field type '{}' not recognized for registration extension field '{}'.".format(
+                            field_type,
+                            field_name
+                        )
+                    )
+                form_desc.add_field(
+                    field_name, label=field.label,
+                    default=field_options.get('default'),
+                    field_type=field_options.get('field_type', FormDescription.FIELD_TYPE_MAP.get(field.__class__)),
+                    placeholder=field.initial, instructions=field.help_text, required=field.required,
+                    restrictions=restrictions,
+                    options=getattr(field, 'choices', None), error_messages=field.error_messages,
+                    include_default_option=field_options.get('include_default_option'),
+                )
+
+        # Extra fields configured in Django settings
+        # may be required, optional, or hidden
+        for field_name in self.EXTRA_FIELDS:
+            if self._is_field_visible(field_name):
+                self.field_handlers[field_name](
+                    form_desc,
+                    required=self._is_field_required(field_name)
+                )
+
+        # Add any Enterprise fields if the app is enabled
+        insert_enterprise_fields(request, form_desc)
+
+        return HttpResponse(form_desc.to_json(), content_type="application/json")
 
     @method_decorator(csrf_exempt)
     def post(self, request):

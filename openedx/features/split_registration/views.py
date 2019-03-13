@@ -35,7 +35,7 @@ from lms.djangoapps.onboarding.models import UserExtendedProfile
 from lms.djangoapps.onboarding.signals import save_interests
 from lms.djangoapps.student_dashboard.views import get_recommended_xmodule_courses, get_joined_communities
 from nodebb.helpers import update_nodebb_for_user_status
-from lms.djangoapps.onboarding import forms
+from openedx.features.split_registration import forms
 
 log = logging.getLogger("edx.onboarding")
 
@@ -195,6 +195,73 @@ def interests(request):
         'is_first_user': is_first_signup_in_org,
     })
 
+    return render(request, template, context)
+
+
+@login_required
+@can_not_update_onboarding_steps
+@transaction.atomic
+def user_organization_role(request):
+    """
+    The view to handle user info survey from the user.
+
+    If its a GET request then an empty form for survey is returned
+    otherwise, a form is populated form the POST request data and
+    is then saved. After saving the form, user is redirected to the
+    next survey namely, interests survey.
+    """
+
+    user_extended_profile = request.user.extended_profile
+    are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
+
+    template = 'features/onboarding/organization_role.html'
+    redirect_to_next = True
+
+    if request.path == reverse('additional_information'):
+        redirect_to_next = False
+        template = 'features/account/additional_information.html'
+
+    initial = {
+        'country_of_employment': COUNTRIES.get(user_extended_profile.country_of_employment, '') if not request.POST.get('country_of_employment') else request.POST.get('country_of_employment') ,
+        'hours_per_week': user_extended_profile.hours_per_week if user_extended_profile.hours_per_week else '',
+        'is_emp_location_different': True if user_extended_profile.country_of_employment else False,
+        "function_areas": user_extended_profile.get_user_selected_functions(_type="fields")
+    }
+
+    context = {
+        'are_forms_complete': are_forms_complete, 'first_name': request.user.first_name
+    }
+
+    if request.method == 'POST':
+        form = forms.OrganizationRoleForm(request.POST, instance=user_extended_profile, initial=initial)
+
+        if form.is_valid():
+            form.save(request, user_extended_profile)
+            unattended_surveys = user_extended_profile.unattended_surveys(_type='list')
+            are_forms_complete = not (bool(unattended_surveys))
+
+            if not are_forms_complete and redirect_to_next:
+                return redirect(unattended_surveys[0])
+
+            # this will only executed if user updated his/her employed status from account settings page
+            # redirect user to account settings page where he come from
+            if not request.path == "features/account/additional_information/":
+                return redirect(reverse("update_account_settings"))
+
+    else:
+        form = forms.OrganizationRoleForm(instance=user_extended_profile, initial=initial)
+
+    context.update({
+        'form': form,
+        'non_profile_organization': Organization.is_non_profit(user_extended_profile),
+        'is_poc': user_extended_profile.is_organization_admin,
+        'is_first_user': user_extended_profile.is_first_signup_in_org \
+        if user_extended_profile.organization else False,
+        'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
+
+    })
+
+    context.update(user_extended_profile.unattended_surveys())
     return render(request, template, context)
 
 

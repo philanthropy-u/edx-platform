@@ -35,7 +35,7 @@ from lms.djangoapps.courseware.courses import get_courses, sort_by_start_date, g
 from lms.djangoapps.courseware.views.views import get_last_accessed_courseware
 from lms.djangoapps.onboarding.helpers import reorder_registration_form_fields, get_alquity_community_url
 from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls
-from lms.djangoapps.student_account.views import _local_server_get, _get_form_descriptions, _external_auth_intercept, \
+from lms.djangoapps.student_account.views import _local_server_get, _external_auth_intercept, \
     _third_party_auth_context
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from openedx.core.djangoapps.theming.helpers import is_request_in_themed_site
@@ -53,6 +53,24 @@ from student.cookies import set_logged_in_cookies
 AUDIT_LOG = logging.getLogger("audit")
 log = logging.getLogger(__name__)
 User = get_user_model()  # pylint:disable=invalid-name
+
+
+def _get_form_descriptions(request):
+    """Retrieve form descriptions from the user API.
+
+    Arguments:
+        request (HttpRequest): The original request, used to retrieve session info.
+
+    Returns:
+        dict: Keys are 'login', 'registration', and 'password_reset';
+            values are the JSON-serialized form descriptions.
+
+    """
+    return {
+        'login': _local_server_get('/user_api/v1/account/login_session/', request.session),
+        'registration': _local_server_get('/user_api/v2/account/registration/', request.session),
+        'password_reset': _local_server_get('/user_api/v1/account/password_reset/', request.session)
+    }
 
 
 @require_http_methods(['GET'])

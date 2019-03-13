@@ -10,7 +10,8 @@ urlpatterns = [
 
     url(r"^user-account/step1/$", views.user_info, name="step1"),  # signup step 1
     url(r"^user-account/step2/$", views.interests, name="step2"),  # signup step 2
-    url(r"^user-account/step3/$", views.organization, name="step3"),  # signup step 3
+    url(r"^user-account/step3/$", views.user_organization_role, name="step3"),  # signup step 3
+    # url(r"^user-account/step3/$", views.organization, name="step3"),  # signup step 3
     url(r"^user-account/step4/$", views.org_detail_survey, name="step4"),  # signup step 4
 
     url(r"^user-account/settings/$", views.update_account_settings, name="update_account"),
