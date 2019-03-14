@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from edxmako.shortcuts import render_to_response
-from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls
+from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls, get_twitter_sharing_url
 
 from certificates import api as certs_api
 from lms.djangoapps.grades.models import PersistentCourseGrade
@@ -100,17 +100,17 @@ def student_certificates(request):
         custom_settings = get_course_custom_settings(course_id)
         meta_tags = custom_settings.get_course_meta_tags()
 
-        # meta_tags['description'] = meta_tags['description'] or course_details.short_description
-        # meta_tags['title'] = meta_tags['title'] or course_details.title or course.display_name
-        meta_tags['title'] = meta_tags['title'] or 'I just completed Philanthropy University\'s ' \
-                             + course.display_name + ' course! '
+        tweet_text = meta_tags['title'] or "I just completed @PhilanthropyUni's free online %s course and " \
+                                                   "earned this certificate. Start learning today: %s%s%s%s" % (
+            course.display_name, settings.LMS_ROOT_URL, '/courses/', course.id, '/about')
 
-        # if course_details.banner_image_name != DEFAULT_IMAGE_NAME:
-        #     meta_tags['image'] = settings.LMS_ROOT_URL + course_details.banner_image_asset_path
+        meta_tags['title'] = "I just completed Philanthropy University\'s %s %s" % (course.display_name, 'course! ')
 
-        # social_sharing_urls = get_social_sharing_urls(settings.LMS_ROOT_URL + certificate_url, meta_tags)
         social_sharing_urls = get_social_sharing_urls(
             settings.LMS_ROOT_URL + "/shared_certificates/" + certificate.verify_uuid, meta_tags)
+
+        social_sharing_urls['twitter'] = get_twitter_sharing_url(
+            settings.LMS_ROOT_URL + "/shared_certificates/" + certificate.verify_uuid, meta_tags, tweet_text)
 
         user_certificates.append({
             'course_name': course_name,
@@ -122,7 +122,7 @@ def student_certificates(request):
         })
 
     context = {
-        'user_certificates': user_certificates
+        'user_certificates': user_certificates,
     }
 
     response = render_to_response('certificates.html', context)
@@ -139,10 +139,9 @@ def shared_student_certificate(request, certificate_uuid):
         request: The request object.
 
     Returns:
-        The generated shared certificate response.
+        The shared certificate response.
 
     """
-    user = request.user
 
     try:
         certificate = GeneratedCertificate.eligible_certificates.get(
@@ -152,8 +151,21 @@ def shared_student_certificate(request, certificate_uuid):
     except GeneratedCertificate.DoesNotExist:
         raise Http404
 
+    course = get_course(certificate.course_id)
+
+    custom_settings = get_course_custom_settings(course.id)
+    meta_tags = custom_settings.get_course_meta_tags()
+
+    meta_tags['description'] = meta_tags['description'] or ""
+    meta_tags['title'] = "I just completed Philanthropy University\'s %s %s" % (course.display_name, 'course! ')
+
+    # meta_tags['image'] = settings.LMS_ROOT_URL + course_details.banner_image_asset_path
+    meta_tags['image'] = "https://cdn1.imggmi.com/uploads/2019/3/12/d027cec46228c2519a3c4ac18793475f-full.jpg"
+
     context = {
-        'course_url': "%s%s%s%s" % (settings.LMS_ROOT_URL, '/courses/', certificate.course_id, '/about'),
+        'course_url': "%s%s%s%s" % (settings.LMS_ROOT_URL, '/courses/', course.id, '/about'),
+        'certificate_image_url': "https://cdn1.imggmi.com/uploads/2019/3/12/d027cec46228c2519a3c4ac18793475f-full.jpg",
+        'meta_tags': meta_tags,
     }
 
     response = render_to_response('shared_certificate.html', context)
