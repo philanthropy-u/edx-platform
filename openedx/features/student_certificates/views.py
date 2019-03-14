@@ -5,10 +5,10 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.exceptions import ObjectDoesNotExist
-
+from constants import TWITTER_META_TITLE_FMT, SOCIAL_MEDIA_SHARE_URL_FMT
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from edxmako.shortcuts import render_to_response
-from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls, get_twitter_sharing_url
+from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls
 
 from certificates import api as certs_api
 from lms.djangoapps.grades.models import PersistentCourseGrade
@@ -102,17 +102,20 @@ def student_certificates(request):
         custom_settings = get_course_custom_settings(course_id)
         meta_tags = custom_settings.get_course_meta_tags()
 
-        tweet_text = meta_tags['title'] or "I just completed @PhilanthropyUni's free online %s course and " \
-                                                   "earned this certificate. Start learning today: %s%s%s%s" % (
-            course.display_name, settings.LMS_ROOT_URL, '/courses/', course.id, '/about')
+        tweet_text = meta_tags['title'] or 'I just completed @PhilanthropyUni\'s free online {course_name} ' \
+                                           'course and earned this certificate. Start learning today: ' \
+                                           '{base_url}{course_url}{course_id}{about_url}'.format(
+            course_name=course.display_name,
+            base_url=settings.LMS_ROOT_URL,
+            course_url='/courses/',
+            course_id=course.id,
+            about_url='/about')
 
-        meta_tags['title'] = "I just completed Philanthropy University\'s %s %s" % (course.display_name, 'course! ')
+        meta_tags['title'] = TWITTER_META_TITLE_FMT.format(course_name=course.display_name)
 
-        social_sharing_urls = get_social_sharing_urls(
-            settings.LMS_ROOT_URL + "/shared_certificates/" + certificate.verify_uuid, meta_tags)
-
-        social_sharing_urls['twitter'] = get_twitter_sharing_url(
-            settings.LMS_ROOT_URL + "/shared_certificates/" + certificate.verify_uuid, meta_tags, tweet_text)
+        social_sharing_urls = get_social_sharing_urls(SOCIAL_MEDIA_SHARE_URL_FMT.format(
+            base_url=settings.LMS_ROOT_URL,
+            certificate_uuid=certificate.verify_uuid), meta_tags, tweet_text)
 
         user_certificates.append({
             'course_name': course_name,
@@ -133,7 +136,7 @@ def student_certificates(request):
 
 @login_required
 @ensure_csrf_cookie
-def shared_student_certificate(request, certificate_uuid):
+def shared_student_achievements(request, certificate_uuid):
     """
     Provides the User with the shared certificate page
 
@@ -159,7 +162,7 @@ def shared_student_certificate(request, certificate_uuid):
     meta_tags = custom_settings.get_course_meta_tags()
 
     meta_tags['description'] = meta_tags['description'] or ""
-    meta_tags['title'] = "I just completed Philanthropy University\'s %s %s" % (course.display_name, 'course! ')
+    meta_tags['title'] = TWITTER_META_TITLE_FMT.format(course_name=course.display_name)
     meta_tags['image'] = get_certificate_image_url(certificate)
 
     context = {

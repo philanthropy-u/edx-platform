@@ -628,6 +628,7 @@ def course_about(request, course_id):
 
         if course_details.banner_image_name != DEFAULT_IMAGE_NAME:
             meta_tags['image'] = settings.LMS_ROOT_URL + course_details.banner_image_asset_path
+        # meta_tags['image'] = "https://cdn1.imggmi.com/uploads/2019/3/12/d027cec46228c2519a3c4ac18793475f-full.jpg"
 
         social_sharing_urls = get_social_sharing_urls(request.build_absolute_uri(), meta_tags)
 
