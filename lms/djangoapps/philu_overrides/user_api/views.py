@@ -81,11 +81,11 @@ def _do_create_account_custom(form, custom_form=None, is_alquity_user=False):
             user.save()
             custom_model = custom_form.save(user=user, commit=True, is_alquity_user=is_alquity_user)
 
-        # Fix: recall user.save to avoid transaction management related exception,
-        # if we call user.save under atomic block
-        # (in custom_from.save )a random transaction exception generated
-        if custom_model.organization:
-            custom_model.organization.save()
+        # # Fix: recall user.save to avoid transaction management related exception,
+        # # if we call user.save under atomic block
+        # # (in custom_from.save )a random transaction exception generated
+        # if custom_model.organization:
+        #     custom_model.organization.save()
 
         user.save()
     except IntegrityError:
@@ -590,7 +590,7 @@ def create_account_with_params_custom_v2(request, params, is_alquity_user):
 
         analytics.identify(*identity_args)
 
-        analytics.trackar(
+        analytics.track(
             user.id,
             "edx.bi.user.account.registered",
             {
@@ -672,6 +672,7 @@ def create_account_with_params_custom_v2(request, params, is_alquity_user):
             AUDIT_LOG.info(u"Login activated on extauth account - {0} ({1})".format(new_user.username, new_user.email))
 
     return new_user
+
 
 def get_params_for_activation_email(request, registration, user):
     activation_link = '{protocol}://{site}/activate/{key}'.format(

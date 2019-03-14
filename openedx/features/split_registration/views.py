@@ -54,7 +54,7 @@ def user_info(request):
     """
 
     user_extended_profile = request.user.extended_profile
-    are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
+    are_forms_complete = not (bool(user_extended_profile.unattended_surveys_v2(_type='list')))
     userprofile = request.user.profile
     is_under_age = False
 
@@ -70,16 +70,17 @@ def user_info(request):
         'gender': userprofile.gender,
         'language': userprofile.language,
         'country': COUNTRIES.get(userprofile.country) if not request.POST.get('country') else request.POST.get('country'),
-        'country_of_employment': COUNTRIES.get(user_extended_profile.country_of_employment, '') if not request.POST.get('country_of_employment') else request.POST.get('country_of_employment') ,
         'city': userprofile.city,
         'level_of_education': userprofile.level_of_education,
-        'hours_per_week': user_extended_profile.hours_per_week if user_extended_profile.hours_per_week else '',
-        'is_emp_location_different': True if user_extended_profile.country_of_employment else False,
-        "function_areas": user_extended_profile.get_user_selected_functions(_type="fields")
+        # 'country_of_employment': COUNTRIES.get(user_extended_profile.country_of_employment, '') if not request.POST.get('country_of_employment') else request.POST.get('country_of_employment') ,
+        # 'hours_per_week': user_extended_profile.hours_per_week if user_extended_profile.hours_per_week else '',
+        # 'is_emp_location_different': True if user_extended_profile.country_of_employment else False,
+        # "function_areas": user_extended_profile.get_user_selected_functions(_type="fields")
     }
 
     context = {
-        'are_forms_complete': are_forms_complete, 'first_name': request.user.first_name
+        'are_forms_complete': are_forms_complete, 'first_name': request.user.first_name,
+        'fields_to_disable': []
     }
 
     year_of_birth = userprofile.year_of_birth
@@ -97,7 +98,7 @@ def user_info(request):
 
         if form.is_valid() and not is_under_age:
             form.save(request)
-            unattended_surveys = user_extended_profile.unattended_surveys(_type='list')
+            unattended_surveys = user_extended_profile.unattended_surveys_v2(_type='list')
             are_forms_complete = not (bool(unattended_surveys))
 
             if not are_forms_complete and redirect_to_next:
@@ -111,13 +112,26 @@ def user_info(request):
     else:
         form = forms.UserInfoModelForm(instance=user_extended_profile, initial=initial)
 
+    # if org_name and admin_email:
+    #     org_name = base64.b64decode(org_name)
+    #     admin_email = base64.b64decode(admin_email)
+    #
+    #     email_field = get_form_field_by_name(registration_fields, 'email')
+    #     org_field = get_form_field_by_name(registration_fields, 'organization_name')
+    #     is_poc_field = get_form_field_by_name(registration_fields, 'is_poc')
+    #     email_field['defaultValue'] = admin_email
+    #     org_field['defaultValue'] = org_name
+    #     is_poc_field['defaultValue'] = "1"
+    #
+    #     context['fields_to_disable'] = json.dumps([email_field['name'], org_field['name'], is_poc_field['name']])
+
     context.update({
         'form': form,
         'is_under_age': is_under_age,
-        'non_profile_organization': Organization.is_non_profit(user_extended_profile),
-        'is_poc': user_extended_profile.is_organization_admin,
-        'is_first_user': user_extended_profile.is_first_signup_in_org \
-        if user_extended_profile.organization else False,
+        # 'non_profile_organization': Organization.is_non_profit(user_extended_profile),
+        # 'is_poc': user_extended_profile.is_organization_admin,
+        # 'is_first_user': user_extended_profile.is_first_signup_in_org \
+        # if user_extended_profile.organization else False,
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
 
     })
@@ -448,41 +462,3 @@ def update_account_settings(request):
     }
 
     return render(request, 'features/account/registration_update.html', ctx)
-
-
-@csrf_exempt
-def get_organizations(request):
-    """
-    Get organizations
-    """
-    final_result = {}
-
-    if request.is_ajax():
-        query = request.GET.get('term', '')
-
-        final_result = get_close_matching_orgs_with_suggestions(request, query)
-
-        if request.user.is_authenticated():
-            user_extended_profile = request.user.extended_profile
-            org = user_extended_profile.organization
-
-            if org:
-                _result = {
-                    'org': org.label,
-                    'is_poc': True if org.admin == request.user else False,
-                    'admin_email': org.admin.email if org.admin else ''
-                }
-            else:
-                _result = {
-                    'org': '',
-                    'is_poc': False,
-                    'admin_email': ''
-                }
-
-            final_result['user_org_info'] = _result
-
-    return JsonResponse(final_result)
-
-
-
-

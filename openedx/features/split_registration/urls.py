@@ -21,5 +21,4 @@ urlpatterns = [
 
     url(r"^user-organization/general/$", views.organization, name="update_organization"),
     url(r"^user-organization/details/$", views.org_detail_survey, name="update_organization_details"),
-    url(r"^user-account/get_organizations/$", views.get_organizations, name="get_organizations"),
 ]
