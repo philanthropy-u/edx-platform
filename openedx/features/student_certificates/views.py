@@ -2,16 +2,20 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.exceptions import ObjectDoesNotExist
 
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from edxmako.shortcuts import render_to_response
+from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls, get_twitter_sharing_url
 
 from certificates import api as certs_api
 from lms.djangoapps.grades.models import PersistentCourseGrade
 from courseware.courses import get_course
-from certificates.models import GeneratedCertificate
+from certificates.models import (
+    GeneratedCertificate,
+    CertificateStatuses)
 from common.djangoapps.student.views import get_course_enrollments
 
 
@@ -93,17 +97,76 @@ def student_certificates(request):
         except TypeError as ex:
             course_title = course.display_name
 
+        custom_settings = get_course_custom_settings(course_id)
+        meta_tags = custom_settings.get_course_meta_tags()
+
+        tweet_text = meta_tags['title'] or "I just completed @PhilanthropyUni's free online %s course and " \
+                                                   "earned this certificate. Start learning today: %s%s%s%s" % (
+            course.display_name, settings.LMS_ROOT_URL, '/courses/', course.id, '/about')
+
+        meta_tags['title'] = "I just completed Philanthropy University\'s %s %s" % (course.display_name, 'course! ')
+
+        social_sharing_urls = get_social_sharing_urls(
+            settings.LMS_ROOT_URL + "/shared_certificates/" + certificate.verify_uuid, meta_tags)
+
+        social_sharing_urls['twitter'] = get_twitter_sharing_url(
+            settings.LMS_ROOT_URL + "/shared_certificates/" + certificate.verify_uuid, meta_tags, tweet_text)
+
         user_certificates.append({
             'course_name': course_name,
             'course_title': course_title,
+            'social_sharing_urls': social_sharing_urls,
             'certificate_url': "%s%s" % (settings.LMS_ROOT_URL, certificate_url),
             'course_start': start_date.strftime('%b %d, %Y') if start_date else None,
             'completion_date': completion_date.strftime('%b %d, %Y') if completion_date else None,
         })
 
     context = {
-        'user_certificates': user_certificates
+        'user_certificates': user_certificates,
     }
 
     response = render_to_response('certificates.html', context)
+    return response
+
+
+@login_required
+@ensure_csrf_cookie
+def shared_student_certificate(request, certificate_uuid):
+    """
+    Provides the User with the shared certificate page
+
+    Arguments:
+        request: The request object.
+
+    Returns:
+        The shared certificate response.
+
+    """
+
+    try:
+        certificate = GeneratedCertificate.eligible_certificates.get(
+            verify_uuid=certificate_uuid,
+            status=CertificateStatuses.downloadable
+        )
+    except GeneratedCertificate.DoesNotExist:
+        raise Http404
+
+    course = get_course(certificate.course_id)
+
+    custom_settings = get_course_custom_settings(course.id)
+    meta_tags = custom_settings.get_course_meta_tags()
+
+    meta_tags['description'] = meta_tags['description'] or ""
+    meta_tags['title'] = "I just completed Philanthropy University\'s %s %s" % (course.display_name, 'course! ')
+
+    # meta_tags['image'] = settings.LMS_ROOT_URL + course_details.banner_image_asset_path
+    meta_tags['image'] = "https://cdn1.imggmi.com/uploads/2019/3/12/d027cec46228c2519a3c4ac18793475f-full.jpg"
+
+    context = {
+        'course_url': "%s%s%s%s" % (settings.LMS_ROOT_URL, '/courses/', course.id, '/about'),
+        'certificate_image_url': "https://cdn1.imggmi.com/uploads/2019/3/12/d027cec46228c2519a3c4ac18793475f-full.jpg",
+        'meta_tags': meta_tags,
+    }
+
+    response = render_to_response('shared_certificate.html', context)
     return response

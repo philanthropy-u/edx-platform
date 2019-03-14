@@ -17,9 +17,10 @@ def get_course_custom_settings(course_key):
     return CustomSettings.objects.filter(id=course_key).first()
 
 
-def get_social_sharing_urls(course_url, meta_tags):
-    from lms.envs.common import (SOCIAL_SHARING_URLS, TWITTER_MESSAGE_FORMAT)
+from lms.envs.common import (SOCIAL_SHARING_URLS, TWITTER_MESSAGE_FORMAT)
 
+
+def get_social_sharing_urls(course_url, meta_tags):
     utm_params = meta_tags['utm_params'].copy()
     course_share_url = '{}?{}'.format(course_url, urlencode(utm_params))
 
@@ -42,6 +43,16 @@ def get_social_sharing_urls(course_url, meta_tags):
                                              SOCIAL_SHARING_URLS['email']['utm_source']),
 
     }
+
+
+def get_twitter_sharing_url(course_url, meta_tags, tweet_text):
+    utm_params = meta_tags['utm_params'].copy()
+    course_share_url = '{}?{}'.format(course_url, urlencode(utm_params))
+
+    return _compile_social_sharing_url(SOCIAL_SHARING_URLS['twitter']['url'], course_share_url,
+                                       SOCIAL_SHARING_URLS['twitter']['url_param'],
+                                       SOCIAL_SHARING_URLS['twitter']['utm_source'],
+                                       text=tweet_text)
 
 
 def _compile_social_sharing_url(share_url, course_url, url_param, utm_source, text=None):
