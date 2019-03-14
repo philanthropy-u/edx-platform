@@ -1,4 +1,4 @@
-import imgkit
+# import imgkit
 from os import remove
 from logging import getLogger
 
@@ -23,7 +23,7 @@ def task_create_certificate_img_and_upload_to_s3(certificate):
         img_name = get_certificate_image_name(certificate)
         uuid = certificate.verify_uuid
         # creating image from certificate url
-        imgkit.from_url(url, img_name)
+        # imgkit.from_url(url, img_name)
         log.info('Certificate image created for verify_uuid:{uuid}'.format(uuid=uuid))
         # uploading image to s3
         img_key = get_certificate_img_key(img_name)

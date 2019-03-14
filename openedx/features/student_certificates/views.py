@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.exceptions import ObjectDoesNotExist
-from constants import TWITTER_META_TITLE_FMT, SOCIAL_MEDIA_SHARE_URL_FMT
+from constants import TWITTER_META_TITLE_FMT, SOCIAL_MEDIA_SHARE_URL_FMT, TWITTER_TWEET_TEXT_FMT
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from edxmako.shortcuts import render_to_response
 from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls
@@ -102,9 +102,7 @@ def student_certificates(request):
         custom_settings = get_course_custom_settings(course_id)
         meta_tags = custom_settings.get_course_meta_tags()
 
-        tweet_text = meta_tags['title'] or 'I just completed @PhilanthropyUni\'s free online {course_name} ' \
-                                           'course and earned this certificate. Start learning today: ' \
-                                           '{base_url}{course_url}{course_id}{about_url}'.format(
+        tweet_text = meta_tags['title'] or TWITTER_TWEET_TEXT_FMT.format(
             course_name=course.display_name,
             base_url=settings.LMS_ROOT_URL,
             course_url='/courses/',
