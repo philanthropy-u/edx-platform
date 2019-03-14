@@ -18,6 +18,8 @@ from certificates.models import (
     CertificateStatuses)
 from common.djangoapps.student.views import get_course_enrollments
 
+from helpers import get_certificate_image_url
+
 
 @login_required
 @ensure_csrf_cookie
@@ -158,13 +160,10 @@ def shared_student_certificate(request, certificate_uuid):
 
     meta_tags['description'] = meta_tags['description'] or ""
     meta_tags['title'] = "I just completed Philanthropy University\'s %s %s" % (course.display_name, 'course! ')
-
-    # meta_tags['image'] = settings.LMS_ROOT_URL + course_details.banner_image_asset_path
-    meta_tags['image'] = "https://cdn1.imggmi.com/uploads/2019/3/12/d027cec46228c2519a3c4ac18793475f-full.jpg"
+    meta_tags['image'] = get_certificate_image_url(certificate)
 
     context = {
         'course_url': "%s%s%s%s" % (settings.LMS_ROOT_URL, '/courses/', course.id, '/about'),
-        'certificate_image_url': "https://cdn1.imggmi.com/uploads/2019/3/12/d027cec46228c2519a3c4ac18793475f-full.jpg",
         'meta_tags': meta_tags,
     }
 
