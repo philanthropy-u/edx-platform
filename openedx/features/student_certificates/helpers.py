@@ -2,6 +2,8 @@ import boto
 from boto.s3.key import Key
 from django.conf import settings
 
+from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls
+from constants import TWITTER_META_TITLE_FMT, SOCIAL_MEDIA_SHARE_URL_FMT, TWITTER_TWEET_TEXT_FMT
 
 CERTIFICATE_IMG_PREFIX = 'certificates_images'
 
@@ -42,7 +44,7 @@ def get_certificate_url(certificate):
     :param certificate:
     :return: url of the certificate
     """
-    return '{root_url}/certificates/{uuid}'.format(root_url=settings.LMS_ROOT_URL, uuid=certificate.verify_uuid)
+    return '{root_url}/certificates/{uuid}?border_class=hide'.format(root_url=settings.LMS_ROOT_URL, uuid=certificate.verify_uuid)
 
 
 def get_certificate_image_name(certificate):
@@ -59,3 +61,23 @@ def get_certificate_img_key(img_name):
     :return: return S3 key name for the image name
     """
     return '{prefix}/{img_name}'.format(prefix=CERTIFICATE_IMG_PREFIX, img_name=img_name)
+
+
+def get_philu_certificate_social_context(course, certificate):
+    custom_settings = get_course_custom_settings(certificate.course_id)
+    meta_tags = custom_settings.get_course_meta_tags()
+
+    tweet_text = meta_tags['title'] or TWITTER_TWEET_TEXT_FMT.format(
+        course_name=course.display_name,
+        base_url=settings.LMS_ROOT_URL,
+        course_url='/courses/',
+        course_id=course.id,
+        about_url='/about')
+
+    meta_tags['title'] = TWITTER_META_TITLE_FMT.format(course_name=course.display_name)
+
+    social_sharing_urls = get_social_sharing_urls(SOCIAL_MEDIA_SHARE_URL_FMT.format(
+        base_url=settings.LMS_ROOT_URL,
+        certificate_uuid=certificate.verify_uuid), meta_tags, tweet_text)
+
+    return social_sharing_urls

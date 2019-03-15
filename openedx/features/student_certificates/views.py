@@ -4,21 +4,19 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.core.exceptions import ObjectDoesNotExist
-from constants import TWITTER_META_TITLE_FMT, SOCIAL_MEDIA_SHARE_URL_FMT, TWITTER_TWEET_TEXT_FMT
+from constants import TWITTER_META_TITLE_FMT
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from edxmako.shortcuts import render_to_response
-from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls
+from lms.djangoapps.philu_api.helpers import get_course_custom_settings
 
 from certificates import api as certs_api
-from lms.djangoapps.grades.models import PersistentCourseGrade
 from courseware.courses import get_course
 from certificates.models import (
     GeneratedCertificate,
     CertificateStatuses)
 from common.djangoapps.student.views import get_course_enrollments
 
-from helpers import get_certificate_image_url
+from helpers import get_certificate_image_url, get_philu_certificate_social_context
 
 
 @login_required
@@ -99,26 +97,10 @@ def student_certificates(request):
         except TypeError as ex:
             course_title = course.display_name
 
-        custom_settings = get_course_custom_settings(course_id)
-        meta_tags = custom_settings.get_course_meta_tags()
-
-        tweet_text = meta_tags['title'] or TWITTER_TWEET_TEXT_FMT.format(
-            course_name=course.display_name,
-            base_url=settings.LMS_ROOT_URL,
-            course_url='/courses/',
-            course_id=course.id,
-            about_url='/about')
-
-        meta_tags['title'] = TWITTER_META_TITLE_FMT.format(course_name=course.display_name)
-
-        social_sharing_urls = get_social_sharing_urls(SOCIAL_MEDIA_SHARE_URL_FMT.format(
-            base_url=settings.LMS_ROOT_URL,
-            certificate_uuid=certificate.verify_uuid), meta_tags, tweet_text)
-
         user_certificates.append({
             'course_name': course_name,
             'course_title': course_title,
-            'social_sharing_urls': social_sharing_urls,
+            'social_sharing_urls': get_philu_certificate_social_context(course, certificate),
             'certificate_url': "%s%s" % (settings.LMS_ROOT_URL, certificate_url),
             'course_start': start_date.strftime('%b %d, %Y') if start_date else None,
             'completion_date': completion_date.strftime('%b %d, %Y') if completion_date else None,
