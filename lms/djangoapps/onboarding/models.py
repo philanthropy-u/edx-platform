@@ -319,6 +319,7 @@ class UserExtendedProfile(TimeStampedModel):
 
     SURVEYS_LIST = ["user_info", "interests", "organization", "org_detail_survey"]
     SURVEYS_LIST_V2 = ["step1", "step2"]
+    ORG_SURVEYS_LIST_V2 = ["step3", "step4", "step5"]
 
     FUNCTIONS_LABELS = {
         "0=function_strategy_planning": "Strategy and planning",
@@ -613,8 +614,7 @@ class UserExtendedProfile(TimeStampedModel):
         attended_list = []
 
         if (not self.organization and self.user.profile.level_of_education and self.english_proficiency) or (
-                self.organization and self.user.profile.level_of_education and self.start_month_year and
-                self.english_proficiency):
+                self.organization and self.user.profile.level_of_education and self.english_proficiency):
             attended_list.append(self.SURVEYS_LIST_V2[0])
         if self.is_interests_data_submitted:
             attended_list.append(self.SURVEYS_LIST_V2[1])
@@ -635,17 +635,31 @@ class UserExtendedProfile(TimeStampedModel):
 
         return attended_list
 
-    def get_admin_or_first_user_attend_surveys_v2(self):
+    def get_org_normal_user_attend_surveys(self):
+        """
+        :return: List of attended surveys that a simple learner can attend
+        """
+        attended_list = []
+
+        if not self.organization:
+            return self.ORG_SURVEYS_LIST_V2
+
+        if self.organization and self.start_month_year:
+            attended_list.append(self.ORG_SURVEYS_LIST_V2[0])
+
+        return attended_list
+
+    def get_org_admin_or_first_user_attend_surveys(self):
         """
         :return: List of attended surveys that a first learner OR admin can attend
         """
-        attended_list = self.get_normal_user_attend_surveys_v2()
+        attended_list = self.get_org_normal_user_attend_surveys()
 
         if self.is_organization_data_filled():
-            attended_list.append(self.SURVEYS_LIST_V2[2])
+            attended_list.append(self.ORG_SURVEYS_LIST_V2[1])
         if self.is_organization_details_filled() \
                 and self.organization.org_type == PartnerNetwork.NON_PROFIT_ORG_TYPE_CODE:
-            attended_list.append(self.SURVEYS_LIST_V2[3])
+            attended_list.append(self.ORG_SURVEYS_LIST_V2[2])
 
         return attended_list
 
@@ -692,14 +706,22 @@ class UserExtendedProfile(TimeStampedModel):
         """
         :return: List of survey for a user to attend depending on the user type (admin/first user in org/non-admin)
         """
-        surveys_to_attend = self.SURVEYS_LIST_V2[:2]
-        if self.organization and (self.is_organization_admin or self.is_first_signup_in_org):
-            surveys_to_attend = self.SURVEYS_LIST_V2[:3]
+        return self.SURVEYS_LIST_V2
 
-        if self.organization and \
-                self.organization.org_type == PartnerNetwork.NON_PROFIT_ORG_TYPE_CODE and \
-                (self.is_organization_admin or self.is_first_signup_in_org):
-            surveys_to_attend = self.SURVEYS_LIST_V2
+    def org_surveys_to_attend(self):
+        """
+        :return: List of survey for a user to attend depending on the user type (admin/first user in org/non-admin)
+        """
+        surveys_to_attend = []
+
+        if self.organization:
+            surveys_to_attend.append(self.ORG_SURVEYS_LIST_V2[0])
+
+        if self.is_first_signup_in_org:
+            surveys_to_attend.append(self.ORG_SURVEYS_LIST_V2[1])
+
+        if self.is_organization_admin and self.organization.org_type == PartnerNetwork.NON_PROFIT_ORG_TYPE_CODE:
+            surveys_to_attend.append(self.ORG_SURVEYS_LIST_V2[2])
 
         return surveys_to_attend
 
@@ -707,11 +729,17 @@ class UserExtendedProfile(TimeStampedModel):
         """
         :return: List of user's attended on-boarding surveys
         """
+        return self.get_normal_user_attend_surveys_v2()
+
+    def org_attended_surveys(self):
+        """
+        :return: List of user's attended on-boarding surveys
+        """
 
         if not (self.organization and (self.is_organization_admin or self.is_first_signup_in_org)):
-            attended_list = self.get_normal_user_attend_surveys_v2()
+            attended_list = self.get_org_normal_user_attend_surveys()
         else:
-            attended_list = self.get_admin_or_first_user_attend_surveys_v2()
+            attended_list = self.get_org_admin_or_first_user_attend_surveys()
 
         return attended_list
 
@@ -726,6 +754,18 @@ class UserExtendedProfile(TimeStampedModel):
             return [s for s in surveys_to_attend if s not in self.attended_surveys_v2()]
 
         return {s: True if s in self.attended_surveys_v2() else False for s in surveys_to_attend}
+
+    def org_unattended_surveys_v2(self, _type="map"):
+        """
+        :return: Mapping of user's unattended on-boarding surveys
+        """
+
+        surveys_to_attend = self.org_surveys_to_attend()
+
+        if _type == "list":
+            return [s for s in surveys_to_attend if s not in self.org_attended_surveys()]
+
+        return {s: True if s in self.org_attended_surveys() else False for s in surveys_to_attend}
 
     @property
     def is_organization_admin(self):

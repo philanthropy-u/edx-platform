@@ -269,6 +269,13 @@ class UserInfoModelForm(BaseOnboardingModelForm):
         userprofile.year_of_birth = self.cleaned_data['year_of_birth']
         userprofile.language = self.cleaned_data['language']
 
+        userprofile.country = get_country_iso(self.cleaned_data['country'])
+        userprofile.city = self.cleaned_data['city']
+        userprofile.level_of_education = self.cleaned_data['level_of_education']
+        if self.cleaned_data['gender']:
+            userprofile.gender = self.cleaned_data['gender']
+        userprofile.save()
+
         organization_name = self.cleaned_data.get('organization_name', '').strip()
         is_poc = self.cleaned_data['is_poc']
         org_admin_email = self.cleaned_data['org_admin_email']
@@ -1199,7 +1206,7 @@ class OrganizationMetricModelUpdateForm(OrganizationMetricModelForm):
         user_extended_profile.save()
 
 
-class OrganizationRoleForm(BaseOnboardingForm):
+class OrganizationRoleForm(BaseOnboardingModelForm):
     NO_SELECT_CHOICE = [('', ugettext_noop('- Select -'))]
 
     ROLE_IN_ORG_CHOICES = NO_SELECT_CHOICE + [(r.code, r.label)

@@ -97,7 +97,11 @@ def user_info(request):
         form = forms.UserInfoModelForm(request.POST, instance=user_extended_profile, initial=initial)
 
         if form.is_valid() and not is_under_age:
-            form.save(request)
+            custom_model = form.save(request)
+
+            if custom_model.organization:
+                custom_model.organization.save()
+
             unattended_surveys = user_extended_profile.unattended_surveys_v2(_type='list')
             are_forms_complete = not (bool(unattended_surveys))
 
@@ -153,12 +157,9 @@ def interests(request):
     namely, organization survey.
     """
     user_extended_profile = request.user.extended_profile
-    are_forms_complete = not(bool(user_extended_profile.unattended_surveys(_type='list')))
-    is_first_signup_in_org = user_extended_profile.is_first_signup_in_org \
-        if user_extended_profile.organization else False
+    are_forms_complete = not(bool(user_extended_profile.unattended_surveys_v2(_type='list')))
 
     template = 'features/onboarding/interests_survey.html'
-    next_page_url = reverse('organization')
     redirect_to_next = True
 
     if request.path == reverse('update_interests'):
@@ -183,11 +184,10 @@ def interests(request):
 
         save_interests.send(sender=UserExtendedProfile, instance=user_extended_profile)
 
-        are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
+        are_forms_complete = not (bool(user_extended_profile.unattended_surveys_v2(_type='list')))
 
-        if (user_extended_profile.is_organization_admin or is_first_signup_in_org) and not are_forms_complete \
-                and redirect_to_next:
-            return redirect(next_page_url)
+        if request.POST.get('next') == 'organization' and redirect_to_next:
+            return redirect(reverse('step3'))
 
         if are_forms_complete and not is_action_update:
             update_nodebb_for_user_status(request.user.username)
@@ -202,11 +202,15 @@ def interests(request):
     user = request.user
     extended_profile = user.extended_profile
     context.update(extended_profile.unattended_surveys())
+    is_employed = bool(user.extended_profile.organization)
 
     context.update({
-        'non_profile_organization': Organization.is_non_profit(user_extended_profile),
-        'is_poc': extended_profile.is_organization_admin,
-        'is_first_user': is_first_signup_in_org,
+        # 'non_profile_organization': Organization.is_non_profit(user_extended_profile),
+        'is_employed': is_employed,
+        'organization_name': user.extended_profile.organization.label if is_employed else '',
+        'user_fullname': user.profile.name
+        # 'is_poc': extended_profile.is_organization_admin,
+        # 'is_first_user': is_first_signup_in_org,
     })
 
     return render(request, template, context)
@@ -226,7 +230,7 @@ def user_organization_role(request):
     """
 
     user_extended_profile = request.user.extended_profile
-    are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
+    are_forms_complete = not (bool(user_extended_profile.org_unattended_surveys_v2(_type='list')))
 
     template = 'features/onboarding/organization_role.html'
     redirect_to_next = True
@@ -251,11 +255,17 @@ def user_organization_role(request):
 
         if form.is_valid():
             form.save(request, user_extended_profile)
-            unattended_surveys = user_extended_profile.unattended_surveys(_type='list')
+            unattended_surveys = user_extended_profile.org_unattended_surveys_v2(_type='list')
             are_forms_complete = not (bool(unattended_surveys))
 
             if not are_forms_complete and redirect_to_next:
                 return redirect(unattended_surveys[0])
+
+            # if are_forms_complete:
+            #     update_nodebb_for_user_status(request.user.username)
+            #     if user_extended_profile.is_alquity_user:
+            #         return redirect(get_alquity_community_url())
+            #     return redirect(reverse('recommendations'))
 
             # this will only executed if user updated his/her employed status from account settings page
             # redirect user to account settings page where he come from
