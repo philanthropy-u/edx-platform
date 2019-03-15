@@ -70,9 +70,9 @@ def get_philu_certificate_social_context(course, certificate):
     tweet_text = meta_tags['title'] or TWITTER_TWEET_TEXT_FMT.format(
         course_name=course.display_name,
         base_url=settings.LMS_ROOT_URL,
-        course_url='/courses/',
+        course_url='courses',
         course_id=course.id,
-        about_url='/about')
+        about_url='about')
 
     meta_tags['title'] = TWITTER_META_TITLE_FMT.format(course_name=course.display_name)
 

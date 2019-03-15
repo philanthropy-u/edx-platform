@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
-from constants import TWITTER_META_TITLE_FMT
+from constants import TWITTER_META_TITLE_FMT, COURSE_URL_FMT
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from edxmako.shortcuts import render_to_response
 from lms.djangoapps.philu_api.helpers import get_course_custom_settings
@@ -146,7 +146,12 @@ def shared_student_achievements(request, certificate_uuid):
     meta_tags['image'] = get_certificate_image_url(certificate)
 
     context = {
-        'course_url': "%s%s%s%s" % (settings.LMS_ROOT_URL, '/courses/', course.id, '/about'),
+        'course_url': COURSE_URL_FMT.format(
+            base_url = settings.LMS_ROOT_URL,
+            course_url = 'courses',
+            course_id = course.id,
+            about_url = 'about'
+        ),
         'meta_tags': meta_tags,
     }
 
