@@ -44,7 +44,7 @@ def get_certificate_url(certificate):
     :param certificate:
     :return: url of the certificate
     """
-    return '{root_url}/certificates/{uuid}?border_class=hide'.format(root_url=settings.LMS_ROOT_URL, uuid=certificate.verify_uuid)
+    return '{root_url}/certificates/{uuid}?border=hide'.format(root_url=settings.LMS_ROOT_URL, uuid=certificate.verify_uuid)
 
 
 def get_certificate_image_name(certificate):

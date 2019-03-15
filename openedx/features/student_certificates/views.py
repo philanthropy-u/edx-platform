@@ -114,8 +114,6 @@ def student_certificates(request):
     return response
 
 
-@login_required
-@ensure_csrf_cookie
 def shared_student_achievements(request, certificate_uuid):
     """
     Provides the User with the shared certificate page
