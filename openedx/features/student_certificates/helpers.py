@@ -39,20 +39,20 @@ def get_certificate_image_url(certificate):
     )
 
 
-def get_certificate_url(certificate):
+def get_certificate_url(verify_uuid):
     """
     :param certificate:
     :return: url of the certificate
     """
-    return '{root_url}/certificates/{uuid}?border=hide'.format(root_url=settings.LMS_ROOT_URL, uuid=certificate.verify_uuid)
+    return '{root_url}/certificates/{uuid}?border=hide'.format(root_url=settings.LMS_ROOT_URL, uuid=verify_uuid)
 
 
-def get_certificate_image_name(certificate):
+def get_certificate_image_name(verify_uuid):
     """
     :param certificate:
     :return: image name of the certificate
     """
-    return '{uuid}.jpg'.format(uuid=certificate.verify_uuid)
+    return '{uuid}.jpg'.format(uuid=verify_uuid)
 
 
 def get_certificate_img_key(img_name):

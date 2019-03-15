@@ -35,10 +35,5 @@ class Command(BaseCommand):
         else:
             certificates = GeneratedCertificate.objects.all()
 
-        total_certificates = len(certificates)
-        for index, certificate in enumerate(certificates):
-            task_create_certificate_img_and_upload_to_s3.delay(certificate)
-            self.stdout.write('Done with {index} certificate(s) from {total}'.format(
-                index=index + 1,
-                total=total_certificates
-            ))
+        for certificate in enumerate(certificates):
+            task_create_certificate_img_and_upload_to_s3.delay(verify_uuid=certificate.verify_uuid)
