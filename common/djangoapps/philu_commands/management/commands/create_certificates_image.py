@@ -35,5 +35,5 @@ class Command(BaseCommand):
         else:
             certificates = GeneratedCertificate.objects.all()
 
-        for certificate in enumerate(certificates):
+        for certificate in certificates:
             task_create_certificate_img_and_upload_to_s3.delay(verify_uuid=certificate.verify_uuid)
