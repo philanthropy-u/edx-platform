@@ -71,11 +71,7 @@ def user_info(request):
         'language': userprofile.language,
         'country': COUNTRIES.get(userprofile.country) if not request.POST.get('country') else request.POST.get('country'),
         'city': userprofile.city,
-        'level_of_education': userprofile.level_of_education,
-        # 'country_of_employment': COUNTRIES.get(user_extended_profile.country_of_employment, '') if not request.POST.get('country_of_employment') else request.POST.get('country_of_employment') ,
-        # 'hours_per_week': user_extended_profile.hours_per_week if user_extended_profile.hours_per_week else '',
-        # 'is_emp_location_different': True if user_extended_profile.country_of_employment else False,
-        # "function_areas": user_extended_profile.get_user_selected_functions(_type="fields")
+        'level_of_education': userprofile.level_of_education
     }
 
     context = {
@@ -132,10 +128,9 @@ def user_info(request):
     context.update({
         'form': form,
         'is_under_age': is_under_age,
-        # 'non_profile_organization': Organization.is_non_profit(user_extended_profile),
-        # 'is_poc': user_extended_profile.is_organization_admin,
-        # 'is_first_user': user_extended_profile.is_first_signup_in_org \
-        # if user_extended_profile.organization else False,
+        'non_profile_organization': Organization.is_non_profit(user_extended_profile),
+        'is_poc': user_extended_profile.is_organization_admin,
+        'is_first_user': user_extended_profile.is_first_signup_in_org if user_extended_profile.organization else False,
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
 
     })
@@ -203,14 +198,16 @@ def interests(request):
     extended_profile = user.extended_profile
     context.update(extended_profile.unattended_surveys())
     is_employed = bool(user.extended_profile.organization)
+    is_first_signup_in_org = user_extended_profile.is_first_signup_in_org \
+        if user_extended_profile.organization else False
 
     context.update({
-        # 'non_profile_organization': Organization.is_non_profit(user_extended_profile),
+        'non_profile_organization': Organization.is_non_profit(user_extended_profile),
         'is_employed': is_employed,
         'organization_name': user.extended_profile.organization.label if is_employed else '',
-        'user_fullname': user.profile.name
-        # 'is_poc': extended_profile.is_organization_admin,
-        # 'is_first_user': is_first_signup_in_org,
+        'user_fullname': user.profile.name,
+        'is_poc': extended_profile.is_organization_admin,
+        'is_first_user': is_first_signup_in_org
     })
 
     return render(request, template, context)
@@ -279,6 +276,7 @@ def user_organization_role(request):
         'form': form,
         'non_profile_organization': Organization.is_non_profit(user_extended_profile),
         'is_poc': user_extended_profile.is_organization_admin,
+        'is_employed': bool(user_extended_profile.organization),
         'is_first_user': user_extended_profile.is_first_signup_in_org \
         if user_extended_profile.organization else False,
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
@@ -303,7 +301,7 @@ def organization(request):
     """
     user_extended_profile = request.user.extended_profile
     _organization = user_extended_profile.organization
-    are_forms_complete = not(bool(user_extended_profile.unattended_surveys(_type='list')))
+    are_forms_complete = not(bool(user_extended_profile.org_unattended_surveys_v2(_type='list')))
 
     template = 'features/onboarding/organization_survey.html'
     next_page_url = reverse('recommendations')
@@ -326,7 +324,7 @@ def organization(request):
         if form.is_valid():
             form.save(request)
             old_url = _organization.url.replace('https://', '', 1) if _organization.url else _organization.url
-            are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
+            are_forms_complete = not (bool(user_extended_profile.org_unattended_surveys_v2(_type='list')))
 
             if user_extended_profile.organization.org_type == PartnerNetwork.NON_PROFIT_ORG_TYPE_CODE:
                 # redirect to organization detail page
@@ -351,6 +349,7 @@ def organization(request):
 
     context.update({
         'non_profile_organization': Organization.is_non_profit(user_extended_profile),
+        'is_employed': bool(user_extended_profile.organization),
         'is_poc': user_extended_profile.is_organization_admin,
         'is_first_user': user_extended_profile.is_first_signup_in_org if user_extended_profile.organization else False,
         'org_admin_id': organization.admin_id if user_extended_profile.organization else None,
@@ -427,6 +426,7 @@ def org_detail_survey(request):
         'is_poc': user_extended_profile.is_organization_admin,
         'is_first_user': user_extended_profile.is_first_signup_in_org if user_extended_profile.organization else False,
         'organization_name': user_extended_profile.organization.label,
+        'is_employed': bool(user_extended_profile.organization)
     })
 
     return render(request, template, context)
