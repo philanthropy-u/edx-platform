@@ -55,6 +55,14 @@ def get_certificate_image_name(verify_uuid):
     return '{uuid}.jpg'.format(uuid=verify_uuid)
 
 
+def get_certificate_image_path(img_name):
+    """
+    :param certificate:
+    :return: image path of the certificate
+    """
+    return '/tmp/{img}'.format(img=img_name)
+
+
 def get_certificate_img_key(img_name):
     """
     :param img_name:
