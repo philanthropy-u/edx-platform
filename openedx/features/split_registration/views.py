@@ -181,8 +181,11 @@ def interests(request):
 
         are_forms_complete = not (bool(user_extended_profile.unattended_surveys_v2(_type='list')))
 
-        if request.POST.get('next') == 'organization' and redirect_to_next:
-            return redirect(reverse('step3'))
+        are_org_forms_complete = not (bool(user_extended_profile.org_unattended_surveys_v2(_type='list')))
+        org_unattended_surveys = user_extended_profile.org_unattended_surveys_v2(_type='list')
+
+        if request.POST.get('next') == 'organization' and redirect_to_next and not are_org_forms_complete:
+            return redirect(reverse(org_unattended_surveys[0]))
 
         if are_forms_complete and not is_action_update:
             update_nodebb_for_user_status(request.user.username)
@@ -258,16 +261,14 @@ def user_organization_role(request):
             if not are_forms_complete and redirect_to_next:
                 return redirect(unattended_surveys[0])
 
-            # if are_forms_complete:
-            #     update_nodebb_for_user_status(request.user.username)
-            #     if user_extended_profile.is_alquity_user:
-            #         return redirect(get_alquity_community_url())
-            #     return redirect(reverse('recommendations'))
+            if are_forms_complete:
+                update_nodebb_for_user_status(request.user.username)
+                return redirect(reverse('recommendations'))
 
             # this will only executed if user updated his/her employed status from account settings page
             # redirect user to account settings page where he come from
-            if not request.path == "features/account/additional_information/":
-                return redirect(reverse("update_account_settings"))
+            # if not request.path == "features/account/additional_information/":
+            #     return redirect(reverse("update_account_settings"))
 
     else:
         form = forms.OrganizationRoleForm(instance=user_extended_profile, initial=initial)
@@ -277,10 +278,8 @@ def user_organization_role(request):
         'non_profile_organization': Organization.is_non_profit(user_extended_profile),
         'is_poc': user_extended_profile.is_organization_admin,
         'is_employed': bool(user_extended_profile.organization),
-        'is_first_user': user_extended_profile.is_first_signup_in_org \
-        if user_extended_profile.organization else False,
+        'is_first_user': user_extended_profile.is_first_signup_in_org if user_extended_profile.organization else False,
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
-
     })
 
     context.update(user_extended_profile.unattended_surveys())
@@ -324,16 +323,15 @@ def organization(request):
         if form.is_valid():
             form.save(request)
             old_url = _organization.url.replace('https://', '', 1) if _organization.url else _organization.url
-            are_forms_complete = not (bool(user_extended_profile.org_unattended_surveys_v2(_type='list')))
+            org_unattended_user_surveys = user_extended_profile.org_unattended_surveys_v2(_type='list')
+            are_forms_complete = not (bool(org_unattended_user_surveys))
 
-            if user_extended_profile.organization.org_type == PartnerNetwork.NON_PROFIT_ORG_TYPE_CODE:
+            if not are_forms_complete:
                 # redirect to organization detail page
-                next_page_url = reverse('org_detail_survey')
+                next_page_url = reverse(org_unattended_user_surveys[0])
             else:
-                #update nodebb for user profile completion
+                # update nodebb for user profile completion
                 update_nodebb_for_user_status(request.user.username)
-                if user_extended_profile.is_alquity_user:
-                    next_page_url = get_alquity_community_url()
 
             if redirect_to_next:
                 return redirect(next_page_url)
@@ -379,7 +377,6 @@ def org_detail_survey(request):
     next_page_url = reverse('recommendations')
     org_metric_form = forms.OrganizationMetricModelForm
     redirect_to_next = True
-    update_org_url = reverse('update_organization_details')
 
     if request.path == reverse('update_organization_details'):
         redirect_to_next = False
@@ -389,6 +386,7 @@ def org_detail_survey(request):
     if request.method == 'POST':
         available_next = request.POST.get('next', None)
         is_user_coming_from_overlay = available_next and available_next == 'oef'
+
         if is_user_coming_from_overlay:
             redirect_to_next = True
 
@@ -400,12 +398,11 @@ def org_detail_survey(request):
         if form.is_valid():
             form.save(request)
 
-            are_forms_complete = not (bool(user_extended_profile.unattended_surveys(_type='list')))
+            are_forms_complete = not (bool(user_extended_profile.org_unattended_surveys_v2(_type='list')))
 
             if are_forms_complete and redirect_to_next:
                 update_nodebb_for_user_status(request.user.username)
-                if user_extended_profile.is_alquity_user:
-                    next_page_url = get_alquity_community_url()
+
                 if is_user_coming_from_overlay:
                     next_page_url = reverse('oef_dashboard')
 
@@ -419,7 +416,7 @@ def org_detail_survey(request):
 
     next_url = request.GET.get('next', None)
     context = {'form': form, 'are_forms_complete': are_forms_complete, 'next': next_url}
-    context.update(user_extended_profile.unattended_surveys())
+    context.update(user_extended_profile.org_unattended_surveys_v2())
 
     context.update({
         'non_profile_organization': Organization.is_non_profit(user_extended_profile),
