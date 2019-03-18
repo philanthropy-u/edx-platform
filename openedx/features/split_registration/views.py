@@ -444,7 +444,7 @@ def update_account_settings(request):
         form = forms.UpdateRegModelForm(request.POST, instance=user_extended_profile)
         if form.is_valid():
             user_extended_profile = form.save(user=user_extended_profile.user, commit=True)
-            unattended_surveys = user_extended_profile.unattended_surveys(_type='list')
+            unattended_surveys = user_extended_profile.unattended_surveys_v2(_type='list')
             are_forms_complete = not (bool(unattended_surveys))
 
             if not are_forms_complete:
@@ -457,8 +457,6 @@ def update_account_settings(request):
         form = forms.UpdateRegModelForm(
             instance=user_extended_profile,
             initial={
-                'organization_name': user_extended_profile.organization.label if user_extended_profile.organization else "",
-                'is_poc': "1" if user_extended_profile.is_organization_admin else "0",
                 'first_name': user_extended_profile.user.first_name,
                 'last_name': user_extended_profile.user.last_name,
                 'opt_in': email_preferences.opt_in if email_preferences else ''
@@ -467,8 +465,6 @@ def update_account_settings(request):
 
     ctx = {
         'form': form,
-        'admin_has_pending_admin_suggestion_request': user_extended_profile.admin_has_pending_admin_suggestion_request(),
-        'org_url': reverse('get_organizations')
     }
 
     return render(request, 'features/account/registration_update.html', ctx)
