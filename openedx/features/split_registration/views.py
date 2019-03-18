@@ -71,7 +71,9 @@ def user_info(request):
         'language': userprofile.language,
         'country': COUNTRIES.get(userprofile.country) if not request.POST.get('country') else request.POST.get('country'),
         'city': userprofile.city,
-        'level_of_education': userprofile.level_of_education
+        'level_of_education': userprofile.level_of_education,
+        'organization_name': user_extended_profile.organization.label if user_extended_profile.organization else "",
+        'is_poc': "1" if user_extended_profile.is_organization_admin else "0",
     }
 
     context = {
@@ -106,8 +108,8 @@ def user_info(request):
 
             # this will only executed if user updated his/her employed status from account settings page
             # redirect user to account settings page where he come from
-            if not request.path == "features/account/additional_information/":
-                return redirect(reverse("update_account_settings"))
+            if not request.path == "/user-account/additional_information/":
+                return redirect(reverse("update_account"))
 
     else:
         form = forms.UserInfoModelForm(instance=user_extended_profile, initial=initial)
@@ -132,6 +134,7 @@ def user_info(request):
         'is_poc': user_extended_profile.is_organization_admin,
         'is_first_user': user_extended_profile.is_first_signup_in_org if user_extended_profile.organization else False,
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
+        'org_url': reverse('get_organizations')
 
     })
 
