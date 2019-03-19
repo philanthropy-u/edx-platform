@@ -5,6 +5,7 @@ import base64
 import json
 import logging
 from datetime import datetime
+from w3lib.url import add_or_replace_parameter
 
 from django.conf import settings
 from django.contrib import messages
@@ -36,6 +37,7 @@ from lms.djangoapps.onboarding.signals import save_interests
 from lms.djangoapps.student_dashboard.views import get_recommended_xmodule_courses, get_joined_communities
 from nodebb.helpers import update_nodebb_for_user_status
 from openedx.features.split_registration import forms
+from .helpers import enroll_in_course
 
 log = logging.getLogger("edx.onboarding")
 
@@ -243,7 +245,8 @@ def user_organization_role(request):
         template = 'features/account/additional_information.html'
 
     initial = {
-        'country_of_employment': COUNTRIES.get(user_extended_profile.country_of_employment, '') if not request.POST.get('country_of_employment') else request.POST.get('country_of_employment') ,
+        'country_of_employment': COUNTRIES.get(user_extended_profile.country_of_employment, '') if not
+        request.POST.get('country_of_employment') else request.POST.get('country_of_employment') ,
         'hours_per_week': user_extended_profile.hours_per_week if user_extended_profile.hours_per_week else '',
         'is_emp_location_different': True if user_extended_profile.country_of_employment else False,
         "function_areas": user_extended_profile.get_user_selected_functions(_type="fields")
@@ -261,12 +264,31 @@ def user_organization_role(request):
             unattended_surveys = user_extended_profile.org_unattended_surveys_v2(_type='list')
             are_forms_complete = not (bool(unattended_surveys))
 
+            enroll_after_completion = bool(request.GET.get('course_id')) and bool(request.GET.get('enrollment_action'))
+
             if not are_forms_complete and redirect_to_next:
-                return redirect(unattended_surveys[0])
+                if enroll_after_completion:
+                    url = add_or_replace_parameter(reverse(unattended_surveys[0]),
+                                                   'course_id', request.GET.get('course_id'))
+                    url = add_or_replace_parameter(url, 'enrollment_action', request.GET.get('enrollment_action'))
+                    return redirect(url)
+                else:
+                    return redirect(unattended_surveys[0])
 
             if are_forms_complete:
                 update_nodebb_for_user_status(request.user.username)
-                return redirect(reverse('recommendations'))
+                if enroll_after_completion:
+                    enrolled = enroll_in_course(
+                        request,
+                        request.GET.get('enrollment_action'),
+                        request.GET.get('course_id')
+                    )
+                    if enrolled:
+                        redirect(enrolled)
+                    else:
+                        redirect(reverse('recommendations'))
+                else:
+                    return redirect(reverse('recommendations'))
 
             # this will only executed if user updated his/her employed status from account settings page
             # redirect user to account settings page where he come from
@@ -329,12 +351,30 @@ def organization(request):
             org_unattended_user_surveys = user_extended_profile.org_unattended_surveys_v2(_type='list')
             are_forms_complete = not (bool(org_unattended_user_surveys))
 
+            enroll_after_completion = bool(request.GET.get('course_id')) and bool(request.GET.get('enrollment_action'))
+
             if not are_forms_complete:
                 # redirect to organization detail page
-                next_page_url = reverse(org_unattended_user_surveys[0])
+                if enroll_after_completion:
+                    url = add_or_replace_parameter(reverse(org_unattended_user_surveys[0]),
+                                                   'course_id', request.GET.get('course_id'))
+                    url = add_or_replace_parameter(url, 'enrollment_action', request.GET.get('enrollment_action'))
+                    next_page_url = url
+                else:
+                    next_page_url = reverse(org_unattended_user_surveys[0])
             else:
                 # update nodebb for user profile completion
                 update_nodebb_for_user_status(request.user.username)
+                if enroll_after_completion:
+                    enrolled = enroll_in_course(
+                        request,
+                        request.GET.get('enrollment_action'),
+                        request.GET.get('course_id')
+                    )
+                    if enrolled:
+                        next_page_url = enrolled
+                    else:
+                        next_page_url = reverse('recommendations')
 
             if redirect_to_next:
                 return redirect(next_page_url)
@@ -402,12 +442,22 @@ def org_detail_survey(request):
             form.save(request)
 
             are_forms_complete = not (bool(user_extended_profile.org_unattended_surveys_v2(_type='list')))
+            enroll_after_completion = bool(request.GET.get('course_id')) and bool(request.GET.get('enrollment_action'))
 
             if are_forms_complete and redirect_to_next:
                 update_nodebb_for_user_status(request.user.username)
 
                 if is_user_coming_from_overlay:
                     next_page_url = reverse('oef_dashboard')
+
+                if enroll_after_completion:
+                    enrolled = enroll_in_course(
+                        request,
+                        request.GET.get('enrollment_action'),
+                        request.GET.get('course_id')
+                    )
+                    if enrolled:
+                        next_page_url = enrolled
 
                 return redirect(next_page_url)
 
