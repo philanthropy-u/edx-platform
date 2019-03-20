@@ -2,17 +2,21 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.core.exceptions import ObjectDoesNotExist
-
+from constants import TWITTER_META_TITLE_FMT, COURSE_URL_FMT
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from edxmako.shortcuts import render_to_response
+from lms.djangoapps.philu_api.helpers import get_course_custom_settings
 
 from certificates import api as certs_api
-from lms.djangoapps.grades.models import PersistentCourseGrade
 from courseware.courses import get_course
-from certificates.models import GeneratedCertificate
+from certificates.models import (
+    GeneratedCertificate,
+    CertificateStatuses)
 from common.djangoapps.student.views import get_course_enrollments
+
+from helpers import get_certificate_image_url, get_philu_certificate_social_context
 
 
 @login_required
@@ -96,14 +100,58 @@ def student_certificates(request):
         user_certificates.append({
             'course_name': course_name,
             'course_title': course_title,
+            'social_sharing_urls': get_philu_certificate_social_context(course, certificate),
             'certificate_url': "%s%s" % (settings.LMS_ROOT_URL, certificate_url),
             'course_start': start_date.strftime('%b %d, %Y') if start_date else None,
             'completion_date': completion_date.strftime('%b %d, %Y') if completion_date else None,
         })
 
     context = {
-        'user_certificates': user_certificates
+        'user_certificates': user_certificates,
     }
 
     response = render_to_response('certificates.html', context)
+    return response
+
+
+def shared_student_achievements(request, certificate_uuid):
+    """
+    Provides the User with the shared certificate page
+
+    Arguments:
+        request: The request object.
+
+    Returns:
+        The shared certificate response.
+
+    """
+
+    try:
+        certificate = GeneratedCertificate.eligible_certificates.get(
+            verify_uuid=certificate_uuid,
+            status=CertificateStatuses.downloadable
+        )
+    except GeneratedCertificate.DoesNotExist:
+        raise Http404
+
+    course = get_course(certificate.course_id)
+
+    custom_settings = get_course_custom_settings(course.id)
+    meta_tags = custom_settings.get_course_meta_tags()
+
+    meta_tags['description'] = meta_tags['description'] or ""
+    meta_tags['title'] = TWITTER_META_TITLE_FMT.format(course_name=course.display_name)
+    meta_tags['image'] = get_certificate_image_url(certificate)
+
+    context = {
+        'course_url': COURSE_URL_FMT.format(
+            base_url = settings.LMS_ROOT_URL,
+            course_url = 'courses',
+            course_id = course.id,
+            about_url = 'about'
+        ),
+        'meta_tags': meta_tags,
+    }
+
+    response = render_to_response('shared_certificate.html', context)
     return response
