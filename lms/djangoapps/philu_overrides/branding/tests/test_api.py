@@ -7,7 +7,7 @@ from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 
-from ..api import get_logo_url, get_auth_footer, get_non_auth_footer
+from ..api import get_logo_url, get_auth_footer, get_non_auth_footer, get_about_url, get_privacy_url, get_tos_and_honor_code_url
 
 
 class TestHeader(TestCase):
@@ -32,9 +32,9 @@ class TestFooter(TestCase):
     @mock.patch.dict('django.conf.settings.FEATURES', {'ENABLE_MKTG_SITE': True})
     @mock.patch.dict('django.conf.settings.MKTG_URLS', {
         "ROOT": "https://philanthropyu.org",
-        "ABOUT": "/about-us",
-        "TOS_AND_HONOR": "/terms-of-use",
-        "PRIVACY": "/privacy-policy"
+        "ABOUT": "/about-us/our-story/",
+        "TOS_AND_HONOR": "/terms-of-use/",
+        "PRIVACY": "/privacy-policy/"
     })
     @override_settings(PLATFORM_NAME='\xe9dX')
     def test_get_auth_footer(self):
@@ -48,7 +48,7 @@ class TestFooter(TestCase):
                     "name": "about",
                     "target": "_blank",
                     "title": "About Philanthropy University",
-                    "url": "https://philanthropyu.org/about-us/our-story/"
+                    "url": get_about_url()
                 }
             ],
             'legal_links': [
@@ -56,13 +56,13 @@ class TestFooter(TestCase):
                     "name": "terms_of_service_and_honor_code",
                     "target": "_blank",
                     "title": "Terms of Use",
-                    "url": "https://philanthropyu.org/terms-of-use/"
+                    "url": get_tos_and_honor_code_url()
                 },
                 {
                     "name": "privacy_policy",
                     "target": "_blank",
                     "title": "Privacy Policy",
-                    "url": "https://philanthropyu.org/privacy-policy/"
+                    "url": get_privacy_url()
                 },
                 {
                     "name": "faq",
@@ -126,9 +126,9 @@ class TestFooter(TestCase):
     @mock.patch.dict('django.conf.settings.FEATURES', {'ENABLE_MKTG_SITE': True})
     @mock.patch.dict('django.conf.settings.MKTG_URLS', {
         "ROOT": "https://philanthropyu.org",
-        "ABOUT": "/about-us",
-        "TOS_AND_HONOR": "/terms-of-use",
-        "PRIVACY": "/privacy-policy"
+        "ABOUT": "/about-us/our-story/",
+        "TOS_AND_HONOR": "/terms-of-use/",
+        "PRIVACY": "/privacy-policy/"
     })
     @override_settings(PLATFORM_NAME='\xe9dX')
     def test_get_non_auth_footer(self):
@@ -142,7 +142,7 @@ class TestFooter(TestCase):
                     "name": "about",
                     "target": "_blank",
                     "title": "About Philanthropy University",
-                    "url": "https://philanthropyu.org/about-us/our-story/"
+                    "url": get_about_url()
                 },
                 {
                     "name": "explore_course",
@@ -162,13 +162,13 @@ class TestFooter(TestCase):
                     "name": "terms_of_service_and_honor_code",
                     "target": "_blank",
                     "title": "Terms of Use",
-                    "url": "https://philanthropyu.org/terms-of-use/"
+                    "url": get_tos_and_honor_code_url()
                 },
                 {
                     "name": "privacy_policy",
                     "target": "_blank",
                     "title": "Privacy Policy",
-                    "url": "https://philanthropyu.org/privacy-policy/"
+                    "url": get_privacy_url()
                 },
                 {
                     "name": "faq",
