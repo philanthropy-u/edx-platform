@@ -171,11 +171,13 @@ def interests(request):
         are_org_forms_complete = not (bool(user_extended_profile.org_unattended_surveys_v2(_type='list')))
         org_unattended_surveys = user_extended_profile.org_unattended_surveys_v2(_type='list')
 
+        # User registration is complete, sync status with NodeBB
+        update_nodebb_for_user_status(request.user.username)
+
         if request.POST.get('next') == 'organization' and redirect_to_next and not are_org_forms_complete:
             return redirect(reverse(org_unattended_surveys[0]))
 
         if are_forms_complete and not is_action_update:
-            update_nodebb_for_user_status(request.user.username)
             if user_extended_profile.is_alquity_user:
                 return redirect(get_alquity_community_url())
             return redirect(reverse('recommendations'))
@@ -255,7 +257,6 @@ def user_organization_role(request):
                 return redirect(next_survey_url_with_enroll_params(unattended_surveys[0], request))
 
             if are_forms_complete:
-                update_nodebb_for_user_status(request.user.username)
                 return redirect(enroll_in_course(request, reverse('recommendations')))
 
     else:
@@ -318,8 +319,6 @@ def organization(request):
                 # redirect to organization detail page
                 next_page_url = next_survey_url_with_enroll_params(org_unattended_user_surveys[0], request)
             else:
-                # update nodebb for user profile completion
-                update_nodebb_for_user_status(request.user.username)
                 next_page_url = enroll_in_course(request, reverse('recommendations'))
 
             if redirect_to_next:
@@ -390,8 +389,6 @@ def org_detail_survey(request):
             are_forms_complete = not (bool(user_extended_profile.org_unattended_surveys_v2(_type='list')))
 
             if are_forms_complete and redirect_to_next:
-                update_nodebb_for_user_status(request.user.username)
-
                 if is_user_coming_from_overlay:
                     next_page_url = reverse('oef_dashboard')
 
