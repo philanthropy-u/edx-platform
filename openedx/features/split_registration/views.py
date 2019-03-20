@@ -62,7 +62,8 @@ def user_info(request):
 
     context = {
         'are_forms_complete': are_forms_complete, 'first_name': request.user.first_name,
-        'fields_to_disable': []
+        'fields_to_disable': [],
+        'is_employed': bool(user_extended_profile.organization)
     }
 
     year_of_birth = userprofile.year_of_birth
@@ -221,9 +222,9 @@ def user_organization_role(request):
     template = 'features/onboarding/organization_role.html'
     redirect_to_next = True
 
-    if request.path == reverse('additional_information'):
+    if request.path == reverse('update_role'):
         redirect_to_next = False
-        template = 'features/account/additional_information.html'
+        template = 'features/account/update_organization_role.html'
 
     initial = {
         'country_of_employment': COUNTRIES.get(user_extended_profile.country_of_employment, '') if not
@@ -242,6 +243,11 @@ def user_organization_role(request):
 
         if form.is_valid():
             form.save(request, user_extended_profile)
+
+            # this will only executed if user updated his/her employed status from account settings page
+            if request.path == '/user-account/update_role/':
+                return redirect(reverse('update_role'))
+
             unattended_surveys = user_extended_profile.org_unattended_surveys_v2(_type='list')
             are_forms_complete = not (bool(unattended_surveys))
 
@@ -447,6 +453,7 @@ def update_account_settings(request):
 
     ctx = {
         'form': form,
+        'is_employed': bool(user_extended_profile.organization)
     }
 
     return render(request, 'features/account/registration_update.html', ctx)
