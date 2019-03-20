@@ -1,43 +1,25 @@
 """
 Views for on-boarding app.
 """
-import base64
-import json
 import logging
 from datetime import datetime
-from w3lib.url import add_or_replace_parameter
 
 from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.db.models import Q
-from django.http import HttpResponse, HttpResponseRedirect
-from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.shortcuts import render
-from django.utils.translation import ugettext_lazy as _, ugettext_noop
-from django.views.decorators.csrf import csrf_exempt
 
-from edxmako.shortcuts import render_to_response
 from lms.djangoapps.onboarding.decorators import can_save_org_data, can_not_update_onboarding_steps, \
     can_save_org_details
-from lms.djangoapps.onboarding.email_utils import send_admin_activation_email, send_admin_update_confirmation_email, \
-    send_admin_update_email
-from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES, LANGUAGES, oef_eligible_first_learner, \
-    get_close_matching_orgs_with_suggestions, get_alquity_community_url
-from lms.djangoapps.onboarding.models import (
-    Organization,
-    Currency, OrganizationMetric, OrganizationAdminHashKeys, PartnerNetwork)
+from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES, get_alquity_community_url
+from lms.djangoapps.onboarding.models import (Organization, OrganizationMetric)
 from lms.djangoapps.onboarding.models import UserExtendedProfile
 from lms.djangoapps.onboarding.signals import save_interests
-from lms.djangoapps.student_dashboard.views import get_recommended_xmodule_courses, get_joined_communities
 from nodebb.helpers import update_nodebb_for_user_status
 from openedx.features.split_registration import forms
-from .helpers import enroll_in_course
+from .helpers import enroll_in_course, next_survey_url_with_enroll_params
 
 log = logging.getLogger("edx.onboarding")
 
@@ -137,7 +119,6 @@ def user_info(request):
         'is_first_user': user_extended_profile.is_first_signup_in_org if user_extended_profile.organization else False,
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
         'org_url': reverse('get_organizations')
-
     })
 
     context.update(user_extended_profile.unattended_surveys())
@@ -264,36 +245,12 @@ def user_organization_role(request):
             unattended_surveys = user_extended_profile.org_unattended_surveys_v2(_type='list')
             are_forms_complete = not (bool(unattended_surveys))
 
-            enroll_after_completion = bool(request.GET.get('course_id')) and bool(request.GET.get('enrollment_action'))
-
             if not are_forms_complete and redirect_to_next:
-                if enroll_after_completion:
-                    url = add_or_replace_parameter(reverse(unattended_surveys[0]),
-                                                   'course_id', request.GET.get('course_id'))
-                    url = add_or_replace_parameter(url, 'enrollment_action', request.GET.get('enrollment_action'))
-                    return redirect(url)
-                else:
-                    return redirect(unattended_surveys[0])
+                return redirect(next_survey_url_with_enroll_params(unattended_surveys[0], request))
 
             if are_forms_complete:
                 update_nodebb_for_user_status(request.user.username)
-                if enroll_after_completion:
-                    enrolled = enroll_in_course(
-                        request,
-                        request.GET.get('enrollment_action'),
-                        request.GET.get('course_id')
-                    )
-                    if enrolled:
-                        redirect(enrolled)
-                    else:
-                        redirect(reverse('recommendations'))
-                else:
-                    return redirect(reverse('recommendations'))
-
-            # this will only executed if user updated his/her employed status from account settings page
-            # redirect user to account settings page where he come from
-            # if not request.path == "features/account/additional_information/":
-            #     return redirect(reverse("update_account_settings"))
+                return redirect(enroll_in_course(request, reverse('recommendations')))
 
     else:
         form = forms.OrganizationRoleForm(instance=user_extended_profile, initial=initial)
@@ -351,30 +308,13 @@ def organization(request):
             org_unattended_user_surveys = user_extended_profile.org_unattended_surveys_v2(_type='list')
             are_forms_complete = not (bool(org_unattended_user_surveys))
 
-            enroll_after_completion = bool(request.GET.get('course_id')) and bool(request.GET.get('enrollment_action'))
-
             if not are_forms_complete:
                 # redirect to organization detail page
-                if enroll_after_completion:
-                    url = add_or_replace_parameter(reverse(org_unattended_user_surveys[0]),
-                                                   'course_id', request.GET.get('course_id'))
-                    url = add_or_replace_parameter(url, 'enrollment_action', request.GET.get('enrollment_action'))
-                    next_page_url = url
-                else:
-                    next_page_url = reverse(org_unattended_user_surveys[0])
+                next_page_url = next_survey_url_with_enroll_params(org_unattended_user_surveys[0], request)
             else:
                 # update nodebb for user profile completion
                 update_nodebb_for_user_status(request.user.username)
-                if enroll_after_completion:
-                    enrolled = enroll_in_course(
-                        request,
-                        request.GET.get('enrollment_action'),
-                        request.GET.get('course_id')
-                    )
-                    if enrolled:
-                        next_page_url = enrolled
-                    else:
-                        next_page_url = reverse('recommendations')
+                next_page_url = enroll_in_course(request, reverse('recommendations'))
 
             if redirect_to_next:
                 return redirect(next_page_url)
@@ -442,7 +382,6 @@ def org_detail_survey(request):
             form.save(request)
 
             are_forms_complete = not (bool(user_extended_profile.org_unattended_surveys_v2(_type='list')))
-            enroll_after_completion = bool(request.GET.get('course_id')) and bool(request.GET.get('enrollment_action'))
 
             if are_forms_complete and redirect_to_next:
                 update_nodebb_for_user_status(request.user.username)
@@ -450,14 +389,7 @@ def org_detail_survey(request):
                 if is_user_coming_from_overlay:
                     next_page_url = reverse('oef_dashboard')
 
-                if enroll_after_completion:
-                    enrolled = enroll_in_course(
-                        request,
-                        request.GET.get('enrollment_action'),
-                        request.GET.get('course_id')
-                    )
-                    if enrolled:
-                        next_page_url = enrolled
+                next_page_url = enroll_in_course(request, next_page_url)
 
                 return redirect(next_page_url)
 
