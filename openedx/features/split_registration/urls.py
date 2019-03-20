@@ -21,4 +21,6 @@ urlpatterns = [
 
     url(r"^user-organization/general/$", views.organization, name="update_organization"),
     url(r"^user-organization/details/$", views.org_detail_survey, name="update_organization_details"),
+
+    url(r"^user-account/update_role/$", views.user_organization_role, name="update_role"),
 ]

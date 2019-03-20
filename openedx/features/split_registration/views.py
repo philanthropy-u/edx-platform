@@ -78,7 +78,8 @@ def user_info(request):
 
     context = {
         'are_forms_complete': are_forms_complete, 'first_name': request.user.first_name,
-        'fields_to_disable': []
+        'fields_to_disable': [],
+        'is_employed': bool(user_extended_profile.organization)
     }
 
     year_of_birth = userprofile.year_of_birth
@@ -213,7 +214,7 @@ def interests(request):
         'organization_name': user.extended_profile.organization.label if is_employed else '',
         'user_fullname': user.profile.name,
         'is_poc': extended_profile.is_organization_admin,
-        'is_first_user': is_first_signup_in_org
+        'is_first_user': is_first_signup_in_org,
     })
 
     return render(request, template, context)
@@ -238,9 +239,9 @@ def user_organization_role(request):
     template = 'features/onboarding/organization_role.html'
     redirect_to_next = True
 
-    if request.path == reverse('additional_information'):
+    if request.path == reverse('update_role'):
         redirect_to_next = False
-        template = 'features/account/additional_information.html'
+        template = 'features/account/update_organization_role.html'
 
     initial = {
         'country_of_employment': COUNTRIES.get(user_extended_profile.country_of_employment, '') if not request.POST.get('country_of_employment') else request.POST.get('country_of_employment') ,
@@ -258,6 +259,11 @@ def user_organization_role(request):
 
         if form.is_valid():
             form.save(request, user_extended_profile)
+
+            # this will only executed if user updated his/her employed status from account settings page
+            if request.path == '/user-account/update_role/':
+                return redirect(reverse('update_role'))
+
             unattended_surveys = user_extended_profile.org_unattended_surveys_v2(_type='list')
             are_forms_complete = not (bool(unattended_surveys))
 
@@ -267,11 +273,6 @@ def user_organization_role(request):
             if are_forms_complete:
                 update_nodebb_for_user_status(request.user.username)
                 return redirect(reverse('recommendations'))
-
-            # this will only executed if user updated his/her employed status from account settings page
-            # redirect user to account settings page where he come from
-            # if not request.path == "features/account/additional_information/":
-            #     return redirect(reverse("update_account_settings"))
 
     else:
         form = forms.OrganizationRoleForm(instance=user_extended_profile, initial=initial)
@@ -465,6 +466,7 @@ def update_account_settings(request):
 
     ctx = {
         'form': form,
+        'is_employed': bool(user_extended_profile.organization)
     }
 
     return render(request, 'features/account/registration_update.html', ctx)
