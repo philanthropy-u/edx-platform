@@ -31,6 +31,7 @@ urlpatterns = (
     url(r'', include('homepage.urls', namespace='homepage')),
 
     url(r'', include('lms.djangoapps.onboarding.urls')),
+    url(r'', include('openedx.features.split_registration.urls')),
     url(r'^oef/', include('lms.djangoapps.oef.urls')),
     url(r'', include('edx_notifications.server.urls')),
     url(r'^$', 'branding.views.index', name="root"),   # Main marketing page, or redirect to courseware
@@ -135,7 +136,10 @@ if settings.FEATURES["ENABLE_COMBINED_LOGIN_REGISTRATION"]:
             {'initial_mode': 'login'}, name="signin_user"),
         url(r'^register$', 'philu_overrides.views.login_and_registration_form',
             {'initial_mode': 'register'}, name="register_user"),
-        url(r'^register/(?P<org_name>[^/]*)/(?P<admin_email>[^/]*)/$', 'philu_overrides.views.login_and_registration_form',
+        url(r'^signup', 'openedx.features.student_account.views.login_and_registration_form',
+            {'initial_mode': 'register'}, name="register_user"),
+        url(r'^register/(?P<org_name>[^/]*)/(?P<admin_email>[^/]*)/$',
+            'philu_overrides.views.login_and_registration_form',
             {'initial_mode': 'register'}, name="register_user"),
     )
 else:
