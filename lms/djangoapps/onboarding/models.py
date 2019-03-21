@@ -613,8 +613,7 @@ class UserExtendedProfile(TimeStampedModel):
         """
         attended_list = []
 
-        if (not self.organization and self.user.profile.level_of_education and self.english_proficiency) or (
-                self.organization and self.user.profile.level_of_education and self.english_proficiency):
+        if self.user.profile.level_of_education and self.english_proficiency:
             attended_list.append(self.SURVEYS_LIST_V2[0])
         if self.is_interests_data_submitted:
             attended_list.append(self.SURVEYS_LIST_V2[1])
@@ -748,11 +747,12 @@ class UserExtendedProfile(TimeStampedModel):
         """
 
         surveys_to_attend = self.surveys_to_attend_v2()
+        attended_surveys = self.attended_surveys_v2()
 
         if _type == "list":
-            return [s for s in surveys_to_attend if s not in self.attended_surveys_v2()]
+            return [s for s in surveys_to_attend if s not in attended_surveys]
 
-        return {s: True if s in self.attended_surveys_v2() else False for s in surveys_to_attend}
+        return {s: True if s in attended_surveys else False for s in surveys_to_attend}
 
     def org_unattended_surveys_v2(self, _type="map"):
         """
@@ -760,11 +760,12 @@ class UserExtendedProfile(TimeStampedModel):
         """
 
         surveys_to_attend = self.org_surveys_to_attend()
+        org_attended_surveys = self.org_attended_surveys()
 
         if _type == "list":
-            return [s for s in surveys_to_attend if s not in self.org_attended_surveys()]
+            return [s for s in surveys_to_attend if s not in org_attended_surveys]
 
-        return {s: True if s in self.org_attended_surveys() else False for s in surveys_to_attend}
+        return {s: True if s in org_attended_surveys else False for s in surveys_to_attend}
 
     @property
     def is_organization_admin(self):
@@ -863,5 +864,11 @@ class MetricUpdatePromptRecord(TimeStampedModel):
 
 
 class RegistrationType(models.Model):
-    user = models.OneToOneField(User, unique=True, db_index=True, related_name='registration_type')
+    user = models.OneToOneField(
+        User,
+        unique=True,
+        db_index=True,
+        on_delete=models.CASCADE,
+        related_name='registration_type'
+    )
     choice = models.SmallIntegerField(default=1, null=False)

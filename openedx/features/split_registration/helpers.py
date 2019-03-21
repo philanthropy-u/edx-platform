@@ -11,6 +11,13 @@ from student.models import CourseEnrollment
 
 
 def enroll_after_survey_completion(request):
+
+    """
+    This function return if appropriate parameters are being passed to enroll user after
+    completion of mandatory surveys
+    :param request:
+    :return:
+    """
     return bool(request.GET.get('course_id')) and bool(request.GET.get('enrollment_action'))
 
 

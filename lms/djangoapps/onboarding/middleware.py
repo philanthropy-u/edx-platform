@@ -19,7 +19,7 @@ class RedirectMiddleware(object):
     this kind of request.
     """
 
-    def get_urls_to_redirect(self, type):
+    def _get_urls_to_redirect(self, type):
         if type == 1:
             urls_to_redirect = {survey: reverse(survey) for survey in UserExtendedProfile.SURVEYS_LIST}
         else:
@@ -44,7 +44,7 @@ class RedirectMiddleware(object):
             user = request.user
             user_reg_type = RegistrationType.objects.filter(user=request.user).first()
             reg_type = user_reg_type.choice if user_reg_type else 1
-            urls_to_redirect = self.get_urls_to_redirect(reg_type)
+            urls_to_redirect = self._get_urls_to_redirect(reg_type)
 
             if RedirectMiddleware.skip_redirection(request, user):
                 return None
@@ -78,9 +78,9 @@ class RedirectMiddleware(object):
                 attended_surveys = user_extended_profile.attended_surveys_v2()
                 unattended_surveys = user_extended_profile.unattended_surveys_v2(_type="list")
 
-                if not unattended_surveys and not request.get_full_path() == '/myaccount/settings/' \
+                if not unattended_surveys and not request.get_full_path() == '/user-account/settings/' \
                         and user.email_preferences and user.email_preferences.opt_in is None:
-                    return redirect('/myaccount/settings/')
+                    return redirect('/user-account/settings/')
 
                 if not unattended_surveys:
                     return None
@@ -96,7 +96,6 @@ class RedirectMiddleware(object):
                         return redirect(urls_to_redirect[next_survey_to_complete])
 
                     return None
-
 
         return None
 

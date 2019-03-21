@@ -64,7 +64,7 @@ def _compile_social_sharing_url(share_url, course_url, url_param, utm_source, te
 def user_org_survey_completion_status(user):
     """
     :param user: user for which we want to check org survey completion
-    :return: returns either "complete" "not authenticated" or the org survey for to which we have to
+    :return: returns either "complete" or the org survey to which we have to
              redirect to
     """
     user_org_details_complete = 'complete'
