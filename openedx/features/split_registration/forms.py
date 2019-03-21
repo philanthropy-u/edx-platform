@@ -12,6 +12,8 @@ from django import forms
 from django.conf import settings
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_noop
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 from rest_framework.compat import MinValueValidator, MaxValueValidator
 
 from lms.djangoapps.onboarding.email_utils import send_admin_activation_email
@@ -219,13 +221,18 @@ class UserInfoModelForm(BaseOnboardingModelForm):
     def clean_organization_name(self):
         organization_name = self.cleaned_data['organization_name']
 
-        if self.data.get('is_currently_employed') == 'false' and not organization_name:
+        if not self.data.get('is_currently_employed') and not organization_name:
             raise forms.ValidationError(ugettext_noop('Please enter Organization Name.'))
 
         return organization_name
 
     def clean_org_admin_email(self):
         org_admin_email = self.cleaned_data['org_admin_email']
+
+        try:
+            validate_email(org_admin_email)
+        except ValidationError:
+            raise forms.ValidationError(ugettext_noop("The email address you've provided isn't formatted correctly."))
 
         already_an_admin = Organization.objects.filter(admin__email=org_admin_email).first()
         if already_an_admin:

@@ -49,6 +49,8 @@ def user_info(request):
         redirect_to_next = False
         template = 'features/account/additional_information.html'
 
+
+
     initial = {
         'year_of_birth': userprofile.year_of_birth,
         'gender': userprofile.gender,
@@ -58,6 +60,9 @@ def user_info(request):
         'level_of_education': userprofile.level_of_education,
         'organization_name': user_extended_profile.organization.label if user_extended_profile.organization else "",
         'is_poc': "1" if user_extended_profile.is_organization_admin else "0",
+        'is_currently_employed': request.POST.get('is_currently_employed'),
+        'org_admin_email':
+            user_extended_profile.organization.unclaimed_org_admin_email if user_extended_profile.organization else ""
     }
 
     context = {
