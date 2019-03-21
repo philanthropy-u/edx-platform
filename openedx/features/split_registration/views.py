@@ -192,6 +192,7 @@ def interests(request):
     is_employed = bool(user.extended_profile.organization)
     is_first_signup_in_org = user_extended_profile.is_first_signup_in_org \
         if user_extended_profile.organization else False
+    id_admin = user_extended_profile.is_organization_admin
 
     context.update({
         'non_profile_organization': Organization.is_non_profit(user_extended_profile),
@@ -199,7 +200,8 @@ def interests(request):
         'organization_name': user.extended_profile.organization.label if is_employed else '',
         'user_fullname': user.profile.name,
         'is_poc': extended_profile.is_organization_admin,
-        'is_first_user': is_first_signup_in_org
+        'is_first_user': is_first_signup_in_org,
+        'is_admin': id_admin
     })
 
     return render(request, template, context)
