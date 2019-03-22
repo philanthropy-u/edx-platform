@@ -228,23 +228,24 @@ class UserInfoModelForm(BaseOnboardingModelForm):
 
     def clean_org_admin_email(self):
         org_admin_email = self.cleaned_data['org_admin_email']
+        if org_admin_email:
 
-        try:
-            validate_email(org_admin_email)
-        except ValidationError:
-            raise forms.ValidationError(ugettext_noop("The email address you've provided isn't formatted correctly."))
+            try:
+                validate_email(org_admin_email)
+            except ValidationError:
+                raise forms.ValidationError(ugettext_noop("The email address you've provided isn't formatted correctly."))
 
-        already_an_admin = Organization.objects.filter(admin__email=org_admin_email).first()
-        if already_an_admin:
-            raise forms.ValidationError(ugettext_noop('%s is already admin of organization "%s"'
-                                                      % (org_admin_email, already_an_admin.label)))
+            already_an_admin = Organization.objects.filter(admin__email=org_admin_email).first()
+            if already_an_admin:
+                raise forms.ValidationError(ugettext_noop('%s is already admin of organization "%s"'
+                                                          % (org_admin_email, already_an_admin.label)))
 
-        already_suggested_as_admin = OrganizationAdminHashKeys.objects.filter(
-            suggested_admin_email=org_admin_email, is_hash_consumed=False).first()
-        if already_suggested_as_admin:
-            raise forms.ValidationError(ugettext_noop('%s is already suggested as admin of "%s" organization'
-                                                      % (org_admin_email,
-                                                         already_suggested_as_admin.organization.label)))
+            already_suggested_as_admin = OrganizationAdminHashKeys.objects.filter(
+                suggested_admin_email=org_admin_email, is_hash_consumed=False).first()
+            if already_suggested_as_admin:
+                raise forms.ValidationError(ugettext_noop('%s is already suggested as admin of "%s" organization'
+                                                          % (org_admin_email,
+                                                             already_suggested_as_admin.organization.label)))
 
         return org_admin_email
 
