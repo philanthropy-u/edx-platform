@@ -128,8 +128,6 @@ class UserInfoModelForm(BaseOnboardingModelForm):
         }
     )
 
-    city = forms.CharField(label=ugettext_noop('City of Residence'), required=False, widget=forms.HiddenInput)
-
     level_of_education = forms.ChoiceField(label=ugettext_noop('Level of Education'), label_suffix="*",
                                            choices=LEVEL_OF_EDUCATION_CHOICES,
                                            error_messages={
@@ -256,7 +254,7 @@ class UserInfoModelForm(BaseOnboardingModelForm):
         model = UserExtendedProfile
         fields = [
             'year_of_birth', 'gender', 'not_listed_gender', 'not_listed_gender', 'level_of_education', 'language',
-            'english_proficiency', 'country', 'city', 'organization_name', 'is_currently_employed', 'is_poc',
+            'english_proficiency', 'country', 'organization_name', 'is_currently_employed', 'is_poc',
             'org_admin_email'
         ]
 
@@ -278,7 +276,6 @@ class UserInfoModelForm(BaseOnboardingModelForm):
         userprofile.language = self.cleaned_data['language']
 
         userprofile.country = get_country_iso(self.cleaned_data['country'])
-        userprofile.city = self.cleaned_data['city']
         userprofile.level_of_education = self.cleaned_data['level_of_education']
         if self.cleaned_data['gender']:
             userprofile.gender = self.cleaned_data['gender']
@@ -1176,11 +1173,6 @@ class OrganizationRoleForm(BaseOnboardingModelForm):
     ROLE_IN_ORG_CHOICES = NO_SELECT_CHOICE + [(r.code, r.label)
                                               for r in RoleInsideOrg.objects.all()]
 
-    is_emp_location_different = forms.BooleanField(label=ugettext_noop('Check here if your country and/or city of '
-                                                                       'employment is different from your country '
-                                                                       'and/or city of residence.'),
-                                                   required=False)
-
     role_in_org = forms.ChoiceField(label=ugettext_noop('Role in the Organization'),
                                     label_suffix="*",
                                     choices=ROLE_IN_ORG_CHOICES,
@@ -1239,14 +1231,10 @@ class OrganizationRoleForm(BaseOnboardingModelForm):
         """
         model = UserExtendedProfile
         fields = [
-            'is_emp_location_different', 'country_of_employment',
-            'city_of_employment', 'role_in_org', 'start_month_year', 'hours_per_week'
+            'country_of_employment', 'city_of_employment', 'role_in_org', 'start_month_year', 'hours_per_week'
         ]
 
         labels = {
-            'is_emp_location_different': ugettext_noop(
-                'Check here if your country and/or city of employment is different'
-                ' from your country and/or city of residence.'),
             'start_month_year': ugettext_noop('Start Month and Year*'),
             'country_of_employment': ugettext_noop('Country of Employment'),
             'city_of_employment': ugettext_noop('City of Employment'),
