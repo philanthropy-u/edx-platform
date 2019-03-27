@@ -41,6 +41,8 @@ def user_info(request):
     are_forms_complete = not (bool(user_extended_profile.unattended_surveys_v2(_type='list')))
     userprofile = request.user.profile
     is_under_age = False
+    reset_org = False
+    is_poc = user_extended_profile.is_organization_admin
 
     template = 'features/onboarding/tell_us_more_survey.html'
     redirect_to_next = True
@@ -79,7 +81,10 @@ def user_info(request):
             is_under_age = True
 
     if request.method == 'POST':
-        form = forms.UserInfoModelForm(request.POST, instance=user_extended_profile, initial=initial)
+        if redirect_to_next:
+            form = forms.UserInfoModelForm(request.POST, instance=user_extended_profile, initial=initial)
+        else:
+            form = forms.UpdateUserInfoModelForm(request.POST, instance=user_extended_profile, initial=initial)
 
         if form.is_valid() and not is_under_age:
             custom_model = form.save(request)
@@ -97,6 +102,9 @@ def user_info(request):
             # redirect user to account settings page where he come from
             if not request.path == "/user-account/additional_information/":
                 return redirect(reverse("update_account"))
+        else:
+            reset_org = True
+            is_poc = True if request.POST.get('is_poc') == '1' else False
 
     else:
         form = forms.UserInfoModelForm(instance=user_extended_profile, initial=initial)
@@ -114,17 +122,21 @@ def user_info(request):
     #
     #     context['fields_to_disable'] = json.dumps([email_field['name'], org_field['name'], is_poc_field['name']])
 
+    if len(user_extended_profile.attended_surveys_v2()) > 0:
+        reset_org = True
+
     context.update({
         'form': form,
         'is_under_age': is_under_age,
         'non_profile_organization': Organization.is_non_profit(user_extended_profile),
-        'is_poc': user_extended_profile.is_organization_admin,
+        'is_poc': is_poc,
         'is_first_user': user_extended_profile.is_first_signup_in_org if user_extended_profile.organization else False,
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
-        'org_url': reverse('get_organizations')
+        'org_url': reverse('get_organizations'),
+        'reset_org': reset_org
     })
 
-    context.update(user_extended_profile.unattended_surveys())
+    context.update(user_extended_profile.unattended_surveys_v2())
     return render(request, template, context)
 
 

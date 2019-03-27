@@ -715,6 +715,85 @@ class RegModelForm(BaseOnboardingModelForm):
         return extended_profile
 
 
+class UpdateUserInfoModelForm(UserInfoModelForm):
+    """
+    Model form to update the registration extra fields
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(UserInfoModelForm, self).__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        extended_profile = super(UpdateUserInfoModelForm, self).save(commit=False)
+
+        userprofile = extended_profile.user.profile
+        userprofile.year_of_birth = self.cleaned_data['year_of_birth']
+        userprofile.language = self.cleaned_data['language']
+
+        userprofile.country = get_country_iso(self.cleaned_data['country'])
+        userprofile.level_of_education = self.cleaned_data['level_of_education']
+
+        if self.cleaned_data['gender']:
+            userprofile.gender = self.cleaned_data['gender']
+        userprofile.save()
+
+        organization_name = self.cleaned_data.get('organization_name', '').strip()
+        is_poc = self.cleaned_data['is_poc']
+        is_currently_unemployed = self.cleaned_data['is_currently_employed']
+
+        user = extended_profile.user
+
+        if not is_currently_unemployed and organization_name:
+            organization_to_assign = Organization.objects.filter(label__iexact=organization_name).first()
+            if not organization_to_assign:
+                organization_to_assign = Organization.objects.create(label=organization_name)
+
+            prev_org = extended_profile.organization
+            extended_profile.organization = organization_to_assign
+
+            if organization_to_assign.users_count() == 0:
+                extended_profile.is_first_learner = True
+
+            # Reset organizations under my administrations if i updated my organization & ask for org details
+            if not prev_org == organization_to_assign:
+                Organization.objects.filter(admin=user).update(admin=None)
+                extended_profile.is_organization_metrics_submitted = False
+
+            # if user check YES option on account settings page => set user as admin of selected/created organization
+            if user and is_poc == '1' and admin_not_assigned_or_me(user, organization_to_assign):
+                organization_to_assign.unclaimed_org_admin_email = None
+                organization_to_assign.admin = user
+
+            # if user check NO option on account settings page => clear my admin status if i was admin
+            if not is_poc == '1':
+                if organization_to_assign.admin == user:
+                    organization_to_assign.admin = None
+
+        elif is_currently_unemployed:
+            if extended_profile.organization and extended_profile.organization.admin == user:
+                extended_profile.organization.admin = None
+                extended_profile.organization.save()
+
+            if extended_profile.is_first_learner:
+                extended_profile.is_first_learner = False
+
+            extended_profile.role_in_org = None
+            extended_profile.start_month_year = None
+            extended_profile.hours_per_week = 0
+
+            extended_profile.organization = None
+            extended_profile.is_organization_metrics_submitted = False
+
+        if commit:
+            user.save()
+            extended_profile.save()
+
+            if extended_profile.organization:
+                extended_profile.organization.save()
+
+        return extended_profile
+
+
 class UpdateRegModelForm(RegModelForm):
     """
     Model form to update the registration extra fields
