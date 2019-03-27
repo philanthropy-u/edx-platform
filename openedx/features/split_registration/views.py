@@ -39,17 +39,25 @@ def user_info(request):
 
     user_extended_profile = request.user.extended_profile
     are_forms_complete = not (bool(user_extended_profile.unattended_surveys_v2(_type='list')))
+    attended_surveys_len = len(user_extended_profile.attended_surveys_v2())
     userprofile = request.user.profile
     is_under_age = False
     reset_org = False
     is_poc = user_extended_profile.is_organization_admin
+    show_add_nav = False
 
     template = 'features/onboarding/tell_us_more_survey.html'
     redirect_to_next = True
 
+    if attended_surveys_len > 0:
+        template = 'features/account/additional_information.html'
+
     if request.path == reverse('additional_information'):
         redirect_to_next = False
         template = 'features/account/additional_information.html'
+    else:
+        if attended_surveys_len > 0:
+            show_add_nav = True
 
     initial = {
         'year_of_birth': userprofile.year_of_birth,
@@ -81,7 +89,7 @@ def user_info(request):
             is_under_age = True
 
     if request.method == 'POST':
-        if redirect_to_next:
+        if redirect_to_next and attended_surveys_len < 1:
             form = forms.UserInfoModelForm(request.POST, instance=user_extended_profile, initial=initial)
         else:
             form = forms.UpdateUserInfoModelForm(request.POST, instance=user_extended_profile, initial=initial)
@@ -105,6 +113,7 @@ def user_info(request):
         else:
             reset_org = True
             is_poc = True if request.POST.get('is_poc') == '1' else False
+            initial['is_poc'] = is_poc
 
     else:
         form = forms.UserInfoModelForm(instance=user_extended_profile, initial=initial)
@@ -133,7 +142,8 @@ def user_info(request):
         'is_first_user': user_extended_profile.is_first_signup_in_org if user_extended_profile.organization else False,
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
         'org_url': reverse('get_organizations'),
-        'reset_org': reset_org
+        'reset_org': reset_org,
+        'show_add_nav': show_add_nav
     })
 
     context.update(user_extended_profile.unattended_surveys_v2())
