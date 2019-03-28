@@ -40,7 +40,7 @@ def user_info(request):
     user_extended_profile = request.user.extended_profile
     are_forms_complete = not (bool(user_extended_profile.unattended_surveys_v2(_type='list')))
     attended_surveys_len = len(user_extended_profile.attended_surveys_v2())
-    userprofile = request.user.profile
+    user_profile = request.user.profile
     is_under_age = False
     reset_org = False
     is_poc = user_extended_profile.is_organization_admin
@@ -52,7 +52,7 @@ def user_info(request):
     if attended_surveys_len > 0:
         template = 'features/account/additional_information.html'
 
-    if request.path == reverse('additional_information'):
+    if request.path == reverse('additional_information_v2'):
         redirect_to_next = False
         template = 'features/account/additional_information.html'
     else:
@@ -60,11 +60,11 @@ def user_info(request):
             show_add_nav = True
 
     initial = {
-        'year_of_birth': userprofile.year_of_birth,
-        'gender': userprofile.gender,
-        'language': userprofile.language,
-        'country': COUNTRIES.get(userprofile.country) if not request.POST.get('country') else request.POST.get('country'),
-        'level_of_education': userprofile.level_of_education,
+        'year_of_birth': user_profile.year_of_birth,
+        'gender': user_profile.gender,
+        'language': user_profile.language,
+        'country': COUNTRIES.get(user_profile.country) if not request.POST.get('country') else request.POST.get('country'),
+        'level_of_education': user_profile.level_of_education,
         'organization_name': user_extended_profile.organization.label if user_extended_profile.organization else "",
         'is_poc': "1" if user_extended_profile.is_organization_admin else "0",
         'is_currently_employed': request.POST.get('is_currently_employed'),
@@ -74,11 +74,10 @@ def user_info(request):
 
     context = {
         'are_forms_complete': are_forms_complete, 'first_name': request.user.first_name,
-        'fields_to_disable': [],
-        'is_employed': bool(user_extended_profile.organization)
+        'fields_to_disable': []
     }
 
-    year_of_birth = userprofile.year_of_birth
+    year_of_birth = user_profile.year_of_birth
 
     if request.method == 'POST':
         year_of_birth = request.POST.get('year_of_birth')
@@ -118,19 +117,6 @@ def user_info(request):
     else:
         form = forms.UserInfoModelForm(instance=user_extended_profile, initial=initial)
 
-    # if org_name and admin_email:
-    #     org_name = base64.b64decode(org_name)
-    #     admin_email = base64.b64decode(admin_email)
-    #
-    #     email_field = get_form_field_by_name(registration_fields, 'email')
-    #     org_field = get_form_field_by_name(registration_fields, 'organization_name')
-    #     is_poc_field = get_form_field_by_name(registration_fields, 'is_poc')
-    #     email_field['defaultValue'] = admin_email
-    #     org_field['defaultValue'] = org_name
-    #     is_poc_field['defaultValue'] = "1"
-    #
-    #     context['fields_to_disable'] = json.dumps([email_field['name'], org_field['name'], is_poc_field['name']])
-
     if len(user_extended_profile.attended_surveys_v2()) > 0:
         reset_org = True
 
@@ -143,7 +129,8 @@ def user_info(request):
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
         'org_url': reverse('get_organizations'),
         'reset_org': reset_org,
-        'show_add_nav': show_add_nav
+        'show_add_nav': show_add_nav,
+        'is_employed': bool(user_extended_profile.organization)
     })
 
     context.update(user_extended_profile.unattended_surveys_v2())
@@ -168,7 +155,7 @@ def interests(request):
     template = 'features/onboarding/interests_survey.html'
     redirect_to_next = True
 
-    if request.path == reverse('update_interests'):
+    if request.path == reverse('update_interests_v2'):
         redirect_to_next = False
         template = 'features/account/interests.html'
 
@@ -321,7 +308,7 @@ def organization(request):
     next_page_url = reverse('recommendations')
     redirect_to_next = True
 
-    if request.path == reverse('update_organization'):
+    if request.path == reverse('update_organization_v2'):
         redirect_to_next = False
         template = 'features/organization/update_organization.html'
 
@@ -392,7 +379,7 @@ def org_detail_survey(request):
     org_metric_form = forms.OrganizationMetricModelForm
     redirect_to_next = True
 
-    if request.path == reverse('update_organization_details'):
+    if request.path == reverse('update_organization_details_v2'):
         redirect_to_next = False
         template = 'features/organization/update_organization_details.html'
         org_metric_form = forms.OrganizationMetricModelUpdateForm
