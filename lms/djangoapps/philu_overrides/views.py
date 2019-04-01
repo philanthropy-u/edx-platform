@@ -6,6 +6,7 @@ import third_party_auth
 import logging
 import urlparse
 from pytz import utc
+from w3lib.url import url_query_cleaner
 
 from django.http import HttpResponseNotFound, HttpResponse, Http404, HttpResponseServerError
 from django.conf import settings
@@ -501,7 +502,7 @@ def login_user_custom(request, error=""):  # pylint: disable=too-many-statements
 
 
 @ensure_csrf_cookie
-@cache_if_anonymous()
+@cache_if_anonymous('share_after_enroll',)
 def course_about(request, course_id):
     """
     Display the course's about page.
@@ -625,12 +626,21 @@ def course_about(request, course_id):
         meta_tags = custom_settings.get_course_meta_tags()
 
         meta_tags['description'] = meta_tags['description'] or course_details.short_description
+        meta_tags['og:description'] = meta_tags['description']
+
         meta_tags['title'] = meta_tags['title'] or course_details.title or course.display_name
+        meta_tags['og:title'] = meta_tags['title']
+        meta_tags['addthis:title'] = "Let's take this {} course together".format(course.display_name)
+
+        if request.GET.get('share_after_enroll') == 'true':
+            meta_tags['og:title'] = 'Join me in this free online course.'
+            meta_tags['og:description'] = "I just enrolled in Philanthropy University's" \
+                                          " {} course. Let's take it together!".format(course.display_name)
 
         if course_details.banner_image_name != DEFAULT_IMAGE_NAME:
             meta_tags['image'] = settings.LMS_ROOT_URL + course_details.banner_image_asset_path
 
-        social_sharing_urls = get_social_sharing_urls(request.build_absolute_uri(), meta_tags)
+        social_sharing_urls = get_social_sharing_urls(url_query_cleaner(request.build_absolute_uri()), meta_tags)
 
         context = {
             'course': course,

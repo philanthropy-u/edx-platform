@@ -27,24 +27,37 @@ def get_social_sharing_urls(course_url, meta_tags, tweet_text=None):
     course_share_url = '{}?{}'.format(course_url, urlencode(utm_params))
 
     return {
-        'facebook': _compile_social_sharing_url(SOCIAL_SHARING_URLS['facebook']['url'], course_share_url,
-                                                SOCIAL_SHARING_URLS['facebook']['url_param'],
-                                                SOCIAL_SHARING_URLS['facebook']['utm_source']),
+        'facebook': _compile_social_sharing_url(
+            SOCIAL_SHARING_URLS['facebook']['url'], course_share_url,
+            SOCIAL_SHARING_URLS['facebook']['url_param'],
+            SOCIAL_SHARING_URLS['facebook']['utm_source']
+        ),
 
-        'linkedin': _compile_social_sharing_url(SOCIAL_SHARING_URLS['linkedin']['url'], course_share_url,
-                                                SOCIAL_SHARING_URLS['linkedin']['url_param'],
-                                                SOCIAL_SHARING_URLS['linkedin']['utm_source']),
+        'facebook_after_enroll': _compile_social_sharing_url(
+            SOCIAL_SHARING_URLS['facebook']['url'],
+            add_or_replace_parameter(course_share_url, 'share_after_enroll', 'true'),
+            SOCIAL_SHARING_URLS['facebook']['url_param'],
+            SOCIAL_SHARING_URLS['facebook']['utm_source']
+        ),
 
-        'twitter': _compile_social_sharing_url(SOCIAL_SHARING_URLS['twitter']['url'], course_share_url,
-                                               SOCIAL_SHARING_URLS['twitter']['url_param'],
-                                               SOCIAL_SHARING_URLS['twitter']['utm_source'],
-                                               text=tweet_text if tweet_text else
-                                               TWITTER_MESSAGE_FORMAT.format(meta_tags['title'])),
+        'linkedin': _compile_social_sharing_url(
+            SOCIAL_SHARING_URLS['linkedin']['url'], course_share_url,
+            SOCIAL_SHARING_URLS['linkedin']['url_param'],
+            SOCIAL_SHARING_URLS['linkedin']['utm_source']
+        ),
 
-        'email': _compile_social_sharing_url(SOCIAL_SHARING_URLS['email']['url'], course_share_url,
-                                             SOCIAL_SHARING_URLS['email']['url_param'],
-                                             SOCIAL_SHARING_URLS['email']['utm_source']),
+        'twitter': _compile_social_sharing_url(
+            SOCIAL_SHARING_URLS['twitter']['url'], course_share_url,
+            SOCIAL_SHARING_URLS['twitter']['url_param'],
+            SOCIAL_SHARING_URLS['twitter']['utm_source'],
+            text=TWITTER_MESSAGE_FORMAT.format(meta_tags['title'])
+        ),
 
+        'email': _compile_social_sharing_url(
+            SOCIAL_SHARING_URLS['email']['url'], course_share_url,
+            SOCIAL_SHARING_URLS['email']['url_param'],
+            SOCIAL_SHARING_URLS['email']['utm_source']
+        ),
     }
 
 
