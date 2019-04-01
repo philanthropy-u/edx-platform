@@ -8,6 +8,7 @@ from xmodule.modulestore.django import modulestore
 from opaque_keys.edx.locations import SlashSeparatedCourseKey
 from openedx.core.djangoapps.embargo import api as embargo_api
 from student.models import CourseEnrollment
+from openedx.features.course_card.helpers import get_related_card_id
 
 
 def enroll_after_survey_completion(request):
@@ -29,8 +30,10 @@ def enroll_in_course(request, next_url):
     action = request.GET.get('enrollment_action')
     course_id = request.GET.get('course_id')
 
+
     try:
         course_id = SlashSeparatedCourseKey.from_deprecated_string(course_id)
+        course_card_id = get_related_card_id(course_id)
     except InvalidKeyError:
         return next_url
 
@@ -57,7 +60,7 @@ def enroll_in_course(request, next_url):
         except Exception as e:  # pylint: disable=broad-except
             return next_url
 
-        course_target = reverse('about_course', args=[unicode(course_id)])
+        course_target = reverse('about_course', args=[unicode(course_card_id)])
 
         return course_target
 
