@@ -574,7 +574,10 @@ TEMPLATES = [
                 'openedx.core.djangoapps.site_configuration.context_processors.configuration_context',
 
                 # PhilU context processors
-                'lms.djangoapps.philu_overrides.context_processor.add_nodebb_endpoint'
+                'lms.djangoapps.philu_overrides.context_processor.add_nodebb_endpoint',
+                
+                # Philu CDN context processor
+                'lms.djangoapps.philu_overrides.context_processor.get_cdn_link'
             ],
             # Change 'debug' in your environment settings files - not here.
             'debug': False
@@ -3103,3 +3106,7 @@ GOOGLE_PLACE_API_KEY = 'AIzaSyDhkKEySp0g2Ip8bovRHCI5KE257DSAJkA'
 # OEF renewal
 
 OEF_RENEWAL_DAYS = 180
+
+# CDN LINK
+
+CDN_LINK = "https://static.philanthropyu.org/"
