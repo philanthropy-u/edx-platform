@@ -275,6 +275,46 @@ class OrganizationPartner(models.Model):
         _partners.update(is_partner_affiliated=True)
 
 
+class GranteeOptIn(models.Model):
+    agreed_at = models.DateTimeField(auto_now_add=True)
+    agreed = models.BooleanField()
+    organization_partner = models.ForeignKey(OrganizationPartner, related_name='grantee_opt_in')
+    user = models.ForeignKey(User, related_name='grantee_opt_in')
+
+    def __str__(self):
+        return '%s-%s' % (self.user, self.agreed_at)
+
+"""
+
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+from django.db import migrations
+
+
+def add_data(apps, schema_editor):
+    PartnerNetwork = apps.get_model('onboarding', 'PartnerNetwork')
+
+    last_order = PartnerNetwork.objects.all().order_by('order').last()
+
+    PartnerNetwork.objects.create(
+        code="ECHIDNA", label="Echidna Giving", order=last_order.order + 1 if last_order else 1
+    )
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ('onboarding', '0025_registrationtype'),
+    ]
+
+    operations = [
+        # migrations.RunPython(add_data)
+    ]
+
+
+"""
+
+
 class RoleInsideOrg(models.Model):
     """
     Specifies what is the role of a user inside the organization.
