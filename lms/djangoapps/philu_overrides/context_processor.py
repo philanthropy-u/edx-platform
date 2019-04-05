@@ -63,9 +63,9 @@ def add_nodebb_endpoint(request):
     return { "nodebb_endpoint": settings.NODEBB_ENDPOINT }
 
 
-def get_cdn_link():
+def get_cdn_link(request):
     """
     return CDN url link to templates
     :return:
     """
-    return settings.CDN_LINK
+    return {"cdn_link": settings.CDN_LINK}
