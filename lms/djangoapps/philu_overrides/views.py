@@ -34,7 +34,8 @@ from lms.djangoapps.courseware.access import has_access, _can_enroll_courselike
 from lms.djangoapps.courseware.courses import get_courses, sort_by_start_date, get_course_by_id, sort_by_announcement
 from lms.djangoapps.courseware.views.views import get_last_accessed_courseware
 from lms.djangoapps.onboarding.helpers import reorder_registration_form_fields, get_alquity_community_url
-from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls
+from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls, \
+    user_org_survey_completion_status
 from lms.djangoapps.student_account.views import _local_server_get, _get_form_descriptions, _external_auth_intercept, \
     _third_party_auth_context
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
@@ -655,7 +656,8 @@ def course_about(request, course_id):
             'course_image_urls': overview.image_urls,
             'meta_tags': meta_tags,
             'is_alquity': is_alquity,
-            'social_sharing_urls': social_sharing_urls
+            'social_sharing_urls': social_sharing_urls,
+            'org_survey_status': user_org_survey_completion_status(request.user)
         }
         inject_coursetalk_keys_into_context(context, course_key)
 

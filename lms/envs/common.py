@@ -2206,6 +2206,9 @@ INSTALLED_APPS = (
     # Unusual migrations
     'database_fixups',
 
+    # Split Registration
+    'openedx.features.split_registration',
+
     'lms.djangoapps.onboarding',
 
     # OEF survey
@@ -3023,6 +3026,7 @@ MAX_BOOKMARKS_PER_COURSE = 100
 # lms.env.json file.
 
 REGISTRATION_EXTENSION_FORM = 'onboarding.forms.RegModelForm'
+REGISTRATION_EXTENSION_FORM_V2 = 'openedx.features.split_registration.forms.RegModelForm'
 
 # Identifier included in the User Agent from open edX mobile apps.
 MOBILE_APP_USER_AGENT_REGEXES = [
