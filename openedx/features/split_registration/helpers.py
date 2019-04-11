@@ -61,6 +61,7 @@ def enroll_in_course(request, next_url):
             return next_url
 
         course_target = reverse('about_course', args=[unicode(course_card_id)])
+        course_target = add_or_replace_parameter(course_target, 'enrolled', '1')
 
         return course_target
 

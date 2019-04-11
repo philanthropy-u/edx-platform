@@ -6,6 +6,7 @@ import third_party_auth
 import logging
 import urlparse
 from pytz import utc
+from w3lib.url import url_query_cleaner
 
 from django.http import HttpResponseNotFound, HttpResponse, Http404, HttpResponseServerError
 from django.conf import settings
@@ -20,6 +21,7 @@ from opaque_keys.edx.locations import SlashSeparatedCourseKey
 from openedx.core.djangoapps.catalog.utils import get_programs_data
 from philu_overrides.helpers import reactivation_email_for_user_custom, get_course_next_classes, \
     get_user_current_enrolled_class, get_next_url_for_login_page_override, is_user_enrolled_in_any_class
+from lms.djangoapps.philu_overrides.constants import ENROLL_SHARE_TITLE_FORMAT, ENROLL_SHARE_DESC_FORMAT
 from lms.djangoapps.courseware.views.views import add_tag_to_enrolled_courses
 from student.views import (
     signin_user as old_login_view,
@@ -501,7 +503,7 @@ def login_user_custom(request, error=""):  # pylint: disable=too-many-statements
 
 
 @ensure_csrf_cookie
-@cache_if_anonymous()
+@cache_if_anonymous('share_after_enroll',)
 def course_about(request, course_id):
     """
     Display the course's about page.
@@ -625,12 +627,20 @@ def course_about(request, course_id):
         meta_tags = custom_settings.get_course_meta_tags()
 
         meta_tags['description'] = meta_tags['description'] or course_details.short_description
+        meta_tags['og:description'] = meta_tags['description']
+
         meta_tags['title'] = meta_tags['title'] or course_details.title or course.display_name
+        meta_tags['og:title'] = meta_tags['title']
+        meta_tags['addthis:title'] = ENROLL_SHARE_TITLE_FORMAT.format(course.display_name)
+
+        if request.GET.get('share_after_enroll') == 'true':
+            meta_tags['og:title'] = 'Join me in this free online course.'
+            meta_tags['og:description'] = ENROLL_SHARE_DESC_FORMAT.format(course.display_name)
 
         if course_details.banner_image_name != DEFAULT_IMAGE_NAME:
             meta_tags['image'] = settings.LMS_ROOT_URL + course_details.banner_image_asset_path
 
-        social_sharing_urls = get_social_sharing_urls(request.build_absolute_uri(), meta_tags)
+        social_sharing_urls = get_social_sharing_urls(url_query_cleaner(request.build_absolute_uri()), meta_tags)
 
         context = {
             'course': course,
