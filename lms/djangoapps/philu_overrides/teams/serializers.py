@@ -1,12 +1,10 @@
 """Defines serializers used by the Team API."""
-from lms.djangoapps.teams.models import CourseTeam
 from lms.djangoapps.teams.serializers import CourseTeamCreationSerializer, CountryField
 from rest_framework import serializers
 from django.conf import settings
-from django_countries import countries
 
 
-class CountryField(CountryField):
+class PhiluTeamsCountryField(CountryField):
     """
     Field to serialize a country code.
     """
@@ -32,7 +30,7 @@ class CountryField(CountryField):
         return data
 
 
-class LanguageField(serializers.Field):
+class PhiluTeamsLanguageField(serializers.Field):
     """
     Field to serialize a Language code.
     """
@@ -66,6 +64,6 @@ class LanguageField(serializers.Field):
         return data
 
 
-class CourseTeamCreationSerializer(CourseTeamCreationSerializer):
-    country = CountryField(required=True)
-    language = LanguageField(required=True)
+class PhiluTeamsCourseTeamCreationSerializer(CourseTeamCreationSerializer):
+    country = PhiluTeamsCountryField(required=True)
+    language = PhiluTeamsLanguageField(required=True)

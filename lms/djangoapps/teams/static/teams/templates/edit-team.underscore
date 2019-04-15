@@ -28,9 +28,7 @@
     <div class="team-required-fields">
     </div>
     <div class="vertical-line"></div>
-    <div class="team-optional-fields">
-
-    </div>
+    <div class="team-optional-fields"></div>
 </div>
 
 <div class="create-team form-actions">
