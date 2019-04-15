@@ -4,7 +4,7 @@ from rest_framework import serializers
 from django.conf import settings
 
 
-class PhiluTeamsCountryField(CountryField):
+class CustomCountryField(CountryField):
     """
     Field to serialize a country code.
     """
@@ -30,7 +30,7 @@ class PhiluTeamsCountryField(CountryField):
         return data
 
 
-class PhiluTeamsLanguageField(serializers.Field):
+class CustomLanguageField(serializers.Field):
     """
     Field to serialize a Language code.
     """
@@ -64,6 +64,6 @@ class PhiluTeamsLanguageField(serializers.Field):
         return data
 
 
-class PhiluTeamsCourseTeamCreationSerializer(CourseTeamCreationSerializer):
-    country = PhiluTeamsCountryField(required=True)
-    language = PhiluTeamsLanguageField(required=True)
+class CustomCourseTeamCreationSerializer(CourseTeamCreationSerializer):
+    country = CustomCountryField(required=True)
+    language = CustomLanguageField(required=True)
