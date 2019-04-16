@@ -23,6 +23,7 @@ from lms.djangoapps.onboarding.models import (
     OrganizationMetric,
     OrganizationMetricUpdatePrompt,
     MetricUpdatePromptRecord,
+    GranteeOptIn
 )
 
 
@@ -107,6 +108,10 @@ class MetricUpdatePromptRecordAdmin(admin.ModelAdmin):
     search_fields = ('prompt__responsible_user__username', 'prompt__org__label')
 
 
+class GranteeOptInAdmin(admin.ModelAdmin):
+    list_display = ('id', 'organization_partner', 'user', 'agreed', 'created_at')
+
+
 admin.site.register(Currency, CurrencyAdmin)
 admin.site.register(RoleInsideOrg, RoleInsideOrgAdmin)
 admin.site.register(OrgSector, OrgSectorAdmin)
@@ -124,3 +129,4 @@ admin.site.register(OrganizationPartner, OrganizationPartnerAdmin)
 admin.site.register(OrganizationMetric, OrganizationMetricAdmin)
 admin.site.register(OrganizationMetricUpdatePrompt, OrganizationMetricUpdatePromptAdmin)
 admin.site.register(MetricUpdatePromptRecord, MetricUpdatePromptRecordAdmin)
+admin.site.register(GranteeOptIn, GranteeOptInAdmin)

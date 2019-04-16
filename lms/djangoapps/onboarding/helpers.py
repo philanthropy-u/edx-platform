@@ -7861,6 +7861,7 @@ def get_close_matching_orgs_with_suggestions(request, query):
 
         if is_suggestion or is_matched:
             data[organization.label.lower()] = {
+                'id': organization.id,
                 'label': organization.label,
                 'is_admin_assigned': True if organization.admin else False,
                 'is_current_user_admin': True if organization.admin == request.user else False,
@@ -7868,6 +7869,7 @@ def get_close_matching_orgs_with_suggestions(request, query):
                 'country': COUNTRIES.get(organization.country) if organization.country else '',
                 'is_matched': is_matched,
                 'is_suggestion': is_suggestion,
+                'has_affiliated_partner': organization.has_affiliated_partner
             }
 
     return data

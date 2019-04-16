@@ -24,4 +24,6 @@ urlpatterns = [
     url(r"^onboarding/organization_detail/$", views.org_detail_survey, name="org_detail_survey"),  # signup step 4
     url(r"^onboarding/delete_account/$", views.delete_my_account, name="delete_my_account"),  # signup step 4
     url(r"^onboarding/admin_activate/(?P<activation_key>[^/]*)$", views.admin_activation, name="admin_activation"),
+    url(r"^onboarding/organizations/(?P<org_id>[0-9]+)/partner-networks/?$", views.get_partner_networks,
+        name="organization_partner_networks")
 ]

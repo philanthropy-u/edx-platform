@@ -12,6 +12,7 @@ from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_noop
 from rest_framework.compat import MinValueValidator, MaxValueValidator
 
+from lms.djangoapps.onboarding.constants import ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
 from lms.djangoapps.onboarding.email_utils import send_admin_activation_email
 from lms.djangoapps.onboarding.helpers import COUNTRIES, LANGUAGES, get_country_iso, get_sorted_choices_from_dict, \
     get_actual_field_names, admin_not_assigned_or_me
@@ -20,7 +21,8 @@ from lms.djangoapps.onboarding.models import (
     EmailPreference,
     Organization,
     OrganizationAdminHashKeys, EducationLevel, EnglishProficiency, RoleInsideOrg, OperationLevel,
-    FocusArea, TotalEmployee, OrgSector, PartnerNetwork, OrganizationPartner, OrganizationMetric, Currency)
+    FocusArea, TotalEmployee, OrgSector, PartnerNetwork, OrganizationPartner, OrganizationMetric, Currency,
+    GranteeOptIn)
 
 NO_OPTION_SELECT_ERROR = 'Please select an option for {}'
 EMPTY_FIELD_ERROR = 'Please enter your {}'
@@ -537,6 +539,20 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
 
         if partners or removed_partners:
             OrganizationPartner.update_organization_partners(organization, partners, removed_partners)
+
+        # Create user GranteeOptIn object if user has agreed to opt in and partner is selected.
+        partners_opt_in = list(set(request.POST.get('partners_opt_in', '').split(",")) & set(partners))
+        for p in partners_opt_in:
+            # Get organization partner who is still affiliated
+            organization_partner = organization.organization_partners.filter(
+                partner=p, end_date=ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
+            ).first()
+            if organization_partner:
+                GranteeOptIn.objects.create(
+                    agreed=True,
+                    organization_partner=organization_partner,
+                    user=request.user
+                )
 
 
 class RegModelForm(BaseOnboardingModelForm):

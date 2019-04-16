@@ -11,17 +11,20 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core import serializers
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http import JsonResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _, ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
-
 from edxmako.shortcuts import render_to_response
+from nodebb.helpers import update_nodebb_for_user_status
+
+from lms.djangoapps.onboarding import forms
 from lms.djangoapps.onboarding.decorators import can_save_org_data, can_not_update_onboarding_steps, \
     can_save_org_details
 from lms.djangoapps.onboarding.email_utils import send_admin_activation_email, send_admin_update_confirmation_email, \
@@ -32,10 +35,9 @@ from lms.djangoapps.onboarding.models import (
     Organization,
     Currency, OrganizationMetric, OrganizationAdminHashKeys, PartnerNetwork)
 from lms.djangoapps.onboarding.models import UserExtendedProfile
+from lms.djangoapps.onboarding.serializers import PartnerNetworkSerializer
 from lms.djangoapps.onboarding.signals import save_interests
 from lms.djangoapps.student_dashboard.views import get_recommended_xmodule_courses, get_joined_communities
-from nodebb.helpers import update_nodebb_for_user_status
-from lms.djangoapps.onboarding import forms
 
 log = logging.getLogger("edx.onboarding")
 
@@ -264,7 +266,14 @@ def organization(request):
         'is_first_user': user_extended_profile.is_first_signup_in_org if user_extended_profile.organization else False,
         'org_admin_id': organization.admin_id if user_extended_profile.organization else None,
         'organization_name': _organization.label,
-        'google_place_api_key': settings.GOOGLE_PLACE_API_KEY
+        'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
+        'partner_networks': serializers.serialize(
+            'json',
+            PartnerNetwork.objects.all(),
+            fields=(
+                'label', 'code', 'show_opt_in', 'affiliated_name',
+                'program_name'
+            ))
     })
 
     return render(request, template, context)
@@ -671,3 +680,31 @@ def admin_activation(request, activation_key):
     return render_to_response('onboarding/admin_change_confirmation.html', context)
 
 
+@csrf_exempt
+def get_partner_networks(request, *args, **kwargs):
+    """
+    Used to fetch the details of partner networks for a organization
+    :param request:
+    :org_id: organization id
+    :opt_in: 0 > False and 1 > True. Decides which partners to filter
+    :return:
+    [
+      {
+        "label": "Echidna Giving",
+        "code": "ECHIDNA",
+        "affiliated_name": "grantee",
+        "program_name": "Capacity Building Program",
+        "show_opt_in": true
+      }
+    ]
+    """
+    opt_in = bool(int(request.GET.get('opt_in', 0)))
+    org = get_object_or_404(Organization, id=kwargs.get('org_id'))
+    partner_networks = PartnerNetwork.objects.filter(
+        show_opt_in=opt_in,
+        code__in=org.get_active_partners()
+    )
+    serializer = PartnerNetworkSerializer(partner_networks, many=True)
+    data = serializer.data
+
+    return JsonResponse(data, safe=False)
