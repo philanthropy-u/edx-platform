@@ -41,12 +41,12 @@ from . import is_feature_enabled
 from lms.djangoapps.teams.models import CourseTeam, CourseTeamMembership
 from .serializers import (
     CourseTeamSerializer,
-    CourseTeamCreationSerializer,
     TopicSerializer,
     BulkTeamCountTopicSerializer,
     MembershipSerializer,
     add_team_count
 )
+from lms.djangoapps.philu_overrides.teams.serializers import CustomCourseTeamCreationSerializer
 from .search_indexes import CourseTeamIndexer
 from .errors import AlreadyOnTeamInCourse, ElasticSearchConnectionError, NotEnrolledInCourseForTeam
 from .utils import emit_team_event
@@ -501,7 +501,7 @@ class TeamsListView(ExpandableFieldViewMixin, GenericAPIView):
         data = request.data.copy()
         data['course_id'] = course_key
 
-        serializer = CourseTeamCreationSerializer(data=data)
+        serializer = CustomCourseTeamCreationSerializer(data=data)
         add_serializer_errors(serializer, data, field_errors)
 
         if field_errors:
