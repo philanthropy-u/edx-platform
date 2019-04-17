@@ -27,6 +27,8 @@ from requests import HTTPError
 from social.exceptions import AuthException, AuthAlreadyAssociated
 from mailchimp_pipeline.signals.handlers import task_send_account_activation_email
 from student.cookies import set_logged_in_cookies
+
+from lms.djangoapps.philu_overrides.helpers import save_user_partner_network_consent
 from openedx.core.djangoapps.user_api.helpers import shim_student_view, require_post_params
 from student.forms import AccountCreationForm, get_registration_extension_form
 from student.models import Registration, create_comments_service_user, PasswordHistory, UserProfile
@@ -771,6 +773,7 @@ def task_enroll_user_in_pending_courses(data):
     _enroll_user_in_pending_courses(user)
 
 
+# noinspection PyMethodMayBeStatic
 class RegistrationViewCustom(RegistrationView):
     """HTTP custom end-points for creating a new user. """
     THIRD_PARTY_OVERRIDE_FIELDS = RegistrationView.DEFAULT_FIELDS + ["first_name", "last_name"]
@@ -834,7 +837,7 @@ class RegistrationViewCustom(RegistrationView):
         try:
             user = create_account_with_params_custom(request, data, is_alquity_user)
             self.save_user_utm_info(user)
-            self._save_user_consent(user, data['partners_opt_in'])
+            save_user_partner_network_consent(user, data['partners_opt_in'])
         except ValidationError as err:
             # Should only get non-field errors from this function
             assert NON_FIELD_ERRORS not in err.message_dict
@@ -849,21 +852,6 @@ class RegistrationViewCustom(RegistrationView):
         response = JsonResponse({"success": True})
         set_logged_in_cookies(request, response, user)
         return response
-
-    def _save_user_consent(self, user, _data):
-        if _data:
-            organization = user.extended_profile.organization
-            consents = json.loads(_data)
-            for _c in consents:
-                organization_partner = organization.organization_partners.filter(
-                    partner=_c['code'], end_date=ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
-                ).first()
-                if organization_partner:
-                    GranteeOptIn.objects.create(
-                        agreed=_c['consent'] == 'true',
-                        organization_partner=organization_partner,
-                        user=user
-                    )
 
     def save_user_utm_info(self, user):
 

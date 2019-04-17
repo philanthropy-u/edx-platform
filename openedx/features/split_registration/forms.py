@@ -14,6 +14,7 @@ from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_noop
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from lms.djangoapps.onboarding.constants import ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
 from rest_framework.compat import MinValueValidator, MaxValueValidator
 
 from lms.djangoapps.onboarding.email_utils import send_admin_activation_email
@@ -24,7 +25,9 @@ from lms.djangoapps.onboarding.models import (
     EmailPreference,
     Organization,
     OrganizationAdminHashKeys, EducationLevel, EnglishProficiency, RoleInsideOrg, OperationLevel,
-    FocusArea, TotalEmployee, OrgSector, PartnerNetwork, OrganizationPartner, OrganizationMetric, Currency)
+    FocusArea, TotalEmployee, OrgSector, PartnerNetwork, OrganizationPartner, OrganizationMetric, Currency,
+    GranteeOptIn)
+from lms.djangoapps.philu_overrides.helpers import save_user_partner_network_consent
 
 NO_OPTION_SELECT_ERROR = 'Please select an option for {}'
 EMPTY_FIELD_ERROR = 'Please enter your {}'
@@ -267,7 +270,7 @@ class UserInfoModelForm(BaseOnboardingModelForm):
             'org_admin_email': {'field_type': 'email'}
         }
 
-    def save(self, commit=True):
+    def save(self, request, commit=True):
         # TODO: we can maybe remove this line.
         extended_profile = super(UserInfoModelForm, self).save(commit=False)
 
@@ -322,6 +325,9 @@ class UserInfoModelForm(BaseOnboardingModelForm):
 
         if commit:
             extended_profile.save()
+
+        partners_opt_in = request.POST.get('partners_opt_in')
+        save_user_partner_network_consent(user, partners_opt_in)
 
         return extended_profile
 
@@ -604,6 +610,20 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
 
         if partners or removed_partners:
             OrganizationPartner.update_organization_partners(organization, partners, removed_partners)
+
+        # Create user GranteeOptIn object if user has agreed to opt in and partner is selected.
+        partners_opt_in = list(set(request.POST.get('partners_opt_in', '').split(",")) & set(partners))
+        for p in partners_opt_in:
+            # Get organization partner who is still affiliated
+            organization_partner = organization.organization_partners.filter(
+                partner=p, end_date=ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
+            ).first()
+            if organization_partner:
+                GranteeOptIn.objects.create(
+                    agreed=True,
+                    organization_partner=organization_partner,
+                    user=request.user
+                )
 
 
 class RegModelForm(BaseOnboardingModelForm):

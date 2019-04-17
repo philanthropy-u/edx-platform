@@ -243,6 +243,9 @@ class OrganizationPartner(models.Model):
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
 
+    def __unicode__(self):
+        return "%s - %s" % (self.organization, self.partner)
+
     @classmethod
     def update_organization_partners(cls, organization, partners, removed_partners):
         """
