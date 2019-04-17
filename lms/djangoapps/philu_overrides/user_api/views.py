@@ -6,6 +6,8 @@ import analytics
 import dogstats_wrapper as dog_stats_api
 import third_party_auth
 from celery.task import task
+from lms.djangoapps.onboarding.constants import ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
+
 from common.djangoapps.util.request import safe_get_host
 from django.conf import settings
 from django.http import HttpResponse
@@ -31,7 +33,7 @@ from student.models import Registration, create_comments_service_user, PasswordH
 from third_party_auth import pipeline, provider
 from util.enterprise_helpers import data_sharing_consent_requirement_at_login, insert_enterprise_fields
 from util.json_request import JsonResponse
-from lms.djangoapps.onboarding.models import RegistrationType
+from lms.djangoapps.onboarding.models import RegistrationType, GranteeOptIn
 
 from common.djangoapps.student.views import AccountValidationError, social_utils, REGISTER_USER, \
     _enroll_user_in_pending_courses, record_registration_attributions
@@ -832,6 +834,7 @@ class RegistrationViewCustom(RegistrationView):
         try:
             user = create_account_with_params_custom(request, data, is_alquity_user)
             self.save_user_utm_info(user)
+            self._save_user_consent(user, data['partners_opt_in'])
         except ValidationError as err:
             # Should only get non-field errors from this function
             assert NON_FIELD_ERRORS not in err.message_dict
@@ -846,6 +849,21 @@ class RegistrationViewCustom(RegistrationView):
         response = JsonResponse({"success": True})
         set_logged_in_cookies(request, response, user)
         return response
+
+    def _save_user_consent(self, user, _data):
+        if _data:
+            organization = user.extended_profile.organization
+            consents = json.loads(_data)
+            for _c in consents:
+                organization_partner = organization.organization_partners.filter(
+                    partner=_c['code'], end_date=ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
+                ).first()
+                if organization_partner:
+                    GranteeOptIn.objects.create(
+                        agreed=_c['consent'] == 'true',
+                        organization_partner=organization_partner,
+                        user=user
+                    )
 
     def save_user_utm_info(self, user):
 
