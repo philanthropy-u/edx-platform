@@ -75,6 +75,15 @@ class RedirectMiddleware(object):
 
                     return None
             else:
+
+                # these two checks have been introduced so that when user comes from nodebb,
+                # user gets redirected to correct flow based on user type
+                if request.path == reverse('update_account_settings') and request.method == 'GET':
+                    return redirect(reverse('update_account'))
+
+                if request.path == reverse('update_organization') and request.method == 'GET':
+                    return redirect(reverse('update_organization_v2'))
+
                 attended_surveys = user_extended_profile.attended_surveys_v2()
                 unattended_surveys = user_extended_profile.unattended_surveys_v2(_type="list")
 
