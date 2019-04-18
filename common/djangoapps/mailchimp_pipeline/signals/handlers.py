@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 from common.lib.mandrill_client.client import MandrillClient
 from lms.djangoapps.certificates import api as certificate_api
 from lms.djangoapps.onboarding.models import (
-    UserExtendedProfile, Organization, EmailPreference,)
+    UserExtendedProfile, Organization, EmailPreference, GranteeOptIn)
 from mailchimp_pipeline.client import ChimpClient, MailChimpException
 from mailchimp_pipeline.helpers import get_org_data_for_mandrill, get_user_active_enrollements, \
     get_enrollements_course_short_ids
@@ -80,6 +80,19 @@ def sync_extended_profile_with_mailchimp(sender, instance, **kwargs):
     }
 
     update_mailchimp(instance.user.email, user_json)
+
+
+@receiver(post_save, sender=GranteeOptIn)
+def sync_grantee_optin_with_mailchimp(sender, instance, **kwargs):
+    grantee_opt_in = instance
+
+    if grantee_opt_in.organization_partner.partner == 'ECHIDNA':
+        user_json = {
+            "merge_fields": {
+                "ECHIDNA": 'TRUE' if grantee_opt_in.agreed else 'FALSE',
+            }
+        }
+        update_mailchimp(instance.user.email, user_json)
 
 
 @receiver(post_save, sender=Organization)

@@ -20,7 +20,8 @@ from lms.djangoapps.onboarding.models import (
     EmailPreference,
     Organization,
     OrganizationAdminHashKeys, EducationLevel, EnglishProficiency, RoleInsideOrg, OperationLevel,
-    FocusArea, TotalEmployee, OrgSector, PartnerNetwork, OrganizationPartner, OrganizationMetric, Currency)
+    FocusArea, TotalEmployee, OrgSector, PartnerNetwork, OrganizationPartner, OrganizationMetric, Currency,
+    GranteeOptIn)
 
 NO_OPTION_SELECT_ERROR = 'Please select an option for {}'
 EMPTY_FIELD_ERROR = 'Please enter your {}'
@@ -537,6 +538,20 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
 
         if partners or removed_partners:
             OrganizationPartner.update_organization_partners(organization, partners, removed_partners)
+
+        # Create user GranteeOptIn object if user has agreed to opt in and partner is selected.
+        partners_opt_in = list(set(request.POST.get('partners_opt_in', '').split(",")) & set(partners))
+        for p in partners_opt_in:
+            # Get organization partner who is still affiliated
+            organization_partner = organization.organization_partners.filter(
+                partner=p, end_date__gt=datetime.utcnow()
+            ).first()
+            if organization_partner:
+                GranteeOptIn.objects.create(
+                    agreed=True,
+                    organization_partner=organization_partner,
+                    user=request.user
+                )
 
 
 class RegModelForm(BaseOnboardingModelForm):

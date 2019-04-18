@@ -6,6 +6,8 @@ import analytics
 import dogstats_wrapper as dog_stats_api
 import third_party_auth
 from celery.task import task
+from lms.djangoapps.onboarding.constants import ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
+
 from common.djangoapps.util.request import safe_get_host
 from django.conf import settings
 from django.http import HttpResponse
@@ -25,13 +27,15 @@ from requests import HTTPError
 from social.exceptions import AuthException, AuthAlreadyAssociated
 from mailchimp_pipeline.signals.handlers import task_send_account_activation_email
 from student.cookies import set_logged_in_cookies
+
+from lms.djangoapps.philu_overrides.helpers import save_user_partner_network_consent
 from openedx.core.djangoapps.user_api.helpers import shim_student_view, require_post_params
 from student.forms import AccountCreationForm, get_registration_extension_form
 from student.models import Registration, create_comments_service_user, PasswordHistory, UserProfile
 from third_party_auth import pipeline, provider
 from util.enterprise_helpers import data_sharing_consent_requirement_at_login, insert_enterprise_fields
 from util.json_request import JsonResponse
-from lms.djangoapps.onboarding.models import RegistrationType
+from lms.djangoapps.onboarding.models import RegistrationType, GranteeOptIn
 
 from common.djangoapps.student.views import AccountValidationError, social_utils, REGISTER_USER, \
     _enroll_user_in_pending_courses, record_registration_attributions
@@ -769,6 +773,7 @@ def task_enroll_user_in_pending_courses(data):
     _enroll_user_in_pending_courses(user)
 
 
+# noinspection PyMethodMayBeStatic
 class RegistrationViewCustom(RegistrationView):
     """HTTP custom end-points for creating a new user. """
     THIRD_PARTY_OVERRIDE_FIELDS = RegistrationView.DEFAULT_FIELDS + ["first_name", "last_name"]
@@ -832,6 +837,7 @@ class RegistrationViewCustom(RegistrationView):
         try:
             user = create_account_with_params_custom(request, data, is_alquity_user)
             self.save_user_utm_info(user)
+            save_user_partner_network_consent(user, data['partners_opt_in'])
         except ValidationError as err:
             # Should only get non-field errors from this function
             assert NON_FIELD_ERRORS not in err.message_dict
