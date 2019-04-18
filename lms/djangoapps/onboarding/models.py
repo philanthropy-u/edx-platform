@@ -6,7 +6,6 @@ import re
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, URLValidator
 from django.db import models
-from django.db.models import F
 from django.utils.translation import ugettext_noop
 from model_utils.models import TimeStampedModel
 from pytz import utc
@@ -284,18 +283,15 @@ class OrganizationPartner(models.Model):
         cls.objects.bulk_create(lst_to_create)
         _partners.update(is_partner_affiliated=True)
 
-        # Check if organization has any grantee partners
+        # Check if organization has any active grantee partners
         opted_partners = PartnerNetwork.objects.filter(
             show_opt_in=True
         ).values_list('code', flat=True)
-        partners = cls.objects.filter(
-            organization=organization,
-            partner__in=opted_partners,
-            end_date=ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
-        )
-        if partners:
-            organization.has_affiliated_partner = True
-            organization.save()
+        org_active_partners = organization.get_active_partners()
+        has_affiliated_partner = True if list(set(opted_partners) & set(org_active_partners)) else False
+
+        organization.has_affiliated_partner = has_affiliated_partner
+        organization.save()
 
 
 class GranteeOptIn(models.Model):

@@ -616,7 +616,7 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
         for p in partners_opt_in:
             # Get organization partner who is still affiliated
             organization_partner = organization.organization_partners.filter(
-                partner=p, end_date=ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
+                partner=p, end_date__gt=datetime.utcnow()
             ).first()
             if organization_partner:
                 GranteeOptIn.objects.create(

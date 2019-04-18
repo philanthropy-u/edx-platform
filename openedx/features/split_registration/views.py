@@ -14,7 +14,8 @@ from django.shortcuts import render
 
 from lms.djangoapps.onboarding.decorators import can_save_org_data, can_not_update_onboarding_steps, \
     can_save_org_details
-from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES, get_alquity_community_url
+from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES, get_alquity_community_url, \
+    serialize_partner_networks
 from lms.djangoapps.onboarding.models import (Organization, OrganizationMetric, PartnerNetwork)
 from lms.djangoapps.onboarding.models import UserExtendedProfile
 from lms.djangoapps.onboarding.signals import save_interests
@@ -355,13 +356,7 @@ def organization(request):
         'org_admin_id': organization.admin_id if user_extended_profile.organization else None,
         'organization_name': _organization.label,
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
-        'partner_networks': serializers.serialize(
-            'json',
-            PartnerNetwork.objects.all(),
-            fields=(
-                'label', 'code', 'show_opt_in', 'affiliated_name',
-                'program_name'
-            ))
+        'partner_networks': serialize_partner_networks()
     })
 
     return render(request, template, context)

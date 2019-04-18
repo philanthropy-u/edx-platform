@@ -5,9 +5,10 @@ from datetime import date, datetime
 from difflib import SequenceMatcher
 
 from django.conf import settings
+from django.core import serializers
 
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
-from lms.djangoapps.onboarding.models import Organization, OrganizationMetricUpdatePrompt
+from lms.djangoapps.onboarding.models import Organization, OrganizationMetricUpdatePrompt, PartnerNetwork
 from lms.djangoapps.oef.models import OrganizationOefUpdatePrompt
 
 
@@ -7997,3 +7998,15 @@ def is_org_oef_prompt_available(prompt):
         return prompt.year
     else:
         return False
+
+
+def serialize_partner_networks():
+    data = serializers.serialize(
+        'json',
+        PartnerNetwork.objects.all(),
+        fields=(
+            'label', 'code', 'show_opt_in', 'affiliated_name',
+            'program_name'
+        ))
+
+    return data

@@ -11,7 +11,6 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.core import serializers
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models import Q
@@ -30,7 +29,7 @@ from lms.djangoapps.onboarding.decorators import can_save_org_data, can_not_upda
 from lms.djangoapps.onboarding.email_utils import send_admin_activation_email, send_admin_update_confirmation_email, \
     send_admin_update_email
 from lms.djangoapps.onboarding.helpers import calculate_age_years, COUNTRIES, LANGUAGES, oef_eligible_first_learner, \
-    get_close_matching_orgs_with_suggestions, get_alquity_community_url
+    get_close_matching_orgs_with_suggestions, get_alquity_community_url, serialize_partner_networks
 from lms.djangoapps.onboarding.models import (
     Organization,
     Currency, OrganizationMetric, OrganizationAdminHashKeys, PartnerNetwork)
@@ -267,13 +266,7 @@ def organization(request):
         'org_admin_id': organization.admin_id if user_extended_profile.organization else None,
         'organization_name': _organization.label,
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
-        'partner_networks': serializers.serialize(
-            'json',
-            PartnerNetwork.objects.all(),
-            fields=(
-                'label', 'code', 'show_opt_in', 'affiliated_name',
-                'program_name'
-            ))
+        'partner_networks': serialize_partner_networks()
     })
 
     return render(request, template, context)
@@ -698,12 +691,16 @@ def get_partner_networks(request, *args, **kwargs):
       }
     ]
     """
-    opt_in = bool(int(request.GET.get('opt_in', 0)))
+    opt_in = request.GET.get('opt_in', None)
+    show_opt_in = bool(int(opt_in)) if opt_in else None
+
     org = get_object_or_404(Organization, id=kwargs.get('org_id'))
-    partner_networks = PartnerNetwork.objects.filter(
-        show_opt_in=opt_in,
-        code__in=org.get_active_partners()
-    )
+
+    query = Q(code__in=org.get_active_partners())
+    if opt_in:
+        query &= Q(show_opt_in=show_opt_in)
+
+    partner_networks = PartnerNetwork.objects.filter(query)
     serializer = PartnerNetworkSerializer(partner_networks, many=True)
     data = serializer.data
 

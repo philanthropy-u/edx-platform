@@ -12,7 +12,6 @@ from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_noop
 from rest_framework.compat import MinValueValidator, MaxValueValidator
 
-from lms.djangoapps.onboarding.constants import ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
 from lms.djangoapps.onboarding.email_utils import send_admin_activation_email
 from lms.djangoapps.onboarding.helpers import COUNTRIES, LANGUAGES, get_country_iso, get_sorted_choices_from_dict, \
     get_actual_field_names, admin_not_assigned_or_me
@@ -545,7 +544,7 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
         for p in partners_opt_in:
             # Get organization partner who is still affiliated
             organization_partner = organization.organization_partners.filter(
-                partner=p, end_date=ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
+                partner=p, end_date__gt=datetime.utcnow()
             ).first()
             if organization_partner:
                 GranteeOptIn.objects.create(
