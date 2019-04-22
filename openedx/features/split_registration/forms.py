@@ -743,8 +743,8 @@ class UpdateUserInfoModelForm(UserInfoModelForm):
     def __init__(self, *args, **kwargs):
         super(UserInfoModelForm, self).__init__(*args, **kwargs)
 
-    def save(self, commit=True):
-        extended_profile = super(UpdateUserInfoModelForm, self).save(commit=False)
+    def save(self, request, commit=True):
+        extended_profile = super(UpdateUserInfoModelForm, self).save(request=request, commit=False)
 
         userprofile = extended_profile.user.profile
         userprofile.year_of_birth = self.cleaned_data['year_of_birth']
