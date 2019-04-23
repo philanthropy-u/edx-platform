@@ -2,19 +2,16 @@
 Model form for the surveys.
 """
 import json
-from importlib import import_module
 import logging
 from datetime import datetime
 from itertools import chain
 
 import os
 from django import forms
-from django.conf import settings
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_noop
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from lms.djangoapps.onboarding.constants import ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
 from rest_framework.compat import MinValueValidator, MaxValueValidator
 
 from lms.djangoapps.onboarding.email_utils import send_admin_activation_email
@@ -32,21 +29,6 @@ from lms.djangoapps.philu_overrides.helpers import save_user_partner_network_con
 NO_OPTION_SELECT_ERROR = 'Please select an option for {}'
 EMPTY_FIELD_ERROR = 'Please enter your {}'
 log = logging.getLogger("edx.onboarding")
-
-
-def get_registration_extension_form_override(*args, **kwargs):
-    """
-    Convenience function for getting the custom form set in settings.REGISTRATION_EXTENSION_FORM.
-
-    An example form app for this can be found at http://github.com/open-craft/custom-form-app
-    """
-    if not settings.FEATURES.get("ENABLE_COMBINED_LOGIN_REGISTRATION"):
-        return None
-    if not getattr(settings, 'REGISTRATION_EXTENSION_FORM_V2', None):
-        return None
-    module, klass = settings.REGISTRATION_EXTENSION_FORM_V2.rsplit('.', 1)
-    module = import_module(module)
-    return getattr(module, klass)(*args, **kwargs)
 
 
 def get_onboarding_autosuggesion_data(file_name):
