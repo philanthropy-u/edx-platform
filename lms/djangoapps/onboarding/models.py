@@ -1,22 +1,20 @@
 import logging
 import uuid
+from datetime import datetime
 
 import re
-
+from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, URLValidator
+from django.db import models
+from django.utils.translation import ugettext_noop
+from model_utils.models import TimeStampedModel
 from pytz import utc
+from simple_history import register
+from simple_history.models import HistoricalRecords
+from student.models import UserProfile
 
 from constants import ORG_PARTNERSHIP_END_DATE_PLACEHOLDER, REMIND_ME_LATER_KEY, REMIND_ME_LATER_VAL, \
     TAKE_ME_THERE_KEY, TAKE_ME_THERE_VAL, NOT_INTERESTED_KEY, NOT_INTERESTED_VAL
-from datetime import datetime
-from django.contrib.auth.models import User
-from django.utils.translation import ugettext_noop
-from model_utils.models import TimeStampedModel
-from simple_history import register
-from simple_history.models import HistoricalRecords
-from django.core.validators import MaxValueValidator, URLValidator
-from django.db import models
-
-from student.models import UserProfile
 
 log = logging.getLogger("edx.onboarding")
 
@@ -116,6 +114,10 @@ class PartnerNetwork(models.Model):
 
     is_partner_affiliated = models.BooleanField(default=False)
 
+    show_opt_in = models.BooleanField(default=False)
+    affiliated_name = models.CharField(max_length=32, null=True, blank=True)
+    program_name = models.CharField(max_length=64, null=True, blank=True)
+
     def __str__(self):
         return self.label
 
@@ -197,6 +199,10 @@ class Organization(TimeStampedModel):
 
     alternate_admin_email = models.EmailField(blank=True, null=True)
 
+    # If organization has affiliation with some affiliated partners,
+    # this flag will be True
+    has_affiliated_partner = models.BooleanField(default=False)
+
     history = HistoricalRecords()
 
     def users_count(self):
@@ -236,6 +242,9 @@ class OrganizationPartner(models.Model):
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
 
+    def __unicode__(self):
+        return "%s - %s" % (self.organization, self.partner)
+
     @classmethod
     def update_organization_partners(cls, organization, partners, removed_partners):
         """
@@ -273,6 +282,26 @@ class OrganizationPartner(models.Model):
 
         cls.objects.bulk_create(lst_to_create)
         _partners.update(is_partner_affiliated=True)
+
+        # Check if organization has any active grantee partners
+        opted_partners = PartnerNetwork.objects.filter(
+            show_opt_in=True
+        ).values_list('code', flat=True)
+        org_active_partners = organization.get_active_partners()
+        has_affiliated_partner = True if list(set(opted_partners) & set(org_active_partners)) else False
+
+        organization.has_affiliated_partner = has_affiliated_partner
+        organization.save()
+
+
+class GranteeOptIn(models.Model):
+    agreed = models.BooleanField()
+    organization_partner = models.ForeignKey(OrganizationPartner, related_name='grantee_opt_in')
+    user = models.ForeignKey(User, related_name='grantee_opt_in')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return '%s-%s' % (self.user, self.created_at)
 
 
 class RoleInsideOrg(models.Model):
