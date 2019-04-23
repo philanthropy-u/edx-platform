@@ -6,7 +6,7 @@ import analytics
 import dogstats_wrapper as dog_stats_api
 import third_party_auth
 from celery.task import task
-from lms.djangoapps.onboarding.constants import ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
+from importlib import import_module
 
 from common.djangoapps.util.request import safe_get_host
 from django.conf import settings
@@ -45,12 +45,26 @@ from openedx.core.djangoapps.user_api.accounts.api import check_account_exists
 from openedx.core.djangoapps.user_api.preferences import api as preferences_api
 from openedx.core.djangoapps.user_api.views import RegistrationView, LoginSessionView
 from openedx.core.djangoapps.user_api.helpers import FormDescription
-from openedx.features.split_registration.forms import get_registration_extension_form_override
 
 from ..helpers import get_register_form_data_override
 
 log = logging.getLogger("edx.student")
 AUDIT_LOG = logging.getLogger("audit")
+
+
+def get_registration_extension_form_override(*args, **kwargs):
+    """
+    Convenience function for getting the custom form set in settings.REGISTRATION_EXTENSION_FORM.
+
+    An example form app for this can be found at http://github.com/open-craft/custom-form-app
+    """
+    if not settings.FEATURES.get("ENABLE_COMBINED_LOGIN_REGISTRATION"):
+        return None
+    if not getattr(settings, 'REGISTRATION_EXTENSION_FORM_V2', None):
+        return None
+    module, klass = settings.REGISTRATION_EXTENSION_FORM_V2.rsplit('.', 1)
+    module = import_module(module)
+    return getattr(module, klass)(*args, **kwargs)
 
 
 def _do_create_account_custom(form, custom_form=None, is_alquity_user=False):
