@@ -266,7 +266,8 @@ def organization(request):
         'org_admin_id': organization.admin_id if user_extended_profile.organization else None,
         'organization_name': _organization.label,
         'google_place_api_key': settings.GOOGLE_PLACE_API_KEY,
-        'partner_networks': serialize_partner_networks()
+        'partner_networks': serialize_partner_networks(),
+        'partners_opt_in': request.POST.get('partners_opt_in', '')
     })
 
     return render(request, template, context)
