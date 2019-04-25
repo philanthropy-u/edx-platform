@@ -45,7 +45,6 @@ from openedx.core.djangoapps.user_api.accounts.api import check_account_exists
 from openedx.core.djangoapps.user_api.preferences import api as preferences_api
 from openedx.core.djangoapps.user_api.views import RegistrationView, LoginSessionView
 from openedx.core.djangoapps.user_api.helpers import FormDescription
-from openedx.features.split_registration.forms import get_registration_extension_form_override
 
 from ..helpers import get_register_form_data_override
 
@@ -310,7 +309,7 @@ def create_account_with_params_custom(request, params, is_alquity_user):
         enforce_password_policy=enforce_password_policy,
         tos_required=tos_required,
     )
-    custom_form = get_registration_extension_form(data=params)
+    custom_form = openedx.features.split_registration.forms.get_registration_extension_form(data=params)
 
     # Perform operations within a transaction that are critical to account creation
     with transaction.atomic():
@@ -582,7 +581,7 @@ def create_account_with_params_custom_v2(request, params, is_alquity_user):
         enforce_password_policy=enforce_password_policy,
         tos_required=tos_required,
     )
-    custom_form = get_registration_extension_form_override(data=params)
+    custom_form = openedx.features.split_registration.forms.get_registration_extension_form_override(data=params)
 
     # Perform operations within a transaction that are critical to account creation
     with transaction.atomic():

@@ -20,7 +20,6 @@ from lms.djangoapps.onboarding.models import (Organization, OrganizationMetric, 
 from lms.djangoapps.onboarding.models import UserExtendedProfile
 from lms.djangoapps.onboarding.signals import save_interests
 from nodebb.helpers import update_nodebb_for_user_status
-from openedx.features.split_registration import forms
 from .helpers import enroll_in_course, next_survey_url_with_enroll_params
 
 log = logging.getLogger("edx.onboarding")
@@ -89,6 +88,7 @@ def user_info(request):
         if years < 16:
             is_under_age = True
 
+    from openedx.features.split_registration import forms
     if request.method == 'POST':
         if redirect_to_next and attended_surveys_len < 1:
             form = forms.UserInfoModelForm(request.POST, instance=user_extended_profile, initial=initial)
@@ -170,6 +170,7 @@ def interests(request):
                                           .hear_about_philanthropy_other else ''
     }
 
+    from openedx.features.split_registration import forms
     if request.method == 'POST':
         form = forms.InterestsForm(request.POST, initial=initial)
 
@@ -255,6 +256,7 @@ def user_organization_role(request):
         'are_forms_complete': are_forms_complete, 'first_name': request.user.first_name
     }
 
+    from openedx.features.split_registration import forms
     if request.method == 'POST':
         form = forms.OrganizationRoleForm(request.POST, instance=user_extended_profile, initial=initial)
 
@@ -320,6 +322,7 @@ def organization(request):
         'partner_networks': _organization.get_active_partners(),
     }
 
+    from openedx.features.split_registration import forms
     if request.method == 'POST':
         old_url = request.POST.get('url', '').replace('http://', 'https://', 1)
         form = forms.OrganizationInfoForm(request.POST, instance=_organization, initial=initial)
@@ -377,6 +380,8 @@ def org_detail_survey(request):
         'registration_number': user_extended_profile.organization.registration_number if user_extended_profile.organization else '',
         "effective_date": datetime.strftime(latest_survey.effective_date, '%m/%d/%Y') if latest_survey else ""
     }
+
+    from openedx.features.split_registration import forms
 
     template = 'features/onboarding/organization_detail_survey.html'
     next_page_url = reverse('recommendations')
@@ -440,6 +445,7 @@ def update_account_settings(request):
     View to handle update of registration extra fields
     """
 
+    from openedx.features.split_registration import forms
     user_extended_profile = UserExtendedProfile.objects.get(user_id=request.user.id)
     if request.method == 'POST':
 
