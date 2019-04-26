@@ -445,14 +445,6 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
 
     NO_SELECT_CHOICE = [('', '- Select -')]
 
-    ORG_TYPE_CHOICES = NO_SELECT_CHOICE + [(os.code, os.label) for os in OrgSector.objects.all()]
-    OPERATION_LEVEL_CHOICES = NO_SELECT_CHOICE + [(ol.code, ol.label)
-                                                  for ol in OperationLevel.objects.all()]
-    FOCUS_AREA_CHOICES = NO_SELECT_CHOICE + [(fa.code, fa.label) for fa in FocusArea.objects.all()]
-    TOTAL_EMPLOYEES_CHOICES = NO_SELECT_CHOICE + [(ep.code, ep.label)
-                                                  for ep in TotalEmployee.objects.all()]
-    PARTNER_NETWORK_CHOICES = [(pn.code, pn.label) for pn in PartnerNetwork.objects.all()]
-
     is_org_url_exist = forms.ChoiceField(label=ugettext_noop('Does your organization have a website?'),
                                          choices=((1, ugettext_noop('Yes')), (0, ugettext_noop('No'))),
                                          label_suffix="*",
@@ -468,21 +460,18 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
                                          })
 
     org_type = forms.ChoiceField(label=ugettext_noop('Organization Type'), label_suffix="*",
-                                 choices=ORG_TYPE_CHOICES,
                                  error_messages={
                                      'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                          'Organization Type')),
                                  })
 
     level_of_operation = forms.ChoiceField(label=ugettext_noop('Level of Operation'), label_suffix="*",
-                                           choices=OPERATION_LEVEL_CHOICES,
                                            error_messages={
                                                'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                                    'Level of Operation')),
                                            })
 
     focus_area = forms.ChoiceField(label=ugettext_noop('Primary Focus Area'), label_suffix="*",
-                                   choices=FOCUS_AREA_CHOICES,
                                    error_messages={
                                        'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                            'Primary Focus Areas')),
@@ -493,7 +482,6 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
                                                   "A staff member working full-time counts as 1 employee; a staff "
                                                   "member working half-time counts as 0.5 of an employee. Please "
                                                   "include yourself in your organization's employee count.",
-                                        choices=TOTAL_EMPLOYEES_CHOICES,
                                         error_messages={
                                             'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format('Total Employees')),
                                         })
@@ -508,7 +496,6 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
                                                                  "to join Philanthropy University by one of your "
                                                                  "partners or funders and that organization appears in "
                                                                  "this list, please select it."),
-                                         choices=PARTNER_NETWORK_CHOICES,
                                          widget=forms.CheckboxSelectMultiple,
                                          required=False,
                                          error_messages={
@@ -517,6 +504,22 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
 
     def __init__(self,  *args, **kwargs):
         super(OrganizationInfoForm, self).__init__( *args, **kwargs)
+
+        ORG_TYPE_CHOICES = self.NO_SELECT_CHOICE + [(os.code, os.label) for os in OrgSector.objects.all()]
+        OPERATION_LEVEL_CHOICES = self.NO_SELECT_CHOICE + [(ol.code, ol.label)
+                                                           for ol in OperationLevel.objects.all()]
+        FOCUS_AREA_CHOICES = self.NO_SELECT_CHOICE + [(fa.code, fa.label) for fa in FocusArea.objects.all()]
+        TOTAL_EMPLOYEES_CHOICES = self.NO_SELECT_CHOICE + [(ep.code, ep.label)
+                                                           for ep in TotalEmployee.objects.all()]
+        PARTNER_NETWORK_CHOICES = [(pn.code, pn.label) for pn in PartnerNetwork.objects.all()]
+
+        self.fields['org_type'].choices = ORG_TYPE_CHOICES
+        self.fields['level_of_operation'].choices = OPERATION_LEVEL_CHOICES
+        self.fields['focus_area'].choices = FOCUS_AREA_CHOICES
+        self.fields['total_employees'].choices = TOTAL_EMPLOYEES_CHOICES
+        self.fields['partner_networks'].choices = PARTNER_NETWORK_CHOICES
+
+
         self.fields['city'].required = False
         self.fields['founding_year'].required = True
 
