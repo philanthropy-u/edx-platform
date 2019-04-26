@@ -70,13 +70,6 @@ class UserInfoModelForm(BaseOnboardingModelForm):
 
     NO_SELECT_CHOICE = [('', ugettext_noop('- Select -'))]
 
-    LEVEL_OF_EDUCATION_CHOICES = NO_SELECT_CHOICE  + [(el.code, el.label)
-                                                     for el in EducationLevel.objects.all()]
-    ENGLISH_PROFICIENCY_CHOICES = NO_SELECT_CHOICE + [(ep.code, ep.label)
-                                                     for ep in EnglishProficiency.objects.all()]
-    ROLE_IN_ORG_CHOICES = NO_SELECT_CHOICE + [(r.code, r.label)
-                                              for r in RoleInsideOrg.objects.all()]
-
     year_of_birth = forms.IntegerField(
         label="Year of Birth",
         label_suffix="*",
@@ -113,21 +106,18 @@ class UserInfoModelForm(BaseOnboardingModelForm):
                                                                        'and/or city of residence.'),
                                                    required=False)
     level_of_education = forms.ChoiceField(label=ugettext_noop('Level of Education'), label_suffix="*",
-                                           choices=LEVEL_OF_EDUCATION_CHOICES,
                                            error_messages={
                                                 'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                                     'Level of Education')),
                                            },
                                            required=True)
     english_proficiency = forms.ChoiceField(label=ugettext_noop('English Language Proficiency'), label_suffix="*",
-                                            choices=ENGLISH_PROFICIENCY_CHOICES,
                                             error_messages={
                                                  'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                                      'English Language Proficiency')),
                                             })
     role_in_org = forms.ChoiceField(label=ugettext_noop('Role in the Organization'),
                                     label_suffix="*",
-                                    choices=ROLE_IN_ORG_CHOICES,
                                     error_messages={
                                          'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                              'Role in the Organization')),
@@ -135,6 +125,18 @@ class UserInfoModelForm(BaseOnboardingModelForm):
 
     def __init__(self,  *args, **kwargs):
         super(UserInfoModelForm, self).__init__( *args, **kwargs)
+
+        LEVEL_OF_EDUCATION_CHOICES = self.NO_SELECT_CHOICE + [(el.code, el.label)
+                                                         for el in EducationLevel.objects.all()]
+        ENGLISH_PROFICIENCY_CHOICES = self.NO_SELECT_CHOICE + [(ep.code, ep.label)
+                                                          for ep in EnglishProficiency.objects.all()]
+        ROLE_IN_ORG_CHOICES = self.NO_SELECT_CHOICE + [(r.code, r.label)
+                                                  for r in RoleInsideOrg.objects.all()]
+
+        self.fields['level_of_education'].choices = LEVEL_OF_EDUCATION_CHOICES
+        self.fields['english_proficiency'].choices = ENGLISH_PROFICIENCY_CHOICES
+        self.fields['role_in_org'].choices = ROLE_IN_ORG_CHOICES
+
 
         self.fields['country_of_employment'].required = False
         self.fields['city_of_employment'].required = False
