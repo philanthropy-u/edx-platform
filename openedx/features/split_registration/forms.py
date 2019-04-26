@@ -91,11 +91,6 @@ class UserInfoModelForm(BaseOnboardingModelForm):
 
     NO_SELECT_CHOICE = [('', ugettext_noop('- Select -'))]
 
-    LEVEL_OF_EDUCATION_CHOICES = NO_SELECT_CHOICE + [(el.code, el.label)
-                                                     for el in EducationLevel.objects.all()]
-    ENGLISH_PROFICIENCY_CHOICES = NO_SELECT_CHOICE + [(ep.code, ep.label)
-                                                      for ep in EnglishProficiency.objects.all()]
-
     IS_POC_CHOICES = (
         (1, ugettext_noop('Yes')),
         (0, ugettext_noop('No'))
@@ -132,14 +127,12 @@ class UserInfoModelForm(BaseOnboardingModelForm):
     )
 
     level_of_education = forms.ChoiceField(label=ugettext_noop('Level of Education'), label_suffix="*",
-                                           choices=LEVEL_OF_EDUCATION_CHOICES,
                                            error_messages={
                                                 'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                                     'Level of Education')),
                                            },
                                            required=True)
     english_proficiency = forms.ChoiceField(label=ugettext_noop('English Language Proficiency'), label_suffix="*",
-                                            choices=ENGLISH_PROFICIENCY_CHOICES,
                                             error_messages={
                                                  'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                                      'English Language Proficiency')),
@@ -186,6 +179,17 @@ class UserInfoModelForm(BaseOnboardingModelForm):
 
     def __init__(self, *args, **kwargs):
         super(UserInfoModelForm, self).__init__(*args, **kwargs)
+
+        LEVEL_OF_EDUCATION_CHOICES = self.NO_SELECT_CHOICE + [(el.code, el.label)
+                                                         for el in EducationLevel.objects.all()]
+        ENGLISH_PROFICIENCY_CHOICES = self.NO_SELECT_CHOICE + [(ep.code, ep.label)
+                                                          for ep in EnglishProficiency.objects.all()]
+
+        self.fields['level_of_education'].choices = LEVEL_OF_EDUCATION_CHOICES
+        self.fields['english_proficiency'].choices = ENGLISH_PROFICIENCY_CHOICES
+
+
+
         self.fields['organization_name'].error_messages = {
             'required': ugettext_noop('Please select your Organization.'),
         }
