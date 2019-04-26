@@ -1276,12 +1276,8 @@ class OrganizationMetricModelUpdateForm(OrganizationMetricModelForm):
 class OrganizationRoleForm(BaseOnboardingModelForm):
     NO_SELECT_CHOICE = [('', ugettext_noop('- Select -'))]
 
-    ROLE_IN_ORG_CHOICES = NO_SELECT_CHOICE + [(r.code, r.label)
-                                              for r in RoleInsideOrg.objects.all()]
-
     role_in_org = forms.ChoiceField(label=ugettext_noop('Role in the Organization'),
                                     label_suffix="*",
-                                    choices=ROLE_IN_ORG_CHOICES,
                                     error_messages={
                                         'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                             'Role in the Organization')),
@@ -1289,6 +1285,11 @@ class OrganizationRoleForm(BaseOnboardingModelForm):
 
     def __init__(self, *args, **kwargs):
         super(OrganizationRoleForm, self).__init__(*args, **kwargs)
+
+        ROLE_IN_ORG_CHOICES = self.NO_SELECT_CHOICE + [(r.code, r.label)
+                                                  for r in RoleInsideOrg.objects.all()]
+        self.fields['role_in_org'].choices = ROLE_IN_ORG_CHOICES
+
         self.fields['country_of_employment'].required = False
         self.fields['city_of_employment'].required = False
 
