@@ -114,11 +114,6 @@ if __name__ == "__main__":
     if 'runserver' in django_args:
         from edx_notifications.load_notification_startup import start_up as notification_startup
         notification_startup()
-        # 'edx-notifications' makes some persistent connection we've to close it manually
-        # because this connection is made at server's start up time so CONN_MAX_AGE
-        # isn't working with this connection
-        from django.db import connection
-        connection.close()
 
     from django.core.management import execute_from_command_line
 
