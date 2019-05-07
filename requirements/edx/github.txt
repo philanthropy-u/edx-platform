@@ -103,5 +103,5 @@ git+https://github.com/edx-solutions/xblock-drag-and-drop-v2@v2.0.15#egg=xblock-
 
 # edx-notifications
 # -e git+https://github.com/philanthropy-u/edx-notifications.git@0770571453072a7c8e185bdbdd778545c9c7ef59#egg=edx-notifications
--e git+https://github.com/philanthropy-u/django-simple-history.git@cf386b41e0b418fae5140c75802e300120a3bd89#egg=django-simple-history
+-e git+https://github.com/philanthropy-u/django-simple-history.git@9187c9b4907da5a2a0564eff45929fd15b784309#egg=django-simple-history
 

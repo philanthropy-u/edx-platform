@@ -91,11 +91,6 @@ class UserInfoModelForm(BaseOnboardingModelForm):
 
     NO_SELECT_CHOICE = [('', ugettext_noop('- Select -'))]
 
-    LEVEL_OF_EDUCATION_CHOICES = NO_SELECT_CHOICE + [(el.code, el.label)
-                                                     for el in EducationLevel.objects.all()]
-    ENGLISH_PROFICIENCY_CHOICES = NO_SELECT_CHOICE + [(ep.code, ep.label)
-                                                      for ep in EnglishProficiency.objects.all()]
-
     IS_POC_CHOICES = (
         (1, ugettext_noop('Yes')),
         (0, ugettext_noop('No'))
@@ -132,14 +127,12 @@ class UserInfoModelForm(BaseOnboardingModelForm):
     )
 
     level_of_education = forms.ChoiceField(label=ugettext_noop('Level of Education'), label_suffix="*",
-                                           choices=LEVEL_OF_EDUCATION_CHOICES,
                                            error_messages={
                                                 'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                                     'Level of Education')),
                                            },
                                            required=True)
     english_proficiency = forms.ChoiceField(label=ugettext_noop('English Language Proficiency'), label_suffix="*",
-                                            choices=ENGLISH_PROFICIENCY_CHOICES,
                                             error_messages={
                                                  'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                                      'English Language Proficiency')),
@@ -186,6 +179,17 @@ class UserInfoModelForm(BaseOnboardingModelForm):
 
     def __init__(self, *args, **kwargs):
         super(UserInfoModelForm, self).__init__(*args, **kwargs)
+
+        LEVEL_OF_EDUCATION_CHOICES = self.NO_SELECT_CHOICE + [(el.code, el.label)
+                                                         for el in EducationLevel.objects.all()]
+        ENGLISH_PROFICIENCY_CHOICES = self.NO_SELECT_CHOICE + [(ep.code, ep.label)
+                                                          for ep in EnglishProficiency.objects.all()]
+
+        self.fields['level_of_education'].choices = LEVEL_OF_EDUCATION_CHOICES
+        self.fields['english_proficiency'].choices = ENGLISH_PROFICIENCY_CHOICES
+
+
+
         self.fields['organization_name'].error_messages = {
             'required': ugettext_noop('Please select your Organization.'),
         }
@@ -441,14 +445,6 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
 
     NO_SELECT_CHOICE = [('', '- Select -')]
 
-    ORG_TYPE_CHOICES = NO_SELECT_CHOICE + [(os.code, os.label) for os in OrgSector.objects.all()]
-    OPERATION_LEVEL_CHOICES = NO_SELECT_CHOICE + [(ol.code, ol.label)
-                                                  for ol in OperationLevel.objects.all()]
-    FOCUS_AREA_CHOICES = NO_SELECT_CHOICE + [(fa.code, fa.label) for fa in FocusArea.objects.all()]
-    TOTAL_EMPLOYEES_CHOICES = NO_SELECT_CHOICE + [(ep.code, ep.label)
-                                                  for ep in TotalEmployee.objects.all()]
-    PARTNER_NETWORK_CHOICES = [(pn.code, pn.label) for pn in PartnerNetwork.objects.all()]
-
     is_org_url_exist = forms.ChoiceField(label=ugettext_noop('Does your organization have a website?'),
                                          choices=((1, ugettext_noop('Yes')), (0, ugettext_noop('No'))),
                                          label_suffix="*",
@@ -464,21 +460,18 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
                                          })
 
     org_type = forms.ChoiceField(label=ugettext_noop('Organization Type'), label_suffix="*",
-                                 choices=ORG_TYPE_CHOICES,
                                  error_messages={
                                      'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                          'Organization Type')),
                                  })
 
     level_of_operation = forms.ChoiceField(label=ugettext_noop('Level of Operation'), label_suffix="*",
-                                           choices=OPERATION_LEVEL_CHOICES,
                                            error_messages={
                                                'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                                    'Level of Operation')),
                                            })
 
     focus_area = forms.ChoiceField(label=ugettext_noop('Primary Focus Area'), label_suffix="*",
-                                   choices=FOCUS_AREA_CHOICES,
                                    error_messages={
                                        'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                            'Primary Focus Areas')),
@@ -489,7 +482,6 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
                                                   "A staff member working full-time counts as 1 employee; a staff "
                                                   "member working half-time counts as 0.5 of an employee. Please "
                                                   "include yourself in your organization's employee count.",
-                                        choices=TOTAL_EMPLOYEES_CHOICES,
                                         error_messages={
                                             'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format('Total Employees')),
                                         })
@@ -504,7 +496,6 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
                                                                  "to join Philanthropy University by one of your "
                                                                  "partners or funders and that organization appears in "
                                                                  "this list, please select it."),
-                                         choices=PARTNER_NETWORK_CHOICES,
                                          widget=forms.CheckboxSelectMultiple,
                                          required=False,
                                          error_messages={
@@ -513,6 +504,22 @@ class OrganizationInfoForm(BaseOnboardingModelForm):
 
     def __init__(self,  *args, **kwargs):
         super(OrganizationInfoForm, self).__init__( *args, **kwargs)
+
+        ORG_TYPE_CHOICES = self.NO_SELECT_CHOICE + [(os.code, os.label) for os in OrgSector.objects.all()]
+        OPERATION_LEVEL_CHOICES = self.NO_SELECT_CHOICE + [(ol.code, ol.label)
+                                                           for ol in OperationLevel.objects.all()]
+        FOCUS_AREA_CHOICES = self.NO_SELECT_CHOICE + [(fa.code, fa.label) for fa in FocusArea.objects.all()]
+        TOTAL_EMPLOYEES_CHOICES = self.NO_SELECT_CHOICE + [(ep.code, ep.label)
+                                                           for ep in TotalEmployee.objects.all()]
+        PARTNER_NETWORK_CHOICES = [(pn.code, pn.label) for pn in PartnerNetwork.objects.all()]
+
+        self.fields['org_type'].choices = ORG_TYPE_CHOICES
+        self.fields['level_of_operation'].choices = OPERATION_LEVEL_CHOICES
+        self.fields['focus_area'].choices = FOCUS_AREA_CHOICES
+        self.fields['total_employees'].choices = TOTAL_EMPLOYEES_CHOICES
+        self.fields['partner_networks'].choices = PARTNER_NETWORK_CHOICES
+
+
         self.fields['city'].required = False
         self.fields['founding_year'].required = True
 
@@ -741,7 +748,7 @@ class UpdateUserInfoModelForm(UserInfoModelForm):
     """
 
     def __init__(self, *args, **kwargs):
-        super(UserInfoModelForm, self).__init__(*args, **kwargs)
+        super(UpdateUserInfoModelForm, self).__init__(*args, **kwargs)
 
     def save(self, request, commit=True):
         extended_profile = super(UpdateUserInfoModelForm, self).save(request=request, commit=False)
@@ -1269,12 +1276,8 @@ class OrganizationMetricModelUpdateForm(OrganizationMetricModelForm):
 class OrganizationRoleForm(BaseOnboardingModelForm):
     NO_SELECT_CHOICE = [('', ugettext_noop('- Select -'))]
 
-    ROLE_IN_ORG_CHOICES = NO_SELECT_CHOICE + [(r.code, r.label)
-                                              for r in RoleInsideOrg.objects.all()]
-
     role_in_org = forms.ChoiceField(label=ugettext_noop('Role in the Organization'),
                                     label_suffix="*",
-                                    choices=ROLE_IN_ORG_CHOICES,
                                     error_messages={
                                         'required': ugettext_noop(NO_OPTION_SELECT_ERROR.format(
                                             'Role in the Organization')),
@@ -1282,6 +1285,11 @@ class OrganizationRoleForm(BaseOnboardingModelForm):
 
     def __init__(self, *args, **kwargs):
         super(OrganizationRoleForm, self).__init__(*args, **kwargs)
+
+        ROLE_IN_ORG_CHOICES = self.NO_SELECT_CHOICE + [(r.code, r.label)
+                                                  for r in RoleInsideOrg.objects.all()]
+        self.fields['role_in_org'].choices = ROLE_IN_ORG_CHOICES
+
         self.fields['country_of_employment'].required = False
         self.fields['city_of_employment'].required = False
 
