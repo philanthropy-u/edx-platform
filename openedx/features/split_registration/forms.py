@@ -730,7 +730,7 @@ class UpdateUserInfoModelForm(UserInfoModelForm):
     """
 
     def __init__(self, *args, **kwargs):
-        super(UserInfoModelForm, self).__init__(*args, **kwargs)
+        super(UpdateUserInfoModelForm, self).__init__(*args, **kwargs)
 
     def save(self, request, commit=True):
         extended_profile = super(UpdateUserInfoModelForm, self).save(request=request, commit=False)
