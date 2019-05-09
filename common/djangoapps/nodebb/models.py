@@ -22,7 +22,7 @@ class DiscussionCommunity(TimeStampedModel):
 
 class TeamGroupChat(TimeStampedModel):
     """
-        Model to store team related group chats
+        Model to store team related group chats/discussion categories
     """
 
     team = models.ForeignKey(CourseTeam, related_name='team')
