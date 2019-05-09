@@ -36,6 +36,7 @@ from lms.djangoapps.onboarding.models import (
 from lms.djangoapps.onboarding.models import UserExtendedProfile
 from lms.djangoapps.onboarding.serializers import PartnerNetworkSerializer
 from lms.djangoapps.onboarding.signals import save_interests
+from lms.djangoapps.philu_overrides.helpers import save_user_partner_network_consent
 from lms.djangoapps.student_dashboard.views import get_recommended_xmodule_courses, get_joined_communities
 
 log = logging.getLogger("edx.onboarding")
@@ -411,6 +412,7 @@ def update_account_settings(request):
         form = forms.UpdateRegModelForm(request.POST, instance=user_extended_profile)
         if form.is_valid():
             user_extended_profile = form.save(user=user_extended_profile.user, commit=True)
+            save_user_partner_network_consent(user_extended_profile.user, request.POST['partners_opt_in'])
             unattended_surveys = user_extended_profile.unattended_surveys(_type='list')
             are_forms_complete = not (bool(unattended_surveys))
 
@@ -435,7 +437,8 @@ def update_account_settings(request):
     ctx = {
         'form': form,
         'admin_has_pending_admin_suggestion_request': user_extended_profile.admin_has_pending_admin_suggestion_request(),
-        'org_url': reverse('get_organizations')
+        'org_url': reverse('get_organizations'),
+        'partners_opt_in': request.POST.get('partners_opt_in', '')
     }
 
     return render(request, 'myaccount/registration_update.html', ctx)
