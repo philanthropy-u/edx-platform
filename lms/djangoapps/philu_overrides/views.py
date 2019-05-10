@@ -7,6 +7,7 @@ import logging
 import urlparse
 from pytz import utc
 from w3lib.url import url_query_cleaner
+from urllib import urlencode
 
 from django.http import HttpResponseNotFound, HttpResponse, Http404, HttpResponseServerError
 from django.conf import settings
@@ -32,6 +33,7 @@ from util.cache import cache_if_anonymous
 from util.enterprise_helpers import set_enterprise_branding_filter_param
 from xmodule.modulestore.django import modulestore
 from common.djangoapps.student.views import get_course_related_keys
+from common.djangoapps.util.philu_utils import extract_utm_params
 from lms.djangoapps.courseware.access import has_access, _can_enroll_courselike
 from lms.djangoapps.courseware.courses import get_courses, sort_by_start_date, get_course_by_id, sort_by_announcement
 from lms.djangoapps.courseware.views.views import get_last_accessed_courseware
@@ -154,6 +156,10 @@ def login_and_registration_form(request, initial_mode="login", org_name=None, ad
 
     registration_fields = context['data']['registration_form_desc']['fields']
     registration_fields = context['data']['registration_form_desc']['fields'] = reorder_registration_form_fields(registration_fields)
+
+    for provider in context['data']['third_party_auth']['providers']:
+        utm_params = extract_utm_params(request.GET)
+        provider['registerUrl'] = '{}&{}'.format(provider['registerUrl'], urlencode(utm_params))
 
     if org_name and admin_email:
         org_name = base64.b64decode(org_name)
