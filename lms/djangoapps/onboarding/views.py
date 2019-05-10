@@ -407,12 +407,14 @@ def update_account_settings(request):
     """
 
     user_extended_profile = UserExtendedProfile.objects.get(user_id=request.user.id)
+    partners_opt_in = request.POST.get('partners_opt_in', '')
+
     if request.method == 'POST':
 
         form = forms.UpdateRegModelForm(request.POST, instance=user_extended_profile)
         if form.is_valid():
             user_extended_profile = form.save(user=user_extended_profile.user, commit=True)
-            save_user_partner_network_consent(user_extended_profile.user, request.POST['partners_opt_in'])
+            save_user_partner_network_consent(user_extended_profile.user, partners_opt_in)
             unattended_surveys = user_extended_profile.unattended_surveys(_type='list')
             are_forms_complete = not (bool(unattended_surveys))
 
@@ -438,7 +440,7 @@ def update_account_settings(request):
         'form': form,
         'admin_has_pending_admin_suggestion_request': user_extended_profile.admin_has_pending_admin_suggestion_request(),
         'org_url': reverse('get_organizations'),
-        'partners_opt_in': request.POST.get('partners_opt_in', '')
+        'partners_opt_in': partners_opt_in
     }
 
     return render(request, 'myaccount/registration_update.html', ctx)
