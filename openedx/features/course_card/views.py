@@ -8,6 +8,7 @@ from openedx.features.course_card.models import CourseCard
 from django.views.decorators.csrf import csrf_exempt
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from student.models import CourseEnrollment
+from .helpers import get_course_open_date
 
 utc = pytz.UTC
 
@@ -22,7 +23,7 @@ def get_course_start_date(course):
     """
 
     if course and course.start:
-        return course.start
+        return get_course_open_date(course)
 
     return None
 
@@ -73,10 +74,13 @@ def get_course_with_link_and_start_date(course, course_rerun_object, request):
     current_class, user_current_enrolled_class, current_enrolled_class_target = get_user_current_enrolled_class(
         request, course)
 
+    if current_class:
+        current_class_start_date = get_course_open_date(current_class)
+
     if user_current_enrolled_class:
         course.is_enrolled = True
         course.course_target = current_enrolled_class_target
-        course.start_date = current_class.start.strftime(date_time_format)
+        course.start_date = current_class_start_date.strftime(date_time_format)
         return course
 
     course_start_time = get_course_start_date(course)
@@ -95,7 +99,7 @@ def get_course_with_link_and_start_date(course, course_rerun_object, request):
             return course
 
     if current_class:
-        course.start_date = current_class.start.strftime(date_time_format)
+        course.start_date = current_class_start_date.strftime(date_time_format)
         return course
 
     course.start_date = None

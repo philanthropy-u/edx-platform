@@ -71,18 +71,30 @@ def get_course_next_classes(request, course):
     from student.models import CourseEnrollment
     from opaque_keys.edx.locations import SlashSeparatedCourseKey
     from course_action_state.models import CourseRerunState
+    from openedx.features.course_card.helpers import get_course_open_date
+
+    courses = []
 
     current_time = datetime.utcnow().replace(tzinfo=utc)
     course_rerun_states = [crs.course_key for crs in CourseRerunState.objects.filter(
         source_course_key=course.id, action="rerun", state="succeeded")] + [course.id]
+
     course_rerun_objects = CourseOverview.objects.select_related('image_set').filter(
-        id__in=course_rerun_states, start__gt=current_time).order_by('start')
+        id__in=course_rerun_states).order_by('start')
+
+    for course_run in course_rerun_objects:
+
+        course_open_date = get_course_open_date(course_run)
+        if course_open_date >= current_time:
+            course_run.course_open_date = course_open_date
+            courses.append(course_run)
 
     course_next_classes = []
 
-    for _course in course_rerun_objects:
+    for _course in courses:
         course_key = SlashSeparatedCourseKey.from_deprecated_string(_course.id.__str__())
         course = get_course_by_id(course_key)
+        course.course_open_date = _course.course_open_date
         registered = registered_for_course(course, request.user)
 
         # Used to provide context to message to student if enrollment not allowed
@@ -125,15 +137,13 @@ def get_user_current_enrolled_class(request, course):
     from django.core.urlresolvers import reverse
     from opaque_keys.edx.locations import SlashSeparatedCourseKey
     from common.djangoapps.student.views import get_course_related_keys
-    from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
     from student.models import CourseEnrollment
     from course_action_state.models import CourseRerunState
 
     all_course_reruns = [crs.course_key for crs in CourseRerunState.objects.filter(
         source_course_key=course.id, action="rerun", state="succeeded")] + [course.id]
     current_time = datetime.utcnow().replace(tzinfo=utc)
-    current_class = CourseOverview.objects.select_related('image_set').filter(
-        id__in=all_course_reruns, start__lte=current_time, end__gte=current_time).order_by('-start').first()
+    current_class = get_course_current_class(all_course_reruns, current_time)
 
     current_enrolled_class = False
     if current_class:
@@ -149,6 +159,22 @@ def get_user_current_enrolled_class(request, course):
                                                       first_chapter_url, first_section])
 
     return current_class, current_enrolled_class, current_enrolled_class_target
+
+
+def get_course_current_class(all_course_reruns, current_time):
+    from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+    from openedx.features.course_card.helpers import get_course_open_date
+    course = CourseOverview.objects.select_related('image_set').filter(
+        id__in=all_course_reruns, start__lte=current_time, end__gte=current_time).order_by('-start').first()
+
+    if course:
+        course_open_date = get_course_open_date(course)
+
+        if course_open_date <= current_time:
+            course.course_open_date = course_open_date
+            return course
+        else:
+            return None
 
 
 def is_user_enrolled_in_any_class(course_current_class, course_next_classes):

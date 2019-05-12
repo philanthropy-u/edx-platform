@@ -11,6 +11,25 @@ from openedx.features.course_card.models import CourseCard
 log = getLogger(__name__)
 
 
+def get_course_open_date(course):
+    """
+    check if course open date is set return that date
+    else return course start date
+    :param course:
+    :return course start date:
+    """
+
+    try:
+        custom_settings = CustomSettings.objects.get(id=course.id)
+        course_open_date = custom_settings.course_open_date
+        if course_open_date:
+            return course_open_date
+        else:
+            return course.start
+    except CustomSettings.DoesNotExist:
+        return course.start
+
+
 def get_related_card_id(course_id):
     """
     Get course key from parent course
