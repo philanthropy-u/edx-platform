@@ -90,7 +90,7 @@ def validate_course_open_date(settings, course_open_date):
         validated course open date or none
     """
 
-    if course_open_date and course_open_date != '':
+    if course_open_date:
         if isinstance(datetime.strptime(course_open_date, DATE_FORMAT), datetime):
             course_open_date = datetime.strptime(course_open_date, DATE_FORMAT)
             utc = pytz.UTC
