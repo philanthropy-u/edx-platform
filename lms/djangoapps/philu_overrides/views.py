@@ -613,7 +613,9 @@ def course_about(request, course_id):
 
         if current_class:
             if isinstance(current_class, CourseOverview):
+                course_open_date = current_class.course_open_date
                 current_class = get_course_by_id(current_class.id)
+                current_class.course_open_date = course_open_date
 
             course_details = CourseDetails.populate(current_class)
         else:
