@@ -126,7 +126,7 @@ def get_all_reruns_of_a_course(course):
     for course_run in course_rerun_objects:
 
         course_open_date = get_course_open_date(course_run)
-        if course_open_date >= current_time:
+        if course_run.start > current_time:
             course_run.course_open_date = course_open_date
             courses.append(course_run)
 
@@ -179,7 +179,7 @@ def get_course_current_class(all_course_reruns, current_time):
     if course:
         course_open_date = get_course_open_date(course)
 
-        if course_open_date <= current_time:
+        if course.start <= current_time:
             course.course_open_date = course_open_date
             return course
         else:
