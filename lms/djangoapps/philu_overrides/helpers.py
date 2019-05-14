@@ -155,10 +155,10 @@ def get_user_current_enrolled_class(request, course):
     current_enrolled_class = False
     if current_class:
         current_enrolled_class = CourseEnrollment.is_enrolled(request.user, current_class.id)
-        course_open_date = current_class.course_open_date
 
     current_enrolled_class_target = ''
     if current_enrolled_class:
+        course_open_date = current_class.course_open_date
         course_key = SlashSeparatedCourseKey.from_deprecated_string(current_class.id.__str__())
         current_class = get_course_by_id(course_key)
         current_class.course_open_date = course_open_date
