@@ -151,11 +151,11 @@ def get_user_current_enrolled_class(request, course):
         source_course_key=course.id, action="rerun", state="succeeded")] + [course.id]
     current_time = datetime.utcnow().replace(tzinfo=utc)
     current_class = get_course_current_class(all_course_reruns, current_time)
-    course_open_date = current_class.course_open_date
 
     current_enrolled_class = False
     if current_class:
         current_enrolled_class = CourseEnrollment.is_enrolled(request.user, current_class.id)
+        course_open_date = current_class.course_open_date
 
     current_enrolled_class_target = ''
     if current_enrolled_class:
