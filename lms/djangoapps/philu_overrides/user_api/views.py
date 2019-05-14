@@ -860,12 +860,21 @@ class RegistrationViewCustom(RegistrationView):
             user for which utm params are being saved + request to get all utm related params
         :return:
         """
+        def extract_param_value(request, param_name):
+            utm_value = request.POST.get(param_name, None)
+
+            if not utm_value and param_name in request.session:
+                utm_value = request.session[param_name]
+                del request.session[param_name]
+
+            return utm_value
+
         try:
-            utm_source = self.request.POST.get("utm_source", None)
-            utm_medium = self.request.POST.get("utm_medium", None)
-            utm_campaign = self.request.POST.get("utm_campaign", None)
-            utm_content = self.request.POST.get("utm_content", None)
-            utm_term = self.request.POST.get("utm_term", None)
+            utm_source = extract_param_value(self.request, "utm_source")
+            utm_medium = extract_param_value(self.request, "utm_medium")
+            utm_campaign = extract_param_value(self.request, "utm_campaign")
+            utm_content = extract_param_value(self.request, "utm_content")
+            utm_term = extract_param_value(self.request, "utm_term")
 
             from openedx.features.user_leads.models import UserLeads
             UserLeads.objects.create(
@@ -1076,12 +1085,21 @@ class RegistrationViewCustomV2(RegistrationView):
             user for which utm params are being saved + request to get all utm related params
         :return:
         """
+        def extract_param_value(request, param_name):
+            utm_value = request.POST.get(param_name, None)
+
+            if not utm_value and param_name in request.session:
+                utm_value = request.session[param_name]
+                del request.session[param_name]
+
+            return utm_value
+
         try:
-            utm_source = self.request.POST.get("utm_source", None)
-            utm_medium = self.request.POST.get("utm_medium", None)
-            utm_campaign = self.request.POST.get("utm_campaign", None)
-            utm_content = self.request.POST.get("utm_content", None)
-            utm_term = self.request.POST.get("utm_term", None)
+            utm_source = extract_param_value(self.request, "utm_source")
+            utm_medium = extract_param_value(self.request, "utm_medium")
+            utm_campaign = extract_param_value(self.request, "utm_campaign")
+            utm_content = extract_param_value(self.request, "utm_content")
+            utm_term = extract_param_value(self.request, "utm_term")
 
             from openedx.features.user_leads.models import UserLeads
             UserLeads.objects.create(
