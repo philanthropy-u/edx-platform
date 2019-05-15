@@ -98,7 +98,7 @@ def get_recommended_xmodule_courses(request, _from='onboarding'):
             course_list_ids.append(course.id)
             _settings = CustomSettings.objects.filter(id=course_rerun_object.id).first()
             course.settings_attrs = _settings
-            course.start = get_course_open_date(course_rerun_object)
+            course.course_open_date = get_course_open_date(course_rerun_object)
             course.target_course_id = course_rerun_object.id
             all_courses.append(course)
 
