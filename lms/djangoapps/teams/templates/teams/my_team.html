@@ -1,0 +1,152 @@
+## mako
+
+<%!
+from django.utils.translation import ugettext as _
+from openedx.core.djangolib.js_utils import (
+    dump_js_escaped_json, js_escaped_string
+)
+%>
+<%namespace name='static' file='/static_content.html'/>
+<%inherit file="/main.html" />
+
+<%block name="bodyclass">view-teams view-in-course course js</%block>
+<%block name="pagetitle">${_("Teams")}</%block>
+
+<%block name="headextra">
+<%static:css group='style-course-vendor'/>
+<%static:css group='style-course'/>
+<%static:css group='style-inline-discussion'/>
+<%include file="../discussion/_js_head_dependencies.html" />
+</%block>
+
+<%include file="/courseware/course_navigation.html" args="active_page='teams'" />
+
+<div class="container">
+    <div class="teams-wrapper">
+        <!-- <main id="main" aria-label="Content" tabindex="-1">
+            <section class="teams-content">
+            </section>
+        </main> -->
+
+        <div class="teams-holder">
+
+            <div class="box-widget title-head">
+                <h3>Teams</h3>
+                <p>Below you will find all the teams already cerated in your course. Join a team to collaborate with other learners who are interested in the same topic as you are. If you can’t find a team, create a new one.</p>
+            </div>
+
+            <div class="box-widget recommended-teams">
+                <h4>Recommended teams based on your location</h4>
+                <ul class="breadcrumbs">
+                    <li class="current">Teams In the Americas and the Caribbean</li>
+                    <li>For learners opperating in the Americas and Caribbean</li>
+                </ul>
+                <ul class="categories community-card-lits">
+                    <li>
+                        <a class="link" href="#">
+                            <div class="community-card">
+                                <div class="content col-xs-12 col-md-7 col-sm-9">
+                                    <div class="icon pull-left" style="background-color: #F7CA88; color: #333; background-image: url(https://philu-community-uploads.s3.amazonaws.com/reactjs_component_lifecycle_functions5b17cda5-eaad-49a5-b8ee-ef8b0be249ce.png); background-size: cover;">
+                                        <span class="bullet" style="background-color: #F7CA88; color: #333; background-image: url(https://philu-community-uploads.s3.amazonaws.com/reactjs_component_lifecycle_functions5b17cda5-eaad-49a5-b8ee-ef8b0be249ce.png); background-size: cover;"></span>
+                                        <h2 class="title">
+                                            <span>Team: <em>Brazil Volunteers</em></span>
+                                        </h2>
+                                    </div>
+                                    <div class="description">
+                                        <div class="profile-images">
+                                            <div class="imgs-list clearfix">
+                                                <div class="avatar avatar-sm avatar-rounded" component="user/picture" data-uid="760" title="dsfsdfsfsf" style="background-color: #3f51b5;">D</div>
+                                                <div class="avatar avatar-sm avatar-rounded" component="user/picture" data-uid="761" title="eeeuwew" style="background-color: #673ab7;">E</div>
+                                                <div class="avatar avatar-sm avatar-rounded" component="user/picture" data-uid="785" title="fdgdfgdfg" style="background-color: #2196f3;">F</div>
+                                            </div>
+                                            <span class="members-text">+ 9 MEMBERS</span>
+                                        </div>
+                                        <div class="desc-text">Learn advocacy skills to improve volunteer work in Brazil</div>
+                                        <span class="link">View Team</span>
+                                    </div>
+                                    <span class="visible-xs pull-right"></span>
+                                </div>
+                                <div class="col-md-1 hidden-sm hidden-xs stats after-none">
+                                    <small>Brazil</small>
+                                </div>
+                                <div class="col-md-1 hidden-sm hidden-xs stats">
+                                    <small>Portuguese</small>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="link" href="#">
+                            <div class="community-card">
+                                <div class="content col-xs-12 col-md-7 col-sm-9">
+                                    <div class="icon pull-left" style="background-color: #F7CA88; color: #333; background-image: url(https://philu-community-uploads.s3.amazonaws.com/reactjs_component_lifecycle_functions5b17cda5-eaad-49a5-b8ee-ef8b0be249ce.png); background-size: cover;">
+                                        <span class="bullet" style="background-color: #F7CA88; color: #333; background-image: url(https://philu-community-uploads.s3.amazonaws.com/reactjs_component_lifecycle_functions5b17cda5-eaad-49a5-b8ee-ef8b0be249ce.png); background-size: cover;"></span>
+                                        <h2 class="title">
+                                            <span>Team: <em>Brazil Volunteers</em></span>
+                                        </h2>
+                                    </div>
+                                    <div class="description">
+                                        <div class="profile-images">
+                                            <div class="imgs-list clearfix">
+                                                <div class="avatar avatar-sm avatar-rounded" component="user/picture" data-uid="760" title="dsfsdfsfsf" style="background-color: #3f51b5;">D</div>
+                                                <div class="avatar avatar-sm avatar-rounded" component="user/picture" data-uid="761" title="eeeuwew" style="background-color: #673ab7;">E</div>
+                                                <div class="avatar avatar-sm avatar-rounded" component="user/picture" data-uid="785" title="fdgdfgdfg" style="background-color: #2196f3;">F</div>
+                                            </div>
+                                            <span class="members-text">+ 9 MEMBERS</span>
+                                        </div>
+                                        <div class="desc-text">Learn advocacy skills to improve volunteer work in Brazil</div>
+                                        <span class="link">View Team</span>
+                                    </div>
+                                    <span class="visible-xs pull-right"></span>
+                                </div>
+                                <div class="col-md-1 hidden-sm hidden-xs stats after-none">
+                                    <small>Brazil</small>
+                                </div>
+                                <div class="col-md-1 hidden-sm hidden-xs stats">
+                                    <small>Portuguese</small>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <div class="create-team-card">
+                            <div class="create-team-content">
+                                <p>Are you having trouble finding a team to join?</p>
+                                <a href="#" class="button button-bordered small">Create a team</a>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="box-widget title-head">
+                <h4>Teams from other continents</h4>
+                <div class="other-continents-list">
+                    <div class="other-continents-widget">
+                        <div class="region-image"></div>
+                        <div class="continents-content">
+                            <h5>Asia and the Pacific</h5>
+                            <p>For learners operating in Asia and the Pacific.</p>
+                            <span>2 TEAMS</span>
+                        </div>
+                        <div class="view-all-teams">
+                            <a href="#" class="link">View All Teams</a>
+                        </div>
+                    </div>
+                    <div class="other-continents-widget">
+                        <div class="region-image"></div>
+                        <div class="continents-content">
+                            <h5>Asia and the Pacific</h5>
+                            <p>For learners operating in Asia and the Pacific.</p>
+                            <span>2 TEAMS</span>
+                        </div>
+                        <div class="view-all-teams">
+                            <a href="#" class="link">Start a Team Here</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

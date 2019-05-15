@@ -645,6 +645,13 @@ if settings.FEATURES["ENABLE_TEAMS"]:
             include('lms.djangoapps.teams.urls'),
             name='teams_endpoints',
         ),
+        url(
+            r'^courses/{}/philu_teams/'.format(
+                settings.COURSE_ID_PATTERN,
+            ),
+            include('openedx.features.teams.urls'),
+            name='philu_teams_endpoints',
+        ),
     )
 
 # allow course staff to change to student view of courseware
