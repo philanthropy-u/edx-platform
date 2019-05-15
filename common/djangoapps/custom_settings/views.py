@@ -15,6 +15,7 @@ from util.json_request import JsonResponse, expect_json
 from util.views import require_global_staff
 from xmodule.modulestore.django import modulestore
 from .models import CustomSettings
+from .helpers import get_course_open_date_from_settings, validate_course_open_date
 
 log = logging.getLogger(__name__)
 
@@ -51,6 +52,7 @@ def course_custom_settings(request, course_key_string):
                     'show_grades': settings.show_grades,
                     'tags': settings.tags,
                     'seo_tags': "" if not settings.seo_tags else json.loads(settings.seo_tags),
+                    'course_open_date': get_course_open_date_from_settings(settings),
                     'auto_enroll': settings.auto_enroll
                 },
                 'custom_settings_url': reverse('custom_settings', kwargs={'course_key_string': unicode(course_key)}),
@@ -58,8 +60,10 @@ def course_custom_settings(request, course_key_string):
 
         elif 'application/json' in request.META.get('HTTP_ACCEPT', '') and request.method in ['POST', 'PUT']:
             body = json.loads(request.body)
+            course_open_date = validate_course_open_date(settings, body.get('course_open_date'))
             settings.is_featured = body.get('is_featured') if isinstance(body.get('is_featured'), bool) else False
             settings.show_grades = body.get('show_grades') if isinstance(body.get('show_grades'), bool) else False
+            settings.course_open_date = course_open_date
             settings.tags = body.get('tags')
             settings.seo_tags = None if body.get('seo_tags') == "" else json.dumps(body.get('seo_tags'))
             settings.enable_enrollment_email = body.get('enable_enrollment_email')
