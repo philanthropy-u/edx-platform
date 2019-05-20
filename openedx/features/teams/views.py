@@ -86,6 +86,21 @@ def my_team(request, course_id):
     return render_to_response("teams/my_team.html", context)
 
 
+def create_team(request, course_id, region):
+    course_key = CourseKey.from_string(course_id)
+    course = get_course_with_access(request.user, "load", course_key)
+
+    context = {
+        'course': course,
+        'countries': list(countries),
+        'languages': [[lang[0], _(lang[1])] for lang in settings.ALL_LANGUAGES]
+    }
+
+    return render_to_response("teams/create_team.html", context)
+
+
+
+
 def get_alphabetical_topics(course_module):
     """Return a list of team topics sorted alphabetically.
 
