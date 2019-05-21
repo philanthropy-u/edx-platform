@@ -36,3 +36,7 @@ def generate_random_user_icon_color():
 
 def generate_random_team_banner_color():
     return choice(TEAM_BANNER_COLORS)
+
+
+def validate_team_topic(course, topic_id):
+    return bool(filter(lambda topic: topic['id'] == topic_id, course.teams_topics))

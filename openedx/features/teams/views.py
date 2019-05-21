@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 
 from opaque_keys.edx.keys import CourseKey
 from courseware.courses import get_course_with_access, has_access
-from lms.djangoapps.teams.models import CourseTeam
+from lms.djangoapps.teams.models import CourseTeam, CourseTeamMembership
 from lms.djangoapps.teams import is_feature_enabled
 from student.models import CourseEnrollment, CourseAccessRole
 from lms.djangoapps.teams.serializers import (
@@ -19,8 +19,7 @@ from lms.djangoapps.teams.serializers import (
     add_team_count
 )
 
-
-from .helpers import serialize
+from .helpers import serialize, validate_team_topic
 from .serializers import CustomCourseTeamSerializer
 
 
@@ -108,10 +107,18 @@ def create_team(request, course_id, topic_id):
     course_key = CourseKey.from_string(course_id)
     course = get_course_with_access(request.user, "load", course_key)
 
+    is_topic_valid = validate_team_topic(course, topic_id)
+    if not is_topic_valid:
+        raise Http404
+
+    is_member_of_any_team = CourseTeamMembership.user_in_team_for_course(request.user, course_key)
+
     context = {
         'course': course,
+        'can_user_create_team': not is_member_of_any_team,
         'countries': list(countries),
-        'languages': [[lang[0], _(lang[1])] for lang in settings.ALL_LANGUAGES]
+        'languages': [[lang[0], _(lang[1])] for lang in settings.ALL_LANGUAGES],
+        'topic_id': topic_id
     }
 
     return render_to_response("teams/create_team.html", context)
