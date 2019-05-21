@@ -1,7 +1,11 @@
 """Defines serializers used by the Team API."""
-from lms.djangoapps.teams.serializers import CourseTeamCreationSerializer, CountryField
+from lms.djangoapps.teams.serializers import (
+    CourseTeamCreationSerializer, CountryField, CourseTeamSerializer, UserMembershipSerializer
+)
 from rest_framework import serializers
 from django.conf import settings
+
+from .helpers import generate_random_team_banner_color, generate_random_user_icon_color
 
 
 class CustomCountryField(CountryField):
@@ -67,3 +71,40 @@ class CustomLanguageField(serializers.Field):
 class CustomCourseTeamCreationSerializer(CourseTeamCreationSerializer):
     country = CustomCountryField(required=True)
     language = CustomLanguageField(required=True)
+
+
+class CustomUserMembershipSerializer(UserMembershipSerializer):
+    class Meta(object):
+        model = UserMembershipSerializer.Meta.model
+        fields = UserMembershipSerializer.Meta.fields + ('profile_color',)
+        read_only_fields = UserMembershipSerializer.Meta.read_only_fields
+
+    profile_color = serializers.SerializerMethodField()
+
+    def get_profile_color(self, membership):
+        return generate_random_user_icon_color()
+
+
+class CustomCourseTeamSerializer(CourseTeamSerializer):
+    country = serializers.SerializerMethodField()
+    language = serializers.SerializerMethodField()
+    banner_color = serializers.SerializerMethodField()
+    membership = CustomUserMembershipSerializer(many=True, read_only=True)
+
+    class Meta(object):
+        model = CourseTeamSerializer.Meta.model
+        fields = CourseTeamSerializer.Meta.fields + ('banner_color',)
+        read_only_fields = CourseTeamSerializer.Meta.read_only_fields
+
+    def get_country(self, course_team):
+        return course_team.country.name.format()
+
+    def get_language(self, course_team):
+        languages = dict(settings.ALL_LANGUAGES)
+        try:
+            return languages[course_team.language]
+        except KeyError:
+            return course_team.language
+
+    def get_banner_color(self, course_team):
+        return generate_random_team_banner_color()
