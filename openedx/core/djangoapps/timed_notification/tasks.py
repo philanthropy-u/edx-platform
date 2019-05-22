@@ -7,6 +7,7 @@ from openedx.core.djangoapps.timed_notification.core import \
     get_course_first_chapter_link
 from lms.djangoapps.branding import get_visible_courses
 from common.lib.mandrill_client.client import MandrillClient
+from openedx.features.course_card.helpers import get_course_open_date
 from nodebb.helpers import get_community_url
 from django.conf import settings
 
@@ -22,7 +23,9 @@ def task_course_notifications():
         log.info("checking course {} for email".format(course.id))
 
         # we're interested only in dates
-        course_start_date = course.start.date()
+        course_open_date = get_course_open_date(course)
+        course_start_date = course_open_date.date()
+
         log.info('Course start date %s', course_start_date)
 
         date_now = datetime.now(utc).date()

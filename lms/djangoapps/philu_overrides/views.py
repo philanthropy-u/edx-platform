@@ -123,6 +123,13 @@ def login_and_registration_form(request, initial_mode="login", org_name=None, ad
     if ext_auth_response is not None:
         return ext_auth_response
 
+    from common.djangoapps.util.philu_utils import extract_utm_params
+
+    utm_params = extract_utm_params(request.GET)
+
+    for utm_param, value in utm_params.items():
+        request.session[utm_param] = value
+
     # Otherwise, render the combined login/registration page
     context = {
         'data': {
@@ -613,7 +620,9 @@ def course_about(request, course_id):
 
         if current_class:
             if isinstance(current_class, CourseOverview):
+                course_open_date = current_class.course_open_date
                 current_class = get_course_by_id(current_class.id)
+                current_class.course_open_date = course_open_date
 
             course_details = CourseDetails.populate(current_class)
         else:

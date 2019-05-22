@@ -12,7 +12,7 @@ from common.lib.nodebb_client.client import NodeBBClient
 from courseware.courses import get_courses
 from custom_settings.models import CustomSettings
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
-from openedx.features.course_card.helpers import get_course_cards_list, get_related_card
+from openedx.features.course_card.helpers import get_course_cards_list, get_related_card, get_course_open_date
 from xmodule.modulestore.django import modulestore
 from student.models import CourseEnrollment
 
@@ -51,6 +51,7 @@ def get_enrolled_past_courses(request, course_enrollments):
 
     for course in course_enrollments:
         course_card = get_related_card(course.course_overview)
+        course.course_overview.course_open_date = get_course_open_date(course.course_overview)
         if course_card in card_list:
             if course.course_overview.has_ended():
                 if course_card.id not in past_course_cards:
@@ -97,7 +98,7 @@ def get_recommended_xmodule_courses(request, _from='onboarding'):
             course_list_ids.append(course.id)
             _settings = CustomSettings.objects.filter(id=course_rerun_object.id).first()
             course.settings_attrs = _settings
-            course.start = course_rerun_object.start
+            course.course_open_date = get_course_open_date(course_rerun_object)
             course.target_course_id = course_rerun_object.id
             all_courses.append(course)
 
@@ -119,7 +120,7 @@ def get_recommended_xmodule_courses(request, _from='onboarding'):
         matched_interests = set(user_interests) & set(tags)
         if matched_interests and not CourseEnrollment.is_enrolled(user, course.target_course_id):
             if _from == 'onboarding':
-                start_date = course.start
+                start_date = get_course_open_date(course)
                 detailed_course = modulestore().get_course(course.id)
                 detailed_course.start = start_date
                 detailed_course.short_description = course.short_description

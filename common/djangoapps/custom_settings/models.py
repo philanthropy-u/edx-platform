@@ -16,6 +16,7 @@ class CustomSettings(models.Model):
     tags = models.CharField(max_length=255, null=True, blank=True)
     course_short_id = models.IntegerField(null=False, unique=True)
     seo_tags = models.TextField(null=True, blank=True)
+    course_open_date = models.DateTimeField(null=True)
 
     def __unicode__(self):
         return '{} | {}'.format(self.id, self.is_featured)

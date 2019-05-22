@@ -132,7 +132,8 @@ def user_info(request):
         'org_url': reverse('get_organizations'),
         'reset_org': reset_org,
         'show_add_nav': show_add_nav,
-        'is_employed': bool(user_extended_profile.organization)
+        'is_employed': bool(user_extended_profile.organization),
+        'partners_opt_in': request.POST.get('partners_opt_in', '')
     })
 
     context.update(user_extended_profile.unattended_surveys_v2())
