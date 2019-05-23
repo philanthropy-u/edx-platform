@@ -225,7 +225,8 @@ def edit_team_memberships(request, course_id, team_id):
 
     context = {
         'course': course,
-        'members': team_data['membership']
+        'members': team_data['membership'],
+        'team_id': team_id
     }
 
     return render_to_response("teams/edit_memberships.html", context)
