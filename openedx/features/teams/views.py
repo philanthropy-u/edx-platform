@@ -12,7 +12,7 @@ from opaque_keys.edx.keys import CourseKey
 from courseware.courses import get_course_with_access, has_access
 from lms.djangoapps.teams.models import CourseTeam, CourseTeamMembership
 from lms.djangoapps.teams import is_feature_enabled
-from nodebb.models import TeamGroupChat
+from openedx.core.djangoapps.user_api.accounts.image_helpers import get_profile_image_urls_for_user
 from student.models import CourseEnrollment, CourseAccessRole
 from lms.djangoapps.teams.serializers import (
     CourseTeamSerializer,
@@ -193,6 +193,37 @@ def update_team(request, course_id, team_id):
     }
 
     return render_to_response("teams/create_update_team.html", context)
+
+
+@login_required
+def edit_team_memberships(request, course_id, team_id):
+    course_key = CourseKey.from_string(course_id)
+    course = get_course_with_access(request.user, "load", course_key)
+
+    team_administrator = (has_access(request.user, 'staff', course_key)
+                          or has_discussion_privileges(request.user, course_key))
+    if not team_administrator :
+        raise Http404
+
+    try:
+        team = CourseTeam.objects.get(team_id=team_id)
+    except CourseTeam.DoesNotExist:
+        raise Http404
+
+    team_data = serialize(
+        team,
+        request,
+        CustomCourseTeamSerializer,
+        {'expand': ('user',)},
+        many=False
+    )
+
+    context = {
+        'course': course,
+        'members': team_data['membership']
+    }
+
+    return render_to_response("teams/edit_memberships.html", context)
 
 
 def get_alphabetical_topics(course_module):

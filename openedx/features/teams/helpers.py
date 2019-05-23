@@ -12,13 +12,14 @@ TEAM_BANNER_COLORS = [
 ]
 
 
-def serialize(queryset, request, serializer_cls, serializer_ctx):
+def serialize(queryset, request, serializer_cls, serializer_ctx, many=True):
     """
     Serialize and paginate objects in a queryset.
 
     Arguments:
         serializer_cls (serializers.Serializer class): Django Rest Framework Serializer subclass.
         serializer_ctx (dict): Context dictionary to pass to the serializer
+        many (bool):
 
     Returns: dict
 
@@ -26,7 +27,7 @@ def serialize(queryset, request, serializer_cls, serializer_ctx):
     # Serialize
     serializer_ctx["request"] = request
 
-    serializer = serializer_cls(queryset, context=serializer_ctx, many=True)
+    serializer = serializer_cls(queryset, context=serializer_ctx, many=many)
     return serializer.data
 
 
