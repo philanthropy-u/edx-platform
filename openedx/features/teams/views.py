@@ -1,5 +1,6 @@
 from django.http import Http404
-from django.shortcuts import render_to_response, redirect, render
+from django.core.urlresolvers import reverse
+from django.shortcuts import render_to_response, redirect
 from django_countries import countries
 from django.conf import settings
 from django.utils.translation import ugettext as _
@@ -135,7 +136,7 @@ def my_team(request, course_id):
     team = CourseTeam.objects.filter(users=user).first()
 
     if team:
-        return redirect('courses')
+        return redirect(reverse('view_team', args=[course_id, team.id]))
 
     return render_to_response("teams/my_team.html", {'course': course})
 
@@ -144,9 +145,18 @@ def my_team(request, course_id):
 def view_team(request, course_id, team_id):
     user = request.user
     course_key = CourseKey.from_string(course_id)
-    course = get_course_with_access(request.user, "load", course_key)
+    course = get_course_with_access(user, "load", course_key)
 
-    return render_to_response("teams/view_team.html", {'course': course})
+    team = CourseTeam.objects.filter(id=team_id).first()
+
+    if not team:
+        raise Http404
+
+    context = {
+        'course': course,
+    }
+
+    return render_to_response("teams/view_team.html", context)
 
 
 @login_required
