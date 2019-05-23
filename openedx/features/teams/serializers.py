@@ -93,7 +93,7 @@ class CustomCourseTeamSerializer(CourseTeamSerializer):
 
     class Meta(object):
         model = CourseTeamSerializer.Meta.model
-        fields = CourseTeamSerializer.Meta.fields + ('banner_color',)
+        fields = CourseTeamSerializer.Meta.fields + ('banner_color', 'team_id')
         read_only_fields = CourseTeamSerializer.Meta.read_only_fields
 
     def get_country(self, course_team):

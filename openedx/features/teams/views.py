@@ -136,7 +136,7 @@ def my_team(request, course_id):
     team = CourseTeam.objects.filter(users=user).first()
 
     if team:
-        return redirect(reverse('view_team', args=[course_id, team.id]))
+        return redirect(reverse('view_team', args=[course_id, team.team_id]))
 
     return render_to_response("teams/my_team.html", {'course': course})
 
@@ -147,13 +147,22 @@ def view_team(request, course_id, team_id):
     course_key = CourseKey.from_string(course_id)
     course = get_course_with_access(user, "load", course_key)
 
-    team = CourseTeam.objects.filter(id=team_id).first()
+    try:
+        team = CourseTeam.objects.get(team_id=team_id)
+    except CourseTeam.DoesNotExist:
+        raise Http404
 
     if not team:
         raise Http404
 
+    # room_id = TeamGroupChat.objects.filter(team=team).first().room_id
+    # url = settings.NODEBB_ENDPOINT + '/category/{}/andorra?iframe=embedView'
+    # room_url = url.format(room_id)
+    room_url = 'http://local.philanthropyu.org:4567/category/5/andorra?iframe=embedView'
+
     context = {
         'course': course,
+        'room_url': room_url
     }
 
     return render_to_response("teams/view_team.html", context)
