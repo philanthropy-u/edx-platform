@@ -10,6 +10,7 @@ from xmodule.modulestore.tests.factories import CourseFactory
 from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from openedx.core.djangoapps.theming.models import SiteTheme
+from openedx.features.course_card.helpers import get_course_open_date
 
 from ..models import CourseCard
 from .helpers import set_course_dates
@@ -34,6 +35,7 @@ class CourseCardBaseClass(ModuleStoreTestCase):
                                            end=datetime.utcnow() + timedelta(days=30))
 
         self.course.save()
+        save_course_custom_settings(self.course.id)
         set_course_dates(self.course, -30, -10, -5, 30)
         CourseCard(course_id=self.course.id, course_name=self.course.display_name, is_enabled=True).save()
 
@@ -49,16 +51,22 @@ class CourseCardBaseClass(ModuleStoreTestCase):
 class CourseCardViewBaseClass(CourseCardBaseClass):
 
     def test_catalog_course_date(self):
-        save_course_custom_settings(self.course.id)
         response = self.client.get(reverse('courses'))
+        # We are getting 3rd span from Div with class "course-date" and get text from it.
+        # It cause a serious problem if CSS is changed. This need to checked if that happens.
         self.assertEqual(pq(response.content)("div.course-date > span")[2].text.strip(),
                          TEST_COURSE_OPEN_DATE.strftime(self.date_time_format))
 
     def test_about_course_date(self):
-        save_course_custom_settings(self.course.id)
         response = self.client.get(reverse('about_course', args=[self.course.id]))
+        # We are getting 1st para with class "start-date" and get text from it.
+        # It cause a serious problem if CSS is changed. This need to checked if that happens.
         self.assertEqual(pq(response.content)("p.start-date")[0].text,
                          TEST_COURSE_OPEN_DATE.strftime(self.date_time_format))
+
+    def test_coursecard_helper_course_open_date(self):
+        course_start_date = get_course_open_date(self.course)
+        self.assertEqual(course_start_date.strftime(self.date_time_format), TEST_COURSE_OPEN_DATE.strftime(self.date_time_format))
 
 
 def save_course_custom_settings(course_key_string):
