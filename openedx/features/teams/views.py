@@ -6,6 +6,7 @@ from django.utils.translation import ugettext as _
 from django.contrib.auth.decorators import login_required
 
 
+from django_comment_client.utils import has_discussion_privileges
 from opaque_keys.edx.keys import CourseKey
 from courseware.courses import get_course_with_access, has_access
 from lms.djangoapps.teams.models import CourseTeam, CourseTeamMembership
@@ -116,13 +117,14 @@ def create_team(request, course_id, topic_id):
 
     context = {
         'course': course,
-        'can_user_create_team': not is_member_of_any_team,
+        'user_has_privilege': not is_member_of_any_team,
         'countries': list(countries),
         'languages': [[lang[0], _(lang[1])] for lang in settings.ALL_LANGUAGES],
-        'topic_id': topic_id
+        'topic_id': topic_id,
+        'template_view': 'create'
     }
 
-    return render_to_response("teams/create_team.html", context)
+    return render_to_response("teams/create_update_team.html", context)
 
 
 @login_required
@@ -145,6 +147,33 @@ def view_team(request, course_id, team_id):
     course = get_course_with_access(request.user, "load", course_key)
 
     return render_to_response("teams/view_team.html", {'course': course})
+
+
+@login_required
+def update_team(request, course_id, team_id):
+    course_key = CourseKey.from_string(course_id)
+    course = get_course_with_access(request.user, "load", course_key)
+
+    team_administrator = (has_access(request.user, 'staff', course_key)
+                          or has_discussion_privileges(request.user, course_key))
+    if not team_administrator:
+        raise Http404
+
+    try:
+        team = CourseTeam.objects.get(team_id=team_id)
+    except CourseTeam.DoesNotExist:
+        raise Http404
+
+    context = {
+        'course': course,
+        'team': team,
+        'countries': list(countries),
+        'languages': [[lang[0], _(lang[1])] for lang in settings.ALL_LANGUAGES],
+        'user_has_privilege': team_administrator,
+        'template_view': 'update'
+    }
+
+    return render_to_response("teams/create_update_team.html", context)
 
 
 def get_alphabetical_topics(course_module):
