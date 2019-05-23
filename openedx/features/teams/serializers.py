@@ -4,6 +4,7 @@ from lms.djangoapps.teams.serializers import (
 )
 from rest_framework import serializers
 from django.conf import settings
+from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from .helpers import generate_random_team_banner_color, generate_random_user_icon_color
 
@@ -76,13 +77,23 @@ class CustomCourseTeamCreationSerializer(CourseTeamCreationSerializer):
 class CustomUserMembershipSerializer(UserMembershipSerializer):
     class Meta(object):
         model = UserMembershipSerializer.Meta.model
-        fields = UserMembershipSerializer.Meta.fields + ('profile_color',)
+        fields = UserMembershipSerializer.Meta.fields + (
+            'profile_color', 'last_activity_natural', 'date_joined_natural'
+        )
         read_only_fields = UserMembershipSerializer.Meta.read_only_fields
 
     profile_color = serializers.SerializerMethodField()
+    last_activity_natural = serializers.SerializerMethodField()
+    date_joined_natural = serializers.SerializerMethodField()
 
     def get_profile_color(self, membership):
         return generate_random_user_icon_color()
+
+    def get_last_activity_natural(self, membership):
+        return naturaltime(membership.last_activity_at)
+
+    def get_date_joined_natural(self, membership):
+        return naturaltime(membership.date_joined)
 
 
 class CustomCourseTeamSerializer(CourseTeamSerializer):

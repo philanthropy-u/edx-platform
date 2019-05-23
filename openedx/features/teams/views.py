@@ -158,11 +158,16 @@ def view_team(request, course_id, team_id):
     # room_id = TeamGroupChat.objects.filter(team=team).first().room_id
     # url = settings.NODEBB_ENDPOINT + '/category/{}/andorra?iframe=embedView'
     # room_url = url.format(room_id)
-    room_url = 'http://local.philanthropyu.org:4567/category/5/andorra?iframe=embedView'
+    room_url = settings.NODEBB_ENDPOINT + '/category/5/andorra?iframe=embedView'
+
+    team_administrator = (has_access(request.user, 'staff', course_key)
+                          or has_discussion_privileges(request.user, course_key))
 
     context = {
         'course': course,
-        'room_url': room_url
+        'room_url': room_url,
+        'team': team,
+        'team_administrator': team_administrator
     }
 
     return render_to_response("teams/view_team.html", context)
