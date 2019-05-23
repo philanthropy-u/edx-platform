@@ -1,5 +1,5 @@
 from django.http import Http404
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, redirect, render
 from django_countries import countries
 from django.conf import settings
 from django.utils.translation import ugettext as _
@@ -10,6 +10,7 @@ from opaque_keys.edx.keys import CourseKey
 from courseware.courses import get_course_with_access, has_access
 from lms.djangoapps.teams.models import CourseTeam, CourseTeamMembership
 from lms.djangoapps.teams import is_feature_enabled
+from nodebb.models import TeamGroupChat
 from student.models import CourseEnrollment, CourseAccessRole
 from lms.djangoapps.teams.serializers import (
     CourseTeamSerializer,
@@ -126,45 +127,24 @@ def create_team(request, course_id, topic_id):
 
 @login_required
 def my_team(request, course_id):
-
     user = request.user
     course_key = CourseKey.from_string(course_id)
-    course = get_course_with_access(user, "load", course_key)
+    course = get_course_with_access(request.user, "load", course_key)
+    team = CourseTeam.objects.filter(users=user).first()
 
-    if not is_feature_enabled(course):
-        raise Http404
+    if team:
+        return redirect('courses')
 
-    if not CourseEnrollment.is_enrolled(request.user, course.id) and \
-            not has_access(request.user, 'staff', course, course.id):
-        raise Http404
+    return render_to_response("teams/my_team.html", {'course': course})
 
-    # Even though sorting is done outside of the serializer, sort_order needs to be passed
-    # to the serializer so that the paginated results indicate how they were sorted.
-    topics = get_alphabetical_topics(course)
 
-    topics_data = serialize(
-        topics,
-        request,
-        BulkTeamCountTopicSerializer,
-        {'course_id': course.id},
-    )
+@login_required
+def view_team(request, course_id, team_id):
+    user = request.user
+    course_key = CourseKey.from_string(course_id)
+    course = get_course_with_access(request.user, "load", course_key)
 
-    user_teams = CourseTeam.objects.filter(membership__user=user, course_id=course.id)
-
-    user_teams_data = serialize(
-        user_teams,
-        request,
-        CourseTeamSerializer,
-        {'expand': ('user',)}
-    )
-
-    context = {
-        'topics': topics_data,
-        'course': course,
-        'user_teams': user_teams_data
-    }
-
-    return render_to_response("teams/my_team.html", context)
+    return render_to_response("teams/view_team.html", {'course': course})
 
 
 def get_alphabetical_topics(course_module):
