@@ -1,3 +1,4 @@
+from django.conf import settings
 from random import choice
 
 USER_ICON_COLORS = [
@@ -41,3 +42,12 @@ def generate_random_team_banner_color():
 
 def validate_team_topic(course, topic_id):
     return bool(filter(lambda topic: topic['id'] == topic_id, course.teams_topics))
+
+
+def make_embed_url(team_group_chat, user):
+    if team_group_chat.slug:
+        return '{}/category/{}?iframe=embedView'.format(settings.NODEBB_ENDPOINT, team_group_chat.slug)
+    else:
+        return '{}/user/{}/chats/{}?iframe=embedView'.format(
+            settings.NODEBB_ENDPOINT, user.username, team_group_chat.room_id
+        )

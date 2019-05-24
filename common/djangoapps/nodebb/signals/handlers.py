@@ -229,48 +229,6 @@ def manage_membership_on_nodebb_group(instance, **kwargs):  # pylint: disable=un
         send_user_enrollments_to_mailchimp(instance.user)
 
 
-# TODO: following method is obsolete
-@receiver(post_save, sender=CourseTeam, dispatch_uid="nodebb.signals.handlers.create_update_groupchat_on_nodebb")
-def create_update_groupchat_on_nodebb(sender, instance, created, **kwargs):
-    """
-    Create group on NodeBB whenever a new team is created
-    OR
-    Update a group whenever existing team changes
-    """
-    team_group_chat = TeamGroupChat.objects.filter(team_id=instance.id).first()
-
-    if created or not team_group_chat:
-        group_info = _get_group_data(instance)
-        status_code, response_body = NodeBBClient().groups.create(**group_info)
-
-        if status_code != 200:
-            log.error(
-                "Error: Can't create nodebb group for the given course %s due to %s" % (
-                    instance.course_id, response_body
-                )
-            )
-        else:
-            TeamGroupChat.objects.create(
-                team_id=instance.id, room_id=response_body['room'])
-            log.info("Successfully created group for course %s" %
-                     instance.course_id)
-    else:
-        room_id = team_group_chat.room_id
-        group_info = _get_group_data(instance, is_created=False)
-        status_code, response_body = NodeBBClient().groups.update(
-            room_id=room_id, **group_info)
-
-        if status_code != 200:
-            log.error(
-                "Error: Can't update nodebb group for the given course %s due to %s" % (
-                    instance.course_id, response_body
-                )
-            )
-        else:
-            log.info("Successfully updated group for course %s" %
-                     instance.course_id)
-
-
 def _get_group_data(instance, is_created=True):
     group_info = {
         'team': [],
@@ -293,7 +251,7 @@ def delete_groupchat_on_nodebb(sender, instance, **kwargs):
     """
     team_group_chat = TeamGroupChat.objects.filter(team_id=instance.id).first()
 
-    if team_group_chat:
+    if team_group_chat and not team_group_chat.slug:
         status_code, response_body = NodeBBClient().groups.delete(
             room_id=team_group_chat.room_id)
 
@@ -318,7 +276,7 @@ def join_groupchat_on_nodebb(sender, instance, created, **kwargs):
     team_group_chat = TeamGroupChat.objects.filter(
         team_id=instance.team.id).first()
 
-    if created and team_group_chat:
+    if created and team_group_chat and not team_group_chat.slug:
         member_info = {"team": [instance.user.username, '']}
         status_code, response_body = NodeBBClient().groups.update(
             room_id=team_group_chat.room_id, **member_info)
@@ -380,7 +338,9 @@ def create_update_team_subcategory_on_nodebb(sender, instance, created, **kwargs
             )
         else:
             TeamGroupChat.objects.create(
-                team_id=instance.id, room_id=response_body['categoryData']['cid'])
+                team_id=instance.id, slug=response_body['categoryData']['slug'],
+                room_id=response_body['categoryData']['cid']
+            )
             log.info("Successfully created subcategory for course team %s" %
                      instance.name)
     else:
@@ -392,7 +352,7 @@ def _get_team_subcategory_data(instance):
     subcategory_info = {
         'name': instance.name,
         'label': instance.name,
-        'parent_cid': instance.discussion_topic_id
+        'parentCid': instance.discussion_topic_id
     }
 
     return subcategory_info
@@ -406,9 +366,9 @@ def join_team_subcategory_on_nodebb(sender, instance, created, **kwargs):
     team_group_chat = TeamGroupChat.objects.filter(
         team_id=instance.team.id).first()
 
-    if created and team_group_chat:
+    if created and team_group_chat and team_group_chat.slug:
         status_code, response_body = NodeBBClient().categories.join(
-            username=instance.user.username, category_id=team_group_chat.team.discussion_topic_id
+            username=instance.user.username, category_id=team_group_chat.room_id
         )
 
         if status_code != 200:
@@ -425,14 +385,14 @@ def join_team_subcategory_on_nodebb(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=CourseTeamMembership, dispatch_uid="nodebb.signals.handlers.leave_team_subcategory_on_nodebb")
 def leave_team_subcategory_on_nodebb(sender, instance, **kwargs):
     """
-    Leave team subcategory on NodeBB whenever a member leaves a team
+    Leave team subcategory on NodeBB whenever a member leaves a shootingteam
     """
     team_group_chat = TeamGroupChat.objects.filter(
         team_id=instance.team.id).first()
 
-    if team_group_chat:
+    if team_group_chat and team_group_chat.slug:
         status_code, response_body = NodeBBClient().categories.leave(
-            username=instance.user.username, category_id=team_group_chat.team.discussion_topic_id
+            username=instance.user.username, category_id=team_group_chat.room_id
         )
 
         if status_code != 200:
@@ -453,7 +413,7 @@ def delete_team_subcategory_on_nodebb(sender, instance, **kwargs):
     """
     team_group_chat = TeamGroupChat.objects.filter(team_id=instance.id).first()
 
-    if team_group_chat:
+    if team_group_chat and team_group_chat.slug:
         status_code, response_body = NodeBBClient().categories.delete(
             category_id=team_group_chat.room_id)
 

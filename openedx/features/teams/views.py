@@ -12,17 +12,13 @@ from opaque_keys.edx.keys import CourseKey
 from courseware.courses import get_course_with_access, has_access
 from lms.djangoapps.teams.models import CourseTeam, CourseTeamMembership
 from lms.djangoapps.teams import is_feature_enabled
-from openedx.core.djangoapps.user_api.accounts.image_helpers import get_profile_image_urls_for_user
+from nodebb.models import TeamGroupChat
 from student.models import CourseEnrollment, CourseAccessRole
 from lms.djangoapps.teams.serializers import (
-    CourseTeamSerializer,
-    TopicSerializer,
     BulkTeamCountTopicSerializer,
-    MembershipSerializer,
-    add_team_count
 )
 
-from .helpers import serialize, validate_team_topic
+from .helpers import serialize, validate_team_topic, make_embed_url
 from .serializers import CustomCourseTeamSerializer
 
 
@@ -158,17 +154,26 @@ def view_team(request, course_id, team_id):
     if not team:
         raise Http404
 
-    # room_id = TeamGroupChat.objects.filter(team=team).first().room_id
-    # url = settings.NODEBB_ENDPOINT + '/category/{}/andorra?iframe=embedView'
-    # room_url = url.format(room_id)
-    room_url = settings.NODEBB_ENDPOINT + '/category/5/andorra?iframe=embedView'
+    team_group_chat = TeamGroupChat.objects.filter(team=team).first()
+
+    if not team_group_chat:
+        raise Http404
+
+    embed_url = make_embed_url(team_group_chat, user)
 
     team_administrator = (has_access(request.user, 'staff', course_key)
                           or has_discussion_privileges(request.user, course_key))
 
+    is_member_of_any_team = CourseTeamMembership.user_in_team_for_course(request.user, course_key)
+
+    is_user_member_of_this_team = bool(CourseTeamMembership.objects.filter(team=team, user=user).first())
+
     context = {
         'course': course,
-        'room_url': room_url,
+        'user_has_team': is_member_of_any_team,
+        'is_user_member_of_this_team': is_user_member_of_this_team,
+        'room_url': embed_url,
+        'join_team_url': reverse('team_membership_list'),
         'team': team,
         'team_administrator': team_administrator
     }
