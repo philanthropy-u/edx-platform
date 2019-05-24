@@ -95,11 +95,14 @@ def browse_topic_teams(request, course_id, topic_id):
         {'expand': ('user',)}
     )
 
+    is_member_of_any_team = CourseTeamMembership.user_in_team_for_course(request.user, course_key)
+
     context = {
         'course': course,
         'user_country': request.user.profile.country.name.format(),
         'topic': topics[0],
-        'teams': teams
+        'teams': teams,
+        'show_create_card': not is_member_of_any_team
     }
 
     return render_to_response("teams/browse_topic_teams.html", context)
