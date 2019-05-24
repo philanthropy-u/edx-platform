@@ -160,6 +160,7 @@ def view_team(request, course_id, team_id):
         raise Http404
 
     embed_url = make_embed_url(team_group_chat, user)
+    leave_team_url = reverse('team_membership_detail', args=[team_id, request.user.username])
 
     team_administrator = (has_access(request.user, 'staff', course_key)
                           or has_discussion_privileges(request.user, course_key))
@@ -175,7 +176,8 @@ def view_team(request, course_id, team_id):
         'room_url': embed_url,
         'join_team_url': reverse('team_membership_list'),
         'team': team,
-        'team_administrator': team_administrator
+        'team_administrator': team_administrator,
+        'leave_team_url': leave_team_url
     }
 
     return render_to_response("teams/view_team.html", context)
