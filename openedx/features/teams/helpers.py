@@ -45,10 +45,8 @@ def validate_team_topic(course, topic_id):
 
 
 def make_embed_url(team_group_chat, user):
-    "{}/embed/:{}/:{}?isTopic=false&teamCommunity=true"
-    id, slug = team_group_chat.slug.split('/')
     if team_group_chat.slug:
-        return '{}/embed/{}/{}?isTopic=false&teamCommunity=true'.format(settings.NODEBB_ENDPOINT, id, slug)
+        return '{}/embed/{}?isTopic=false&teamCommunity=true'.format(settings.NODEBB_ENDPOINT, team_group_chat.slug)
     else:
         return '{}/user/{}/chats/{}?iframe=embedView'.format(
             settings.NODEBB_ENDPOINT, user.username, team_group_chat.room_id
