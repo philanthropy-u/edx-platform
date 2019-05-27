@@ -352,7 +352,7 @@ def _get_team_subcategory_data(instance):
     subcategory_info = {
         'name': instance.name,
         'label': instance.name,
-        'parentCid': get_community_id(instance.course_id)
+        'parent_cid': int(get_community_id(instance.course_id))
     }
 
     return subcategory_info
