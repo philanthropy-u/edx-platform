@@ -350,9 +350,10 @@ def create_update_team_subcategory_on_nodebb(sender, instance, created, **kwargs
 
 def _get_team_subcategory_data(instance):
     subcategory_info = {
-        'name': instance.name,
+        'name': '{}-{}'.format(instance.name, instance.id),
         'label': instance.name,
-        'parent_cid': int(get_community_id(instance.course_id))
+        'parent_cid': int(get_community_id(instance.course_id)),
+        'description': instance.description
     }
 
     return subcategory_info
