@@ -5,7 +5,7 @@ from django_countries import countries
 from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.contrib.auth.decorators import login_required
-
+from w3lib.url import add_or_replace_parameter
 
 from django_comment_client.utils import has_discussion_privileges
 from opaque_keys.edx.keys import CourseKey
@@ -139,7 +139,11 @@ def my_team(request, course_id):
         pass
 
     if team:
-        return redirect(reverse('view_team', args=[course_id, team.team_id]))
+        topic_url = request.GET.get("topic_url", None)
+        url = reverse('view_team', args=[course_id, team.team_id])
+        if topic_url:
+            url = add_or_replace_parameter(url, "topic_url", topic_url)
+        return redirect(url)
 
     return render_to_response("teams/my_team.html", {'course': course})
 
@@ -163,7 +167,8 @@ def view_team(request, course_id, team_id):
     if not team_group_chat:
         raise Http404
 
-    embed_url = make_embed_url(team_group_chat, user)
+    topic_url = request.GET.get("topic_url", None)
+    embed_url = make_embed_url(team_group_chat, user, topic_url)
     leave_team_url = reverse('team_membership_detail', args=[team_id, request.user.username])
 
     team_administrator = (has_access(request.user, 'staff', course_key)
