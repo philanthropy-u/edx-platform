@@ -132,6 +132,7 @@ def my_team(request, course_id):
     user = request.user
     course_key = CourseKey.from_string(course_id)
     course = get_course_with_access(request.user, "load", course_key)
+    team = None
 
     try:
         team = CourseTeam.objects.get(course_id=course_key, users=user)
@@ -181,6 +182,7 @@ def view_team(request, course_id, team_id):
     context = {
         'course': course,
         'user_has_team': is_member_of_any_team,
+        'is_team_full': course.teams_max_size <= len(team.users.all()),
         'is_user_member_of_this_team': is_user_member_of_this_team,
         'room_url': embed_url,
         'join_team_url': reverse('team_membership_list'),
