@@ -177,7 +177,10 @@ def view_team(request, course_id, team_id):
         'join_team_url': reverse('team_membership_list'),
         'team': team,
         'team_administrator': team_administrator,
-        'leave_team_url': leave_team_url
+        'leave_team_url': leave_team_url,
+        'country': str(countries.countries[team.country]),
+        'language': dict(settings.ALL_LANGUAGES)[team.language],
+        'name': team.name,
     }
 
     return render_to_response("teams/view_team.html", context)
