@@ -3,6 +3,7 @@ Views handling read (GET) requests for the Discussion tab and inline discussions
 """
 
 import logging
+from w3lib.url import add_or_replace_parameter
 
 from django.http import HttpResponseRedirect
 from django.conf import settings
@@ -61,6 +62,7 @@ def nodebb_forum_discussion(request, course_id):
 
     return render(request, 'discussion_nodebb/discussion_board.html', context)
 
+
 @login_required
 def nodebb_embedded_topic(request):
     """
@@ -69,17 +71,23 @@ def nodebb_embedded_topic(request):
     topic_url = 'topic/' + request.GET.get('topic_url')
     category_slug = request.GET.get('category_slug')
     if "teamview" in request.GET:
-        redirect_url = get_course_team_discussion_url(category_slug)
+        redirect_url = get_course_team_discussion_url(category_slug, topic_url)
     else:
         redirect_url = get_course_discussion_url(category_slug, topic_url)
 
     return HttpResponseRedirect(redirect_url)
 
 
-def get_course_team_discussion_url(community_url):
+def get_course_team_discussion_url(community_url, topic_url):
+
     team_chat_group = TeamGroupChat.objects.get(slug=community_url)
     if team_chat_group:
-        return reverse("my_team", args=[team_chat_group.team.course_id])
+        course_id = team_chat_group.team.course_id.to_deprecated_string()
+
+        url = reverse("my_team", args=[course_id])
+        if topic_url:
+            url = add_or_replace_parameter(url, "topic_url", topic_url)
+        return url
 
 
 def get_course_discussion_url(category_slug, topic_url):

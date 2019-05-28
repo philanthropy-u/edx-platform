@@ -44,7 +44,10 @@ def validate_team_topic(course, topic_id):
     return bool(filter(lambda topic: topic['id'] == topic_id, course.teams_topics))
 
 
-def make_embed_url(team_group_chat, user):
+def make_embed_url(team_group_chat, user, topic_url=None):
+    if topic_url:
+        topic = topic_url.split("topic/")[1]
+        return '{}/embed/{}?iframe=embedView&isTopic=True'.format(settings.NODEBB_ENDPOINT, topic)
     if team_group_chat.slug:
         return '{}/category/{}?iframe=embedView'.format(settings.NODEBB_ENDPOINT, team_group_chat.slug)
     else:
