@@ -6,7 +6,7 @@ class ForumCategory(Category):
     Added custom methods to the default Category class of pynodebb package
     """
 
-    def create(self, name, label, hidden=1, uid=1, parent_cid=None, **kwargs):
+    def create(self, name, label, hidden=1, uid=1, parent_cid=None, description='', **kwargs):
         """
          Create a private category on NodeBB
 
@@ -18,7 +18,8 @@ class ForumCategory(Category):
             'label': label,
             '_uid': uid,
             'hidden': hidden,
-            'parentCid': parent_cid
+            'parentCid': parent_cid,
+            'description': description
         }
         return self.client.post('/api/v2/category/private', **payload)
 

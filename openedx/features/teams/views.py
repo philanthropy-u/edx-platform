@@ -132,7 +132,11 @@ def my_team(request, course_id):
     user = request.user
     course_key = CourseKey.from_string(course_id)
     course = get_course_with_access(request.user, "load", course_key)
-    team = CourseTeam.objects.filter(users=user).first()
+
+    try:
+        team = CourseTeam.objects.get(course_id=course_key, users=user)
+    except CourseTeam.DoesNotExist:
+        pass
 
     if team:
         return redirect(reverse('view_team', args=[course_id, team.team_id]))
