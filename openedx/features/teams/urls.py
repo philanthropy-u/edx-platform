@@ -8,7 +8,7 @@ from .views import browse_teams, create_team, my_team, browse_topic_teams, updat
 urlpatterns = patterns(
     'openedx.features.teams.views',
 
-    url(r"^browse_teams/$", browse_teams, name="browse_teams"),
+    url(r"^browse_teams/$", browse_teams, name="teams_dashboard"),
     url(r"^browse_teams/" + TOPIC_ID_PATTERN + "/$", browse_topic_teams, name="browse_topic_teams"),
     url(r"^" + TOPIC_ID_PATTERN + "/create/$", create_team, name="create_team"),
     url(r"^" + TEAM_ID_PATTERN + "/update/$", update_team, name="update_team"),

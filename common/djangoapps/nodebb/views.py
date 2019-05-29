@@ -44,7 +44,7 @@ def nodebb_forum_discussion(request, course_id):
     progress = get_all_course_progress(request.user, current_course)
 
     course_link = reverse('about_course', args=[get_related_card_id(course_key)])
-    browse_teams_link = reverse('browse_teams', args=[course_id])
+    browse_teams_link = reverse('teams_dashboard', args=[course_id])
 
     context = {
         "provider": current_course.org,
