@@ -639,11 +639,11 @@ if settings.FEATURES["ENABLE_TEAMS"]:
             include('lms.djangoapps.teams.api_urls')
         ),
         url(
-            r'^courses/{}/teams'.format(
+            r'^courses/{}/teams/'.format(
                 settings.COURSE_ID_PATTERN,
             ),
-            include('lms.djangoapps.teams.urls'),
-            name='teams_endpoints',
+            include('openedx.features.teams.urls'),
+            name='philu_teams_endpoints',
         ),
     )
 

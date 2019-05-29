@@ -2,7 +2,7 @@ from lms.djangoapps.teams.tests.factories import CourseTeamFactory
 from xmodule.modulestore.tests.factories import CourseFactory
 from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
-from lms.djangoapps.philu_overrides.teams.serializers import CustomCourseTeamCreationSerializer
+from openedx.features.teams.serializers import CustomCourseTeamCreationSerializer
 
 VALID_COUNTRY = 'LA'
 VALID_LANGUAGE = 'kl'
