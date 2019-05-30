@@ -236,6 +236,7 @@
                         data = this.setExtraData(data);
                         this.model.set(data);
                         this.model.save();
+                        trackEvent('Registration', 'Clicked - Button - Create Account');
                         this.clearFormErrors();
                     } else {
                         this.renderErrors(this.defaultFormErrorsTitle, this.errors);
