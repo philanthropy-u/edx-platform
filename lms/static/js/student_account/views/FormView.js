@@ -236,7 +236,7 @@
                         data = this.setExtraData(data);
                         this.model.set(data);
                         this.model.save();
-                        trackEvent(CATEGORY.registration, 'Clicked - Button - Create Account');
+                        trackEvent(GTM_EVENT_CATEGORY.registration, GTM_EVENT_ACTION.registrationPage0);
                         this.clearFormErrors();
                     } else {
                         this.renderErrors(this.defaultFormErrorsTitle, this.errors);
