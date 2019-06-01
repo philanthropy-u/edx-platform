@@ -6,4 +6,4 @@ channels==1.1.8
 asgi-redis==1.4.3
 imgkit==1.0.1
 -e git+https://github.com/philanthropy-u/xblock-poll#egg=xblock-poll
--e git+https://github.com/philanthropy-u/edx-notifications.git@f03d251440ca9cea68e51fcd01e5dec230d9a842#egg=edx-notifications
+-e git+https://github.com/philanthropy-u/edx-notifications.git@e9839444109f2773e03cab0712c540a652d5d4e9#egg=edx-notifications

@@ -46,7 +46,7 @@ from .serializers import (
     MembershipSerializer,
     add_team_count
 )
-from lms.djangoapps.philu_overrides.teams.serializers import CustomCourseTeamCreationSerializer
+from openedx.features.teams.serializers import CustomCourseTeamCreationSerializer
 from .search_indexes import CourseTeamIndexer
 from .errors import AlreadyOnTeamInCourse, ElasticSearchConnectionError, NotEnrolledInCourseForTeam
 from .utils import emit_team_event

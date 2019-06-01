@@ -3,6 +3,8 @@ Views handling read (GET) requests for the Discussion tab and inline discussions
 """
 
 import logging
+from w3lib.url import add_or_replace_parameter
+
 from django.http import HttpResponseRedirect
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -11,9 +13,8 @@ from django.core.urlresolvers import reverse
 from openedx.features.course_card.helpers import get_related_card_id
 from opaque_keys.edx.keys import CourseKey
 
-from nodebb.models import DiscussionCommunity
 from common.djangoapps.nodebb.helpers import get_course_related_tabs, get_all_course_progress
-from nodebb.models import DiscussionCommunity
+from nodebb.models import DiscussionCommunity, TeamGroupChat
 
 log = logging.getLogger("edx.nodebb")
 
@@ -43,6 +44,7 @@ def nodebb_forum_discussion(request, course_id):
     progress = get_all_course_progress(request.user, current_course)
 
     course_link = reverse('about_course', args=[get_related_card_id(course_key)])
+    browse_teams_link = reverse('teams_dashboard', args=[course_id])
 
     context = {
         "provider": current_course.org,
@@ -54,10 +56,12 @@ def nodebb_forum_discussion(request, course_id):
         "course_id": course_id,
         "community_url": course_community.community_url if course_community else "",
         "custom_community_link": custom_community_link,
-        "is_community_topic_link": is_community_topic_link
+        "is_community_topic_link": is_community_topic_link,
+        "browse_teams_link": browse_teams_link
     }
 
     return render(request, 'discussion_nodebb/discussion_board.html', context)
+
 
 @login_required
 def nodebb_embedded_topic(request):
@@ -66,7 +70,27 @@ def nodebb_embedded_topic(request):
     """
     topic_url = 'topic/' + request.GET.get('topic_url')
     category_slug = request.GET.get('category_slug')
+    if "teamview" in request.GET:
+        redirect_url = get_course_team_discussion_url(category_slug, topic_url)
+    else:
+        redirect_url = get_course_discussion_url(category_slug, topic_url)
 
+    return HttpResponseRedirect(redirect_url)
+
+
+def get_course_team_discussion_url(community_url, topic_url):
+
+    team_chat_group = TeamGroupChat.objects.get(slug=community_url)
+    if team_chat_group:
+        course_id = team_chat_group.team.course_id.to_deprecated_string()
+
+        url = reverse("my_team", args=[course_id])
+        if topic_url:
+            url = add_or_replace_parameter(url, "topic_url", topic_url)
+        return url
+
+
+def get_course_discussion_url(category_slug, topic_url):
     course_id = DiscussionCommunity.objects.filter(community_url=category_slug).first().course_id
-
-    return HttpResponseRedirect('/courses/{}/discussion/nodebb?topic_url={}'.format(course_id, topic_url))
+    redirect_url = '/courses/{}/discussion/nodebb?topic_url={}'.format(course_id, topic_url)
+    return redirect_url

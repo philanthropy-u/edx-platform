@@ -165,6 +165,7 @@ class MembershipSerializer(serializers.ModelSerializer):
 
 class BaseTopicSerializer(serializers.Serializer):
     """Serializes a topic without team_count."""
+    image = serializers.URLField(required=False)  # this is new field in the topics json in cms for region flags
     description = serializers.CharField()
     name = serializers.CharField()
     id = serializers.CharField()  # pylint: disable=invalid-name
