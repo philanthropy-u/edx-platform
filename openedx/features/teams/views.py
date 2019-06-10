@@ -57,7 +57,7 @@ def browse_teams(request, course_id):
         'course': course,
         'topics': topics_data,
         'recommended_teams': recommended_teams,
-        'user_country': request.user.profile.country.name.format()
+        'user_country': user.profile.country.name.format()
     }
 
     return render_to_response("teams/browse_teams.html", context)
@@ -65,7 +65,8 @@ def browse_teams(request, course_id):
 
 @login_required
 def browse_topic_teams(request, course_id, topic_id):
-    course = get_user_course_with_access(course_id, request.user)
+    user = request.user
+    course = get_user_course_with_access(course_id, user)
 
     topics = [t for t in course.teams_topics if t['id'] == topic_id]
 
@@ -81,11 +82,11 @@ def browse_topic_teams(request, course_id, topic_id):
         {'expand': ('user',)}
     )
 
-    is_member_of_any_team = CourseTeamMembership.user_in_team_for_course(request.user, course.id)
+    is_member_of_any_team = CourseTeamMembership.user_in_team_for_course(user, course.id)
 
     context = {
         'course': course,
-        'user_country': request.user.profile.country.name.format(),
+        'user_country': user.profile.country.name.format(),
         'topic': topics[0],
         'teams': teams,
         'show_create_card': not is_member_of_any_team
@@ -96,13 +97,14 @@ def browse_topic_teams(request, course_id, topic_id):
 
 @login_required
 def create_team(request, course_id, topic_id):
-    course = get_user_course_with_access(course_id, request.user)
+    user = request.user
+    course = get_user_course_with_access(course_id, user)
 
     is_topic_valid = validate_team_topic(course, topic_id)
     if not is_topic_valid:
         raise Http404
 
-    is_member_of_any_team = CourseTeamMembership.user_in_team_for_course(request.user, course.id)
+    is_member_of_any_team = CourseTeamMembership.user_in_team_for_course(user, course.id)
 
     context = {
         'course': course,
@@ -119,7 +121,7 @@ def create_team(request, course_id, topic_id):
 @login_required
 def my_team(request, course_id):
     user = request.user
-    course = get_user_course_with_access(course_id, request.user)
+    course = get_user_course_with_access(course_id, user)
 
     try:
         team = CourseTeam.objects.get(course_id=course.id, users=user)
@@ -154,12 +156,12 @@ def view_team(request, course_id, team_id):
 
     topic_url = request.GET.get('topic_url', None)
     embed_url = make_embed_url(team_group_chat, user, topic_url)
-    leave_team_url = reverse('team_membership_detail', args=[team_id, request.user.username])
+    leave_team_url = reverse('team_membership_detail', args=[team_id, user.username])
 
-    team_administrator = (has_access(request.user, 'staff', course.id)
-                          or has_discussion_privileges(request.user, course.id))
+    team_administrator = (has_access(user, 'staff', course.id)
+                          or has_discussion_privileges(user, course.id))
 
-    is_member_of_any_team = CourseTeamMembership.user_in_team_for_course(request.user, course.id)
+    is_member_of_any_team = CourseTeamMembership.user_in_team_for_course(user, course.id)
 
     is_user_member_of_this_team = bool(CourseTeamMembership.objects.filter(team=team, user=user).first())
 
@@ -182,10 +184,11 @@ def view_team(request, course_id, team_id):
 
 @login_required
 def update_team(request, course_id, team_id):
-    course = get_user_course_with_access(course_id, request.user)
+    user = request.user
+    course = get_user_course_with_access(course_id, user)
 
-    team_administrator = (has_access(request.user, 'staff', course.id)
-                          or has_discussion_privileges(request.user, course.id))
+    team_administrator = (has_access(user, 'staff', course.id)
+                          or has_discussion_privileges(user, course.id))
     if not team_administrator:
         raise Http404
 
@@ -208,10 +211,11 @@ def update_team(request, course_id, team_id):
 
 @login_required
 def edit_team_memberships(request, course_id, team_id):
-    course = get_user_course_with_access(course_id, request.user)
+    user = request.user
+    course = get_user_course_with_access(course_id, user)
 
-    team_administrator = (has_access(request.user, 'staff', course.id)
-                          or has_discussion_privileges(request.user, course.id))
+    team_administrator = (has_access(user, 'staff', course.id)
+                          or has_discussion_privileges(user, course.id))
     if not team_administrator:
         raise Http404
 
