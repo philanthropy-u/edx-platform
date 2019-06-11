@@ -1,5 +1,9 @@
-from django.conf import settings
 from random import choice
+from django.conf import settings
+
+from opaque_keys.edx.keys import CourseKey
+from lms.djangoapps.teams.models import CourseTeam
+from courseware.courses import get_course_with_access
 
 USER_ICON_COLORS = [
     '#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5',
@@ -52,5 +56,26 @@ def make_embed_url(team_group_chat, user, topic_url=None):
         return '{}/category/{}?iframe=embedView'.format(settings.NODEBB_ENDPOINT, team_group_chat.slug)
     else:
         return '{}/user/{}/chats/{}?iframe=embedView'.format(
-            settings.NODEBB_ENDPOINT, user.username, team_group_chat.room_id
+            settings.NODEBB_ENDPOINT, user.username.lower(), team_group_chat.room_id
         )
+
+
+def get_user_recommended_team(course_key, user):
+    user_country = user.profile.country
+    recommended_teams = CourseTeam.objects.filter(course_id=course_key,
+                                                  country=user_country).exclude(users__in=[user]).all()
+
+    return list(recommended_teams)
+
+
+def get_user_course_with_access(course_id, user):
+    """
+    Method that wraps the courseware.courses.get_course_with_access to use
+    course_id in string format with it
+
+    :param course_id: in string format
+    :param user: user
+    :return: course if user has access in this course
+    """
+    course_key = CourseKey.from_string(course_id)
+    return get_course_with_access(user, "load", course_key)
