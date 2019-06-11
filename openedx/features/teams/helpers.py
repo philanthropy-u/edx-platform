@@ -56,7 +56,7 @@ def make_embed_url(team_group_chat, user, topic_url=None):
         return '{}/category/{}?iframe=embedView'.format(settings.NODEBB_ENDPOINT, team_group_chat.slug)
     else:
         return '{}/user/{}/chats/{}?iframe=embedView'.format(
-            settings.NODEBB_ENDPOINT, user.username, team_group_chat.room_id
+            settings.NODEBB_ENDPOINT, user.username.lower(), team_group_chat.room_id
         )
 
 
