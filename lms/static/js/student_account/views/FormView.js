@@ -236,6 +236,7 @@
                         data = this.setExtraData(data);
                         this.model.set(data);
                         this.model.save();
+                        trackEvent(GTM_EVENT_CATEGORY.registration, GTM_EVENT_ACTION.registrationPage0);
                         this.clearFormErrors();
                     } else {
                         this.renderErrors(this.defaultFormErrorsTitle, this.errors);

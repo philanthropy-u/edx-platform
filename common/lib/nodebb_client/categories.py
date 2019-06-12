@@ -51,37 +51,3 @@ class ForumCategory(Category):
             * 200 status if successful
         """
         return self.client.delete('/api/v2/categories/{}'.format(category_id))
-
-    def join(self, username, category_id, **kwargs):
-        """
-        Join category for specific user
-        :param username: username of the logged in user
-        :param category_id: Id of the NodeBB category
-        :return:
-            * 200 status if successful
-            * 401 if user is unauthorized
-            * 400 if bad request
-        """
-
-        payload = {
-            'username': username,
-            'category_id': category_id
-        }
-        return self.client.post('api/v2/users/join', **payload)
-
-    def leave(self, username, category_id, **kwargs):
-        """
-        Leave a category for some user
-        :param username: username of logged in user
-        :param category_id: Id of the NodeBB category
-        :return:
-            * 200 status if successfull
-            * 401 if user is unauthorized
-            * 400 if bad request
-        """
-
-        payload = {
-            'username': username,
-            'category_id': category_id
-        }
-        return self.client.post('api/v2/users/unjoin', **payload)
