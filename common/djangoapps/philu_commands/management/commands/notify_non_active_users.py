@@ -64,7 +64,6 @@ class Command(BaseCommand):
                 non_actives = [user for user in enrolled_users if user not in unique_users]
 
                 for non_active_user in non_actives:
-                    context = {}
                     first_name = non_active_user.first_name
                     course_name = course.display_name
                     course_url = get_course_first_chapter_link(course=course)
