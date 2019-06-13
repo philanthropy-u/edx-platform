@@ -1,44 +1,48 @@
+from logging import getLogger
+from datetime import datetime, timedelta
+from django.core.management.base import BaseCommand
+
 from common.lib.mandrill_client.client import MandrillClient
+
+from student.models import CourseEnrollment
 from courseware.models import StudentModule
-from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+from lms.djangoapps.branding import get_visible_courses
 from openedx.core.djangoapps.timed_notification.core import get_course_link
 from openedx.features.course_card.helpers import get_course_open_date
-from student.models import CourseEnrollment
-from django.core.management.base import BaseCommand
-from openedx.features.course_card.models import CourseCard
-from datetime import datetime, timedelta
 
-from logging import getLogger
 log = getLogger(__name__)
+
+DAYS_TO_SEND_EMAIL = 7
 
 
 class Command(BaseCommand):
     help = """
-    Send Notifications prompts to users who have not entered into course after enrollment.
+    Send Notifications prompts to users who have not entered into course after Course Open Date.
     Orientation module will not be considered because that module will be accessible to user 
     before course actually starts. We are managing this by introducing our own date "Course Open Date"
     in custom setting.
+    Note: As we know in some cases enrollment process may continues after Course Open Date so if any student
+    enroll to some course after 7 days of course open date, those users will not be notified.
     """
 
     def handle(self, *args, **options):
-        courses = CourseCard.objects.all()
+        courses = get_visible_courses()
 
         for course in courses:
-            course_overview = CourseOverview.get_from_id(course_id=course.course_id)
 
             today = datetime.now().date()
             log.info('Today date %s', today)
 
-            course_start_date = get_course_open_date(course_overview).date()
+            course_start_date = get_course_open_date(course).date()
             log.info('Course start date %s', course_start_date)
 
             delta_date = today - course_start_date
             log.info('Days passed since course started %s', delta_date.days)
 
-            if delta_date.days == 7:
+            if delta_date.days == DAYS_TO_SEND_EMAIL:
 
-                log.info('Getting all enrollments for %s course', course_overview.display_name)
-                all_enrollments = CourseEnrollment.objects.filter(course_id=course.course_id)
+                log.info('Getting all enrollments for %s course', course.display_name)
+                all_enrollments = CourseEnrollment.objects.filter(course_id=course.id)
 
                 active_users = []
                 enrolled_users = []
@@ -46,22 +50,25 @@ class Command(BaseCommand):
                 for enrollment in all_enrollments:
                     enrolled_users.append(enrollment.user)
 
-                modules = StudentModule.objects.filter(course_id=course.course_id)
+                modules = StudentModule.objects.filter(course_id=course.id)
 
-                for mod in modules:
-                    if course_start_date < mod.created.date() <= (course_start_date + timedelta(days=7)):
-                        active_users.append(mod.student)
+                for mod_entry in modules:
+                    ''' Verifying if mod_entry is between C0urse Open Date and 7 days after course open date'''
+                    if course_start_date < mod_entry.created.date() \
+                            <= (course_start_date + timedelta(days=DAYS_TO_SEND_EMAIL)):
+                        active_users.append(mod_entry.student)
 
-                unique_users = [k for k in dict.fromkeys(active_users)]
-
-                s = set(unique_users)
-                non_actives = [x for x in enrolled_users if x not in s]
+                ''' Getting unique users as Student module may contains multiple entries for same course of same user'''
+                unique_users = set([k for k in dict.fromkeys(active_users)])
+                # s = set(unique_users)
+                ''' Getting list of those users who haven't entered in course.'''
+                non_actives = [user for user in enrolled_users if user not in unique_users]
 
                 for non_active_user in non_actives:
                     context = {}
                     first_name = non_active_user.first_name
-                    course_name = course_overview.display_name
-                    course_url = get_course_link(course_id=course_overview.id)
+                    course_name = course.display_name
+                    course_url = get_course_link(course_id=course.id)
 
                     template = MandrillClient.COURSE_ACTIVATION_REMINDER
                     context = {
