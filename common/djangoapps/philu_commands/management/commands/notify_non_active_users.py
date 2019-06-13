@@ -7,7 +7,7 @@ from common.lib.mandrill_client.client import MandrillClient
 from student.models import CourseEnrollment
 from courseware.models import StudentModule
 from lms.djangoapps.branding import get_visible_courses
-from openedx.core.djangoapps.timed_notification.core import get_course_link
+from openedx.core.djangoapps.timed_notification.core import get_course_link, get_course_first_chapter_link
 from openedx.features.course_card.helpers import get_course_open_date
 
 log = getLogger(__name__)
@@ -53,22 +53,21 @@ class Command(BaseCommand):
                 modules = StudentModule.objects.filter(course_id=course.id)
 
                 for mod_entry in modules:
-                    ''' Verifying if mod_entry is between C0urse Open Date and 7 days after course open date'''
+                    # Verifying if mod_entry is between Course Open Date and 7 days after course open date
                     if course_start_date < mod_entry.created.date() \
                             <= (course_start_date + timedelta(days=DAYS_TO_SEND_EMAIL)):
                         active_users.append(mod_entry.student)
 
-                ''' Getting unique users as Student module may contains multiple entries for same course of same user'''
+                # Getting unique users as Student module may contains multiple entries for same course of same user
                 unique_users = set([k for k in dict.fromkeys(active_users)])
-                # s = set(unique_users)
-                ''' Getting list of those users who haven't entered in course.'''
+                # Getting list of those users who haven't entered in course.
                 non_actives = [user for user in enrolled_users if user not in unique_users]
 
                 for non_active_user in non_actives:
                     context = {}
                     first_name = non_active_user.first_name
                     course_name = course.display_name
-                    course_url = get_course_link(course_id=course.id)
+                    course_url = get_course_first_chapter_link(course=course)
 
                     template = MandrillClient.COURSE_ACTIVATION_REMINDER
                     context = {
