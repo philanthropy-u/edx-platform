@@ -1,5 +1,7 @@
 from logging import getLogger
+from pytz import utc
 from datetime import datetime, timedelta
+
 from django.core.management.base import BaseCommand
 
 from common.lib.mandrill_client.client import MandrillClient
@@ -7,7 +9,7 @@ from common.lib.mandrill_client.client import MandrillClient
 from student.models import CourseEnrollment
 from courseware.models import StudentModule
 from lms.djangoapps.branding import get_visible_courses
-from openedx.core.djangoapps.timed_notification.core import get_course_link, get_course_first_chapter_link
+from openedx.core.djangoapps.timed_notification.core import get_course_first_chapter_link
 from openedx.features.course_card.helpers import get_course_open_date
 
 log = getLogger(__name__)
@@ -30,7 +32,7 @@ class Command(BaseCommand):
 
         for course in courses:
 
-            today = datetime.now().date()
+            today = datetime.now(utc).date()
             log.info('Today date %s', today)
 
             course_start_date = get_course_open_date(course).date()
@@ -76,6 +78,4 @@ class Command(BaseCommand):
                     }
 
                     MandrillClient().send_mail(template, non_active_user.email, context)
-                    log.info('CELERY-TASK: date_now: %s, course_start_date: %s', today, course_start_date)
-
                     log.info("Emailing to %s Task Completed", non_active_user.email)
