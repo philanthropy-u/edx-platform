@@ -117,5 +117,5 @@ def task_archive_community_on_nodebb(category_id):
     Celery task to archive a community on NodeBB
     """
     status_code, response = NodeBBClient().categories.archive(category_id=category_id)
-    handle_response(task_archive_community_on_nodebb, 'Archived category with id {}'.format(category_id),
+    handle_response(task_archive_community_on_nodebb, 'Archive category with id {}'.format(category_id),
                     status_code, response)
