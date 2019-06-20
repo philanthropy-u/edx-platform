@@ -18,13 +18,13 @@ class Command(BaseCommand):
     This command picks all courses that end in the past 24 hours and archives the course discussion community for 
     it in nodebb (which archives all mini communities)
     example:
-        manage.py ... archive_past_courses_teams
+        manage.py ... archive_past_courses_communities
     """
 
     def handle(self, *args, **options):
         courses = get_visible_courses()
         time_to_compare_with = datetime.utcnow().replace(tzinfo=utc)
-        days_seconds = timedelta(days=1).total_seconds()
+        day_in_seconds = timedelta(days=1).total_seconds()
 
         for course in courses:
             if not course.end:
@@ -33,6 +33,6 @@ class Command(BaseCommand):
             # To check if the course has ended between the last 24 hours
             time_diff_in_seconds = (time_to_compare_with - course.end).total_seconds()
 
-            if 0 < time_diff_in_seconds < days_seconds:
+            if 0 < time_diff_in_seconds < day_in_seconds:
                 log.info('Archiving course community for course id: {}'.format(course.id))
                 archive_course_community(course.id)
