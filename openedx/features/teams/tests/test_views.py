@@ -32,7 +32,6 @@ TEST_USERNAME = 'test_user'
 TEST_PASSWORD = 'test_password'
 
 
-@factory.django.mute_signals(signals.pre_save, signals.post_save)
 @override_settings(MIDDLEWARE_CLASSES=[klass for klass in settings.MIDDLEWARE_CLASSES if klass != 'lms.djangoapps.onboarding.middleware.RedirectMiddleware'])
 class TeamsTestsBaseClass(ModuleStoreTestCase):
 
@@ -58,6 +57,7 @@ class TeamsTestsBaseClass(ModuleStoreTestCase):
         topic = {u'name': u'T0pic', u'description': u'The best topic!', u'id': u'0', 'url': 'example.com/topic/0'}
         return topic
 
+    @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def _create_course(self, **kwargs):
         org = kwargs.get('org') or 'edX'
         course_number = kwargs.get('course_number') or 'CS101'
@@ -76,6 +76,7 @@ class TeamsTestsBaseClass(ModuleStoreTestCase):
         )
         return course
 
+    @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def _create_team(self, course):
         team = CourseTeamFactory.create(
             course_id=course.id,
@@ -85,14 +86,17 @@ class TeamsTestsBaseClass(ModuleStoreTestCase):
         )
         return team
 
+    @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def _create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
         user = UserFactory.create(username= username, password=password, **kwargs)
         return user
 
+    @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def _create_team_membership(self, team, user):
         membership = CourseTeamMembershipFactory.create(team=team, user=user)
         return membership
 
+    @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def _enroll_user_in_course(self, user, course_id):
         enrollment= CourseEnrollmentFactory(user=user, course_id=course_id)
         return enrollment
