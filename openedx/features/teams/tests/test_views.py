@@ -31,8 +31,12 @@ TEST_TOPIC_URL = '/topic/test-1'
 TEST_USERNAME = 'test_user'
 TEST_PASSWORD = 'test_password'
 
+COURSE_TEAMS_COUNTRY = 'US'
+
+
 
 @override_settings(MIDDLEWARE_CLASSES=[klass for klass in settings.MIDDLEWARE_CLASSES if klass != 'lms.djangoapps.onboarding.middleware.RedirectMiddleware'])
+@factory.django.mute_signals(signals.pre_save, signals.post_save)
 class TeamsTestsBaseClass(ModuleStoreTestCase):
 
     @classmethod
@@ -48,7 +52,10 @@ class TeamsTestsBaseClass(ModuleStoreTestCase):
         super(TeamsTestsBaseClass, self).setUp()
         self.topic = self._create_topic()
         self.course = self._create_course()
-        self.team = self._create_team(self.course)
+        self.teams = []
+        self.teams.append(self._create_team(self.course.id, topic_id=self.course.teams_topics[0]['id'], country=COURSE_TEAMS_COUNTRY))
+        self.teams.append(self._create_team(self.course.id, topic_id=self.course.teams_topics[0]['id'], country=COURSE_TEAMS_COUNTRY))
+        self.teams.append(self._create_team(self.course.id, topic_id=self.course.teams_topics[0]['id'], country=COURSE_TEAMS_COUNTRY))
         self.user = self._create_user()
         self._create_team_membership(self.team, self.user)
         self._initiate_urls()
@@ -79,10 +86,11 @@ class TeamsTestsBaseClass(ModuleStoreTestCase):
     @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def _create_team(self, course):
         team = CourseTeamFactory.create(
-            course_id=course.id,
-            topic_id=course.teams_topics[0]['id'],
+            course_id=course_id,
+            topic_id=topic_id,
             name='Test Team',
             description='Testing Testing Testing...',
+            **kwargs
         )
         return team
 
@@ -293,7 +301,7 @@ class ViewTeamTestCase(TeamsTestsBaseClass):
 
     def test_404_team_no_team_group_chat(self):
         client = Client()
-        team_without_group_chat = self._create_team(self.course)
+        team_without_group_chat = self._create_team(self.course.id, self.course.teams_topics[0]['id'])
         team_without_group_chat.team.all().delete()
         url = reverse('view_team', args=[self.course.id, team_without_group_chat.team_id])
         client.login(username=self.user.username, password=TEST_PASSWORD)
