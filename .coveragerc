@@ -11,6 +11,7 @@ source =
     openedx/core/djangoapps
     pavelib
     openedx/features/course_card
+    openedx/features/teams
 
 omit =
     cms/envs/*

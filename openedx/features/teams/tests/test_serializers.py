@@ -1,3 +1,7 @@
+import factory
+
+from django.db.models import signals
+
 from lms.djangoapps.teams.tests.factories import CourseTeamFactory
 from xmodule.modulestore.tests.factories import CourseFactory
 from xmodule.modulestore import ModuleStoreEnum
@@ -19,6 +23,7 @@ class CreateTeamsSerializerTestCase(ModuleStoreTestCase):
         Tests for the create team serializer.
     """
 
+    @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def setUp(self):
         super(CreateTeamsSerializerTestCase, self).setUp()
         org = 'edX'

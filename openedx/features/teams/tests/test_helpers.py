@@ -3,12 +3,12 @@ import factory
 from django.conf import settings
 from django.db.models import signals
 
-from lms.djangoapps.teams.tests.factories import CourseTeamFactory
 from lms.djangoapps.onboarding.tests.factories import UserFactory
 from xmodule.modulestore.tests.factories import CourseFactory
 from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 
+from openedx.features.teams.tests.factories import CourseTeamFactory
 from openedx.features.teams.serializers import CustomCourseTeamCreationSerializer
 from openedx.features.teams.helpers import (
     USER_ICON_COLORS,
@@ -21,29 +21,25 @@ from openedx.features.teams.helpers import (
 )
 
 
-TEST_TOPIC_URL = ''
-TEST_COURSE_COMMUNITY = 'testCourseCommunity'
-NODEBB_CREATE_CATEGORY_RESPONSE = {
-    'categoryData': {
-        'slug': TEST_COURSE_COMMUNITY,
-        'cid': 1
-    }
-}
-
-
 class HelpersTestCase(ModuleStoreTestCase):
 
     @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def setUp(self):
         super(HelpersTestCase, self).setUp()
+        self.topic = self._create_topic()
+        self.course = self._create_course()
+        self.team = self._create_team(self.course.id, self.course.teams_topics[0]['id'])
+        self.user = UserFactory.create()
+
+    def _create_topic(self):
+        return {u'name': u'T0pic', u'description': u'The best topic!', u'id': u'0', 'url': 'example.com/topic/0'}
+
+    def _create_course(self):
         org = 'edX'
         course_number = 'CS101'
         course_run = '2015_Q1'
         display_name = 'test course 1'
-
-        self.topic = {u'name': u'T0pic', u'description': u'The best topic!', u'id': u'0', 'url': 'example.com/topic/0'}
-
-        self.course = CourseFactory.create(
+        course = CourseFactory.create(
             org=org,
             number=course_number,
             run=course_run,
@@ -54,18 +50,16 @@ class HelpersTestCase(ModuleStoreTestCase):
                 "topics": [self.topic]
             }
         )
-        self.course.save()
+        return course
 
-        self.team = CourseTeamFactory.create(
-            course_id=self.course.id,
-            topic_id=self.course.teams_topics[0]['id'],
+    def _create_team(self, course_id, topic_id):
+        team = CourseTeamFactory.create(
+            course_id=course_id,
+            topic_id=topic_id,
             name='Test Team',
             description='Testing Testing Testing...',
         )
-        self.team.save()
-
-        self.user = UserFactory.create()
-        self.user.save()
+        return team
 
     def test_generate_random_user_icon_color(self):
         color = generate_random_user_icon_color()
@@ -112,9 +106,9 @@ class HelpersTestCase(ModuleStoreTestCase):
             data,
             serializer_cls=CustomCourseTeamCreationSerializer,
             serializer_ctx=dummy_context,
-            request=None,
+            request=dummy_request,
             many=False
         )
         serialized_data_keys = serialized_data.keys()
-        expected_data = { key: str(data[key]) for key in serialized_data_keys }
+        expected_data = {key: str(data[key]) for key in serialized_data_keys}
         self.assertEqual(serialized_data, expected_data)
