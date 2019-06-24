@@ -21,6 +21,7 @@ from lms.djangoapps.teams.views import get_alphabetical_topics
 from .helpers import serialize, validate_team_topic, make_embed_url, get_user_recommended_team, \
     get_user_course_with_access
 from .serializers import CustomCourseTeamSerializer
+from .decorators import can_view_teams
 
 
 @login_required
@@ -53,16 +54,19 @@ def browse_teams(request, course_id):
         {'expand': ('user',)}
     )
 
+    course_has_ended = course.has_ended()
     context = {
         'course': course,
         'topics': topics_data,
         'recommended_teams': recommended_teams,
-        'user_country': user.profile.country.name.format()
+        'user_country': user.profile.country.name.format(),
+        'course_has_ended': course_has_ended
     }
 
     return render_to_response("teams/browse_teams.html", context)
 
 
+@can_view_teams
 @login_required
 def browse_topic_teams(request, course_id, topic_id):
     user = request.user
@@ -95,6 +99,7 @@ def browse_topic_teams(request, course_id, topic_id):
     return render_to_response("teams/browse_topic_teams.html", context)
 
 
+@can_view_teams
 @login_required
 def create_team(request, course_id, topic_id):
     user = request.user
@@ -118,6 +123,7 @@ def create_team(request, course_id, topic_id):
     return render_to_response("teams/create_update_team.html", context)
 
 
+@can_view_teams
 @login_required
 def my_team(request, course_id):
     user = request.user
@@ -139,6 +145,7 @@ def my_team(request, course_id):
     return render_to_response("teams/my_team.html", {'course': course})
 
 
+@can_view_teams
 @login_required
 def view_team(request, course_id, team_id):
     user = request.user
@@ -182,6 +189,7 @@ def view_team(request, course_id, team_id):
     return render_to_response("teams/view_team.html", context)
 
 
+@can_view_teams
 @login_required
 def update_team(request, course_id, team_id):
     user = request.user
@@ -209,6 +217,7 @@ def update_team(request, course_id, team_id):
     return render_to_response("teams/create_update_team.html", context)
 
 
+@can_view_teams
 @login_required
 def edit_team_memberships(request, course_id, team_id):
     user = request.user
