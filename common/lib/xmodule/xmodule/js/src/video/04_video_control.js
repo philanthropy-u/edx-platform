@@ -149,26 +149,21 @@ function() {
         });
     }
 
-    var isTrackingEventSent = false;
-
     function updateVcrVidTime(params) {
         var endTime = (this.config.endTime !== null) ? this.config.endTime : params.duration;
         // in case endTime is accidentally specified as being greater than the video
         endTime = Math.min(endTime, params.duration);
         var elapsedTime = Time.format(params.time);
-        this.videoControl.vidTimeEl.html(elapsedTime + ' / ' + Time.format(endTime));
-        if (elapsedTime === '0:10') { // Track GTM only at a particular time
-            if (!isTrackingEventSent) { // preventing multiple GTM events
-                // every time updateVcrVidTime is called, params.time return floating point value
-                // i.e. 5.785, 10.234, 10.534, 10.855, 11.399; When floating points are converted to
-                // seconds i.e. 0:05, 0:10, 0:10, 0:10, 0:11, same value may repeat multiple times
-                trackEvent(GTM_EVENT_CATEGORY.productEngagement, GTM_EVENT_ACTION.productEngagementVideo,
-                    GTM_EVENT_LABEL.productEngagementVideo, GTM_EVENT_VALUE.productEngagementVideo);
-                isTrackingEventSent = true;
-            }
-        } else {
-            isTrackingEventSent = false;
+        var timeText = this.videoControl.vidTimeEl.html();
+        // Track GTM only at a particular time and prevent multiple GTM events
+        if (elapsedTime === '0:10' && timeText.lastIndexOf(elapsedTime, 0) < 0) {
+            // every time updateVcrVidTime is called, params.time return floating point value
+            // i.e. 5.785, 10.234, 10.534, 10.855, 11.399; When floating points are converted to
+            // seconds i.e. 0:05, 0:10, 0:10, 0:10, 0:11, same value may repeat multiple times
+            trackEvent(GTM_EVENT_CATEGORY.productEngagement, GTM_EVENT_ACTION.productEngagementVideo,
+                GTM_EVENT_LABEL.productEngagementVideo, GTM_EVENT_VALUE.productEngagementVideo);
         }
+        this.videoControl.vidTimeEl.html(elapsedTime + ' / ' + Time.format(endTime));
     }
 });
 }(RequireJS.requirejs, RequireJS.require, RequireJS.define));
