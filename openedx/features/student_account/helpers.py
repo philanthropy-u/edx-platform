@@ -23,7 +23,7 @@ def get_non_active_course(user):
 
         course = CourseOverview.objects.get(id=user_course.course_id)
 
-        if datetime.now(utc).date() > course.end.date():
+        if course.end and datetime.now(utc).date() > course.end.date():
             continue
 
         course_start_date = get_course_open_date(course).date()
@@ -36,7 +36,7 @@ def get_non_active_course(user):
 
             for mod_entry in modules:
                 # Verifying if mod_entry is after Course Open date
-                if course_start_date < mod_entry.created.date():
+                if course_start_date < mod_entry.created.date() and mod_entry.student_id == user.id:
                     active_courses.append(course)
                     break
 
