@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from pytz import utc
 
 from student.models import CourseEnrollment
@@ -11,9 +10,9 @@ from openedx.core.djangoapps.timed_notification.core import get_course_first_cha
 
 def get_non_active_course(user):
 
-    DAYS_TO_SEND_EMAIL = 7
+    DAYS_TO_DISPLAY_NOTIFICATION = 7
 
-    all_user_courses = CourseEnrollment.objects.filter(user=user)
+    all_user_courses = CourseEnrollment.objects.filter(user=user, is_active=True)
 
     active_courses = []
     overview_courses = []
@@ -23,12 +22,16 @@ def get_non_active_course(user):
         today = datetime.now(utc).date()
 
         course = CourseOverview.objects.get(id=user_course.course_id)
-        overview_courses.append(course)
-        course_start_date = get_course_open_date(course).date()
 
+        if datetime.now(utc).date() > course.end.date():
+            continue
+
+        course_start_date = get_course_open_date(course).date()
         delta_date = today - course_start_date
 
-        if delta_date.days >= DAYS_TO_SEND_EMAIL:
+        if delta_date.days >= DAYS_TO_DISPLAY_NOTIFICATION:
+
+            overview_courses.append(course)
             modules = StudentModule.objects.filter(course_id=course.id)
 
             for mod_entry in modules:
@@ -36,8 +39,6 @@ def get_non_active_course(user):
                 if course_start_date < mod_entry.created.date():
                     active_courses.append(course)
                     break
-        else:
-            overview_courses.remove(course)
 
     non_active_courses = [course for course in overview_courses if course not in active_courses]
 
