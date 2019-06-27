@@ -81,5 +81,5 @@ def get_team_topic(course, topic_id):
     if not topic_id:
         return
 
-    topics = [t for t in course.teams_topics if t['id'] == 'AsiaPacific'] or [None]
+    topics = filter(lambda topic: topic['id'] == topic_id, course.teams_topics) or (None,)
     return topics[0]
