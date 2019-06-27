@@ -32,13 +32,10 @@ def get_non_active_course(user):
         if delta_date.days >= DAYS_TO_DISPLAY_NOTIFICATION:
 
             overview_courses.append(course)
-            modules = StudentModule.objects.filter(course_id=course.id)
+            modules = StudentModule.objects.filter(course_id=course.id, student_id=user.id, created__gt=course_start_date)
 
-            for mod_entry in modules:
-                # Verifying if mod_entry is after Course Open date
-                if course_start_date < mod_entry.created.date() and mod_entry.student_id == user.id:
-                    active_courses.append(course)
-                    break
+            if len(modules) > 0:
+                active_courses.append(course)
 
     non_active_courses = [course for course in overview_courses if course not in active_courses]
 
