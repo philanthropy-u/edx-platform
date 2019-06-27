@@ -613,6 +613,9 @@ def dashboard(request):
         The dashboard response.
 
     """
+
+    from openedx.features.student_account.helpers import get_non_active_course
+
     user = request.user
 
     platform_name = configuration_helpers.get_value("platform_name", settings.PLATFORM_NAME)
@@ -825,6 +828,7 @@ def dashboard(request):
         'show_program_listing': ProgramsApiConfig.current().show_program_listing,
         'disable_courseware_js': True,
         'display_course_modes_on_dashboard': enable_verified_certificates and display_course_modes_on_dashboard,
+        'non_active_course': get_non_active_course(user)
     }
 
     ecommerce_service = EcommerceService()
