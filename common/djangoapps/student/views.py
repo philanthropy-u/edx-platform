@@ -828,7 +828,7 @@ def dashboard(request):
         'show_program_listing': ProgramsApiConfig.current().show_program_listing,
         'disable_courseware_js': True,
         'display_course_modes_on_dashboard': enable_verified_certificates and display_course_modes_on_dashboard,
-        'non_active_course': get_non_active_course(user)
+        'alert_messages': get_non_active_course(user)
     }
 
     ecommerce_service = EcommerceService()
