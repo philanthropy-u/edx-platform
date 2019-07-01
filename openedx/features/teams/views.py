@@ -18,8 +18,8 @@ from lms.djangoapps.teams.serializers import (
 )
 from lms.djangoapps.teams.views import get_alphabetical_topics
 
-from .helpers import serialize, validate_team_topic, make_embed_url, get_user_recommended_team, \
-    get_user_course_with_access
+from .helpers import serialize, make_embed_url, get_user_recommended_team, \
+    get_user_course_with_access, get_team_topic
 from .serializers import CustomCourseTeamSerializer
 from .decorators import can_view_teams
 
@@ -54,12 +54,15 @@ def browse_teams(request, course_id):
         {'expand': ('user',)}
     )
 
+    is_member_of_any_team = CourseTeamMembership.user_in_team_for_course(user, course.id)
+
     course_has_ended = course.has_ended()
     context = {
         'course': course,
         'topics': topics_data,
         'recommended_teams': recommended_teams,
         'user_country': user.profile.country.name.format(),
+        'show_create_card': not is_member_of_any_team,
         'course_has_ended': course_has_ended
     }
 
@@ -101,12 +104,12 @@ def browse_topic_teams(request, course_id, topic_id):
 
 @can_view_teams
 @login_required
-def create_team(request, course_id, topic_id):
+def create_team(request, course_id, topic_id=None):
     user = request.user
     course = get_user_course_with_access(course_id, user)
+    topic = get_team_topic(course, topic_id)
 
-    is_topic_valid = validate_team_topic(course, topic_id)
-    if not is_topic_valid:
+    if topic_id and not topic:
         raise Http404
 
     is_member_of_any_team = CourseTeamMembership.user_in_team_for_course(user, course.id)
@@ -116,7 +119,8 @@ def create_team(request, course_id, topic_id):
         'user_has_privilege': not is_member_of_any_team,
         'countries': list(countries),
         'languages': [[lang[0], _(lang[1])] for lang in settings.ALL_LANGUAGES],
-        'topic_id': topic_id,
+        'topic': topic,
+        'topics': course.teams_topics,
         'template_view': 'create'
     }
 
