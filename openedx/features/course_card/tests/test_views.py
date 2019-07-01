@@ -1,3 +1,7 @@
+from datetime import datetime
+
+from custom_settings.models import CustomSettings
+from opaque_keys.edx.keys import CourseKey
 from pyquery import PyQuery as pq
 from django.core.urlresolvers import reverse
 from django.contrib.sites.models import Site
@@ -16,7 +20,7 @@ from .helpers import set_course_dates, disable_course_card, initialize_test_user
 class CourseCardBaseClass(ModuleStoreTestCase):
 
     password = 'test'
-    # Always keep NUMBER_OF_COURSES greater than equal to 2
+    # Always keep NUMBER_OF_COURSES greater than equal  to 2
     NUMBER_OF_COURSES = 4
 
     def setUp(self):
