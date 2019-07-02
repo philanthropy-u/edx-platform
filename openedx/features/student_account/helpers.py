@@ -1,6 +1,9 @@
 from datetime import datetime
+
+from lms.djangoapps.philu_overrides.constants import ACTIVATION_ALERT_TYPE
 from pytz import utc
 
+from constants import NON_ACTIVE_COURSE_NOTIFICATION
 from student.models import CourseEnrollment
 from courseware.models import StudentModule
 from openedx.features.course_card.helpers import get_course_open_date
@@ -9,21 +12,20 @@ from openedx.core.djangoapps.timed_notification.core import get_course_first_cha
 
 
 def get_non_active_course(user):
-
     DAYS_TO_DISPLAY_NOTIFICATION = 7
 
     all_user_courses = CourseEnrollment.objects.filter(user=user, is_active=True)
 
-    active_courses = []
-    overview_courses = []
+    non_active_courses = []
+    non_active_course_info = []
 
     for user_course in all_user_courses:
 
         today = datetime.now(utc).date()
 
-        course = CourseOverview.objects.get(id=user_course.course_id)
-
-        if course.end and datetime.now(utc).date() > course.end.date():
+        try:
+            course = CourseOverview.objects.get(id=user_course.course_id, end__gte=today)
+        except CourseOverview.DoesNotExist:
             continue
 
         course_start_date = get_course_open_date(course).date()
@@ -31,16 +33,16 @@ def get_non_active_course(user):
 
         if delta_date.days >= DAYS_TO_DISPLAY_NOTIFICATION:
 
-            overview_courses.append(course)
-            modules = StudentModule.objects.filter(course_id=course.id, student_id=user.id, created__gt=course_start_date)
+            modules = StudentModule.objects.filter(course_id=course.id, student_id=user.id,
+                                                   created__gt=course_start_date)
 
-            if len(modules) > 0:
-                active_courses.append(course)
+            # Make this check equals to zero to make it more generic.
+            if len(modules) <= 0:
+                non_active_courses.append(course)
 
-    non_active_courses = [course for course in overview_courses if course not in active_courses]
-
-    first_non_active_course = {}
     if len(non_active_courses) > 0:
-        first_non_active_course = {'course_name': non_active_courses[0].display_name,
-                                   'course_link': get_course_first_chapter_link(course=non_active_courses[0])}
-    return first_non_active_course
+        error = NON_ACTIVE_COURSE_NOTIFICATION % (non_active_courses[0].display_name,
+                                                  get_course_first_chapter_link(course=non_active_courses[0]))
+        non_active_course_info.append({"type": ACTIVATION_ALERT_TYPE,
+                                       "alert": error})
+    return non_active_course_info
