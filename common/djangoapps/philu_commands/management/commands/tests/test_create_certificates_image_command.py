@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from datetime import datetime, timedelta
+
 import mock
 from certificates.tests.factories import GeneratedCertificateFactory
 from django.core.management import call_command
@@ -18,30 +20,47 @@ class CreateCertificateImage(SharedModuleStoreTestCase):
 
     @mute_signals(post_save)
     def setUp(self):
+        """
+        This function is responsible for creating user and courses for every test and mocking the function for tests.
+        :return:
+        """
         super(CreateCertificateImage, self).setUp()
         self.user = UserFactory()
         self.course = CourseFactory()
         self.course.certificates_display_behavior = "early_with_info"
+        patcher = mock.patch(
+            'openedx.features.student_certificates.tasks.task_create_certificate_img_and_upload_to_s3.delay')
+        self.mock_request = patcher.start()
+        self.addCleanup(patcher.stop)
 
-    @mock.patch('openedx.features.student_certificates.tasks.task_create_certificate_img_and_upload_to_s3.delay')
-    def test_command(self, mock_func):
-        certificate_uuid = self._create_certificate('honor')
+    def test_create_certificates_images_command(self):
+        """
+        This Test case checks the scenario for creating the certificates images of all of the Generated Certificates.
+        """
+        certificate_uuid = self._create_certificate_and_get_uuid('honor')
         call_command('create_certificates_image')
-        mock_func.assert_called_once_with(verify_uuid=certificate_uuid)
+        self.mock_request.assert_called_once_with(verify_uuid=certificate_uuid)
 
-    @mock.patch('openedx.features.student_certificates.tasks.task_create_certificate_img_and_upload_to_s3.delay')
-    def test_command_with_date_argument(self, mock_func):
-        certificate_uuid = self._create_certificate('honor')
-        call_command('create_certificates_image', '--after=30/6/2019')
-        mock_func.assert_called_once_with(verify_uuid=certificate_uuid)
+    def test_create_certificates_images_command_with_date_argument(self):
+        """
+        This Test case checks the scenario for creating the certificates images of Generated Certificates after the
+        given date.
+        """
+        certificate_uuid = self._create_certificate_and_get_uuid('honor')
+        after_date = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
+        call_command('create_certificates_image', '--after={}'.format(after_date))
+        self.mock_request.assert_called_once_with(verify_uuid=certificate_uuid)
 
-    @mock.patch('openedx.features.student_certificates.tasks.task_create_certificate_img_and_upload_to_s3.delay')
-    def test_command_with_uuid_argument(self, mock_func):
-        certificate_uuid = self._create_certificate('honor')
+    def test_create_certificates_images_command_with_uuid_argument(self):
+        """
+        This Test case checks the scenario for creating the certificates images of Generated Certificates for the given
+        UUID.
+        """
+        certificate_uuid = self._create_certificate_and_get_uuid('honor')
         call_command('create_certificates_image', '--uuid={}'.format(certificate_uuid))
-        mock_func.assert_called_once_with(verify_uuid=certificate_uuid)
+        self.mock_request.assert_called_once_with(verify_uuid=certificate_uuid)
 
-    def _create_certificate(self, enrollment_mode):
+    def _create_certificate_and_get_uuid(self, enrollment_mode):
         """Simulate that the user has a generated certificate. """
         CourseEnrollmentFactory.create(user=self.user, course_id=self.course.id, mode=enrollment_mode)
         certificate = GeneratedCertificateFactory(
