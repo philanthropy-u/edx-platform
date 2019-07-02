@@ -35,8 +35,8 @@ TEST_PASSWORD = 'test_password'
 
 @override_settings(
     MIDDLEWARE_CLASSES=[
-        klass for klass in settings.MIDDLEWARE_CLASSES
-        if klass != 'lms.djangoapps.onboarding.middleware.RedirectMiddleware'
+        middleware for middleware in settings.MIDDLEWARE_CLASSES
+        if middleware != 'lms.djangoapps.onboarding.middleware.RedirectMiddleware'
     ]
 )
 class TeamsTestsBaseClass(ModuleStoreTestCase):
@@ -156,7 +156,7 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
         self.teams_text_selector = 'div.continents-content span'
         self.expexted_teams_count_text = '{} TEAMS'.format(TOTAL_TEAMS)
 
-    def test_anonymous(self):
+    def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot access the team dashboard, and is redirected to the login page."""
         anonymous_client = Client()
         response = anonymous_client.get(self.teams_dashboard_url)
@@ -165,7 +165,7 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
         self.assertRedirects(response, redirect_url)
 
     @mock.patch.dict("django.conf.settings.FEATURES", {'ENABLE_TEAMS': False})
-    def test_404_feature_disabled(self):
+    def test_404_case_teams_feature_is_disabled(self):
         """Test that 404 is returned when team feature is disabled."""
 
         client = Client()
@@ -174,7 +174,7 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_404_not_enrolled_not_staff(self):
+    def test_404_case_user_not_enrolled_not_staff(self):
         """Test that 404 is returned if the user is neither enrolled in course nor a staff member."""
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
@@ -182,7 +182,7 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_not_enrolled_staff(self):
+    def test_case_user_is_not_enrolled_staff(self):
         """Test that valid data is rendered if user is not enrolled in a course but is a staff member."""
         client = Client()
         staff_user = self._create_user(username='staff_test_user', is_staff=True)
@@ -198,7 +198,7 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
         self.assertEqual(num_of_topics, TOTAL_TOPICS)
         self.assertEqual(teams_count_text, self.expexted_teams_count_text)
 
-    def test_enrolled_not_staff(self):
+    def test_case_user_is_enrolled_not_staff(self):
         """Test that correct number of topics and teams are rendered if user is enrolled in a course but
         is not a staff member.
         """
@@ -216,7 +216,7 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
         self.assertEqual(num_of_topics, TOTAL_TOPICS)
         self.assertEqual(teams_count_text, self.expexted_teams_count_text)
 
-    def test_enrolled_staff_browse_teams(self):
+    def test_case_user_is_enrolled_and_staff(self):
         """Test that correct number of topics and teams are rendered if user is enrolled in a course and
         is a staff member too.
         """
@@ -239,7 +239,7 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
 class BrowseTopicTeamsTestCase(TeamsTestsBaseClass):
     """Test cases for browse_topic_teams view."""
 
-    def test_anonymous(self):
+    def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot access the team topics, and is redirected to the login page."""
         anonymous_client = Client()
         response = anonymous_client.get(self.topic_teams_url)
@@ -247,7 +247,7 @@ class BrowseTopicTeamsTestCase(TeamsTestsBaseClass):
 
         self.assertRedirects(response, redirect_url)
 
-    def test_404_invalid_topic_id(self):
+    def test_404_case_provide_invalid_topic_id(self):
         """Test that 404 is returned when invalid topic_id is provided."""
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
@@ -256,7 +256,7 @@ class BrowseTopicTeamsTestCase(TeamsTestsBaseClass):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_browse_topic_teams(self):
+    def test_case_browse_valid_topic_id_teams(self):
         """Test that correct number of teams are displayed when correct topic_id is provided."""
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
@@ -273,7 +273,7 @@ class BrowseTopicTeamsTestCase(TeamsTestsBaseClass):
 class CreateTeamTestCase(TeamsTestsBaseClass):
     """Test cases for create_team view."""
 
-    def test_anonymous(self):
+    def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot access the create team page, and is redirected
         to the login page.
         """
@@ -283,7 +283,7 @@ class CreateTeamTestCase(TeamsTestsBaseClass):
 
         self.assertRedirects(response, redirect_url)
 
-    def test_404_invalid_topic(self):
+    def test_404_case_provide_invalid_topic(self):
         """Test that 404 is returned when invalid topic_id is provided"""
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
@@ -292,7 +292,8 @@ class CreateTeamTestCase(TeamsTestsBaseClass):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_create_team_not_joined(self):
+    @factory.django.mute_signals(signals.post_delete)
+    def test_case_create_team_when_user_is_not_joined_in_team(self):
         """Test that "Create Team" header for form is displayed if user is not already a member of
         any team of the course.
         """
@@ -308,7 +309,7 @@ class CreateTeamTestCase(TeamsTestsBaseClass):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(is_create_team_header_exists)
 
-    def test_create_team_already_joined(self):
+    def test_case_create_team_when_user_has_already_joined_a_team(self):
         """Test that correct informational message is displayed instead of create team form  if user is already
         a member of any team of the course.
         """
@@ -328,7 +329,7 @@ class CreateTeamTestCase(TeamsTestsBaseClass):
 class MyTeamTestCase(TeamsTestsBaseClass):
     """Test cases for my_teams view."""
 
-    def test_anonymous(self):
+    def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot access the "my teams" page, and is redirected
         to the login page.
         """
@@ -337,7 +338,7 @@ class MyTeamTestCase(TeamsTestsBaseClass):
         redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.my_team_url))
         self.assertRedirects(response, redirect_url)
 
-    def test_no_course_team_exists(self):
+    def test_case_no_course_team_exists(self):
         """Test the error response when there is no team for given course id."""
         error_msg_selector = '.teams-content .box-widget p'
         expected_error_msg = 'You are not currently a member of any team.'
@@ -352,7 +353,7 @@ class MyTeamTestCase(TeamsTestsBaseClass):
         self.assertEqual(response.status_code, 200)
         self.assertIn(expected_error_msg, error_msg)
 
-    def test_course_team_exists_no_topic_url(self):
+    def test_case_course_team_exists_and_no_topic_url_is_provided(self):
         """Test that user is redirected to view_team without the topic_url when course team exists and there is no
         topic_url provided with the request
         """
@@ -363,7 +364,7 @@ class MyTeamTestCase(TeamsTestsBaseClass):
 
         self.assertRedirects(response, redirect_url)
 
-    def test_course_team_exists_topic_url(self):
+    def test_case_course_team_exists_and_topic_url_is_provided(self):
         """Test that user is redirected to view_team with topic_url when course team exists and there is no
         topic_url provided with the request
         """
@@ -381,7 +382,7 @@ class MyTeamTestCase(TeamsTestsBaseClass):
 class ViewTeamTestCase(TeamsTestsBaseClass):
     """Test cases for view_team view."""
 
-    def test_anonymous(self):
+    def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot view any team and is redirected to the login page."""
         anonymous_client = Client()
         response = anonymous_client.get(self.my_team_url)
@@ -389,7 +390,7 @@ class ViewTeamTestCase(TeamsTestsBaseClass):
 
         self.assertRedirects(response, redirect_url)
 
-    def test_404_no_team_exists(self):
+    def test_404_case_no_team_exists_for_provided_team_id(self):
         """Test that 404 is returned when there is no team with provided team id."""
         client = Client()
         url = reverse('view_team', args=[self.course.id, NONE_EXISTING_TEAM_ID])
@@ -398,7 +399,7 @@ class ViewTeamTestCase(TeamsTestsBaseClass):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_404_team_no_team_group_chat(self):
+    def test_404_case_team_exists_but_no_team_group_chat_exists_for_provided_team_id(self):
         """Test that 404 is returned when there is no team_group_chat for team with provided team id."""
         client = Client()
         team_without_group_chat = self._create_team(self.course.id, self.course.teams_topics[0]['id'])
@@ -409,7 +410,7 @@ class ViewTeamTestCase(TeamsTestsBaseClass):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_team_group_chat_team(self):
+    def test_case_team_and_team_group_chat_exist_for_provided_team_id(self):
         """Test that iframe for team group chat exists and "Edit Membership" button does not exist (which
         only exists for administrator of the team) when Team and TeamGroupChat exists for provided team_id.
         """
@@ -432,7 +433,7 @@ class ViewTeamTestCase(TeamsTestsBaseClass):
 class UpdateTeamTestCase(TeamsTestsBaseClass):
     """Test cases for update_team view."""
 
-    def test_anonymous(self):
+    def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot access the update_team view, and is redirected to
         the login page.
         """
@@ -442,7 +443,7 @@ class UpdateTeamTestCase(TeamsTestsBaseClass):
 
         self.assertRedirects(response, redirect_url)
 
-    def test_404_no_staff(self):
+    def test_404_case_user_is_not_staff(self):
         """Test that 404 is returned when current user is not staff member."""
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
@@ -450,7 +451,7 @@ class UpdateTeamTestCase(TeamsTestsBaseClass):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_404_staff_no_team(self):
+    def test_404_case_user_is_staff_but_no_team_exists_for_provided_team_id(self):
         """Test that 404 is returned when current user is staff but there is no team with provided team id."""
         client = Client()
         staff_user = self._create_user(username='staff_test_user', is_staff=True)
@@ -460,7 +461,7 @@ class UpdateTeamTestCase(TeamsTestsBaseClass):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_staff_team_update(self):
+    def test_case_user_is_staff_and_team_exists_for_provided_team_id(self):
         """Test that "Edit Membership" and "Update Team" form buttons are displayed when current user is staff
         and there is existing team for provided team_id
         """
@@ -485,7 +486,7 @@ class UpdateTeamTestCase(TeamsTestsBaseClass):
 class EditTeamMembershitTestCase(TeamsTestsBaseClass):
     """Test cases for edit_team_memberships view."""
 
-    def test_anonymous(self):
+    def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot access the edit_team_memberships view, and is redirected
         to the login page.
         """
@@ -495,7 +496,7 @@ class EditTeamMembershitTestCase(TeamsTestsBaseClass):
 
         self.assertRedirects(response, redirect_url)
 
-    def test_404_no_staff(self):
+    def test_404_case_user_is_not_staff(self):
         """Test that 404 is returned when current user is not a staff member"""
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
@@ -503,7 +504,7 @@ class EditTeamMembershitTestCase(TeamsTestsBaseClass):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_404_staff_no_team(self):
+    def test_404_case_user_is_staff_but_no_team_exists_for_provided_team_id(self):
         """Test that 404 is returned when current user is staff user but there is no team with provided team id."""
         client = Client()
         staff_user = self._create_user(username='staff_test_user', is_staff=True)
@@ -513,7 +514,7 @@ class EditTeamMembershitTestCase(TeamsTestsBaseClass):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_staff_team(self):
+    def test_case_user_is_staff_and_team_exists_for_provided_team_id(self):
         """Test that correct number of team members are displayed for their membership to be edited when current user
         is a staff user and there is existing team for provided team_id
         """
