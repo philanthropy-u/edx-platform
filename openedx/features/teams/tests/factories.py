@@ -18,8 +18,6 @@ class CourseTeamFactory(BaseCourseTeamFactory):
         if create:
             self.save()
             return TeamGroupChatFactory.create(team=self, room_id=0, **kwargs)
-        elif kwargs:
-            raise Exception("Cannot build a team group chat without saving the course team")
         else:
             return None
 
