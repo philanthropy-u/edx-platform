@@ -1,21 +1,25 @@
 from __future__ import unicode_literals
 
-import mock
 from django.core.management import call_command
 from django.db.models.signals import post_save
 from django.test import TestCase
 from factory.django import mute_signals
+from mock import call, patch
+from pynodebb.settings import settings as nodebb_settings
+
 from lms.djangoapps.onboarding.helpers import COUNTRIES
 from lms.djangoapps.onboarding.models import UserExtendedProfile
 from lms.djangoapps.onboarding.tests.factories import UserFactory
 
 HTTP_SUCCESS = 200
 HTTP_NOT_FOUND = 404
+POST_METHOD = 'POST'
+GET_METHOD = 'GET'
 
 
 class NodeBBSync(TestCase):
     """
-        Tests for `create_certificates_image` command.
+        Tests for `sync_users_with_nodebb` command.
     """
     nodebb_data = {
         'website': '',
@@ -34,79 +38,95 @@ class NodeBBSync(TestCase):
         'language': 'None'
     }
 
+    nodebb_api_urls = {
+        'get_users_data': '/api/v2/users/all',
+        'user_creation': '/api/v2/users/create',
+        'user_activation': '/api/v2/users/activate',
+        'user_update': '/api/v2/users/update',
+        'user_onboarding_status_update': '/api/v2/users/update-visibility-status?username={}'
+    }
+
     @mute_signals(post_save)
     def setUp(self):
         super(NodeBBSync, self).setUp()
         self.user = UserFactory(username="test", email="test@example.com", password="123")
         self.user_edx_data = self._generate_edx_user_data()
-        patcher = mock.patch('common.lib.nodebb_client.users.ForumUser.all')
-        self.mocked_nodebb_response = patcher.start()
+        patcher = patch('pynodebb.http_client.HttpClient._request')
+        self.mocked_pynodebb_request_func = patcher.start()
         self.addCleanup(patcher.stop)
 
-    @mock.patch('common.djangoapps.nodebb.tasks.task_create_user_on_nodebb.delay')
-    @mock.patch('common.djangoapps.nodebb.tasks.task_activate_user_on_nodebb.delay')
-    def test_sync_users_with_nodebb_command_for_user_creation(self, mocked_task_activate_user_on_nodebb,
-                                                              mocked_task_create_user_on_nodebb):
+    def test_sync_users_with_nodebb_command_for_user_creation(self):
         """
         This test case is responsible for testing the user creation and activation part of command.
-
-        :param mocked_task_activate_user_on_nodebb: Mocked task which takes data from command and send to nodebb.
-        :param mocked_task_create_user_on_nodebb: Mocked task which takes data from command and send to nodebb.
-        :return:
         """
-        self.mocked_nodebb_response.return_value = [HTTP_SUCCESS, []]
+        self.mocked_pynodebb_request_func.return_value = [HTTP_SUCCESS, []]
         call_command('sync_users_with_nodebb')
-        mocked_task_create_user_on_nodebb.assert_called_once_with(username=self.user.username,
-                                                                  user_data=self.user_edx_data)
-        mocked_task_activate_user_on_nodebb.assert_called_once_with(username=self.user.username,
-                                                                    active=self.user.is_active)
+        self.mocked_pynodebb_request_func.assert_has_calls([call(POST_METHOD, self.nodebb_api_urls['get_users_data']),
+                                                            call(POST_METHOD, self.nodebb_api_urls['user_creation'],
+                                                                 **self.user_edx_data),
+                                                            call(POST_METHOD, self.nodebb_api_urls['user_activation'],
+                                                                 username=self.user.username,
+                                                                 active=self.user.is_active,
+                                                                 _uid=nodebb_settings['admin_uid']),
+                                                            call(POST_METHOD, self.nodebb_api_urls['user_activation'],
+                                                                 username=self.user.username,
+                                                                 active=self.user.is_active,
+                                                                 _uid=nodebb_settings['admin_uid'])
+                                                            ])
+        self.assertEqual(self.mocked_pynodebb_request_func.call_count, 4)
 
-    @mock.patch('common.djangoapps.nodebb.tasks.task_update_onboarding_surveys_status.delay')
-    @mock.patch('lms.djangoapps.onboarding.models.UserExtendedProfile.unattended_surveys', return_value=[])
-    @mock.patch('common.djangoapps.nodebb.tasks.task_create_user_on_nodebb.delay')
-    @mock.patch('common.djangoapps.nodebb.tasks.task_activate_user_on_nodebb.delay')
-    def test_sync_users_with_nodebb_command_without_attended_surveys(self, mocked_task_activate_user_on_nodebb,
-                                                                     mocked_task_create_user_on_nodebb,
-                                                                     mocked_function_of_model,
-                                                                     mocked_task_update_onboarding_surveys):
+    @patch('lms.djangoapps.onboarding.models.UserExtendedProfile.unattended_surveys', return_value=[])
+    def test_sync_users_with_nodebb_command_without_attended_survey(self, mocked_func_of_model):
         """
         This test case is responsible for testing and the user creation and updating the onboarding survey status
         on nodebb if it doesn't have attended any onboarding surveys.
-
-        :param mocked_task_activate_user_on_nodebb: Mocked task which takes data from command and send to nodebb.
-        :param mocked_task_create_user_on_nodebb: Mocked task which takes data from command and send to nodebb.
-        :param mocked_function_of_model: Mocked function of Extended Profile to return Null.
-        :param mocked_task_update_onboarding_surveys: Mocked task which takes data from command and send to nodebb.
-        :return:
         """
-        self.mocked_nodebb_response.return_value = [HTTP_SUCCESS, []]
+        self.mocked_pynodebb_request_func.return_value = [HTTP_SUCCESS, []]
         call_command('sync_users_with_nodebb')
-        mocked_task_create_user_on_nodebb.assert_called_once_with(username=self.user.username,
-                                                                  user_data=self.user_edx_data)
-        mocked_task_activate_user_on_nodebb.assert_called_once_with(username=self.user.username,
-                                                                    active=self.user.is_active)
-        mocked_task_update_onboarding_surveys.assert_called_once_with(username=self.user.username)
+        self.mocked_pynodebb_request_func.assert_has_calls([call(POST_METHOD, self.nodebb_api_urls['get_users_data']),
+                                                            call(POST_METHOD, self.nodebb_api_urls['user_creation'],
+                                                                 **self.user_edx_data),
+                                                            call(POST_METHOD, self.nodebb_api_urls['user_activation'],
+                                                                 username=self.user.username,
+                                                                 active=self.user.is_active,
+                                                                 _uid=nodebb_settings['admin_uid']),
+                                                            call(GET_METHOD,
+                                                                 self.nodebb_api_urls[
+                                                                     'user_onboarding_status_update'].format(
+                                                                     self.user.username)),
+                                                            call(POST_METHOD, self.nodebb_api_urls['user_activation'],
+                                                                 username=self.user.username,
+                                                                 active=self.user.is_active,
+                                                                 _uid=nodebb_settings['admin_uid']),
+                                                            call(GET_METHOD,
+                                                                 self.nodebb_api_urls[
+                                                                     'user_onboarding_status_update'].format(
+                                                                     self.user.username)),
+                                                            ])
+        self.assertEqual(self.mocked_pynodebb_request_func.call_count, 6)
 
-    def test_sync_users_with_nodebb_command_for_bad_request_code(self):
+    def test_sync_users_with_nodebb_command_for_bad_request(self):
         """
         This test case is responsible for testing the scenario when nodebb returns bad_request. In that case command
         Log the Issue and Terminate and returns nothing.
         """
-        self.mocked_nodebb_response.return_value = [HTTP_NOT_FOUND, []]
-        self.assertIsNone(call_command('sync_users_with_nodebb'))
+        self.mocked_pynodebb_request_func.return_value = [HTTP_NOT_FOUND, []]
+        call_command('sync_users_with_nodebb')
+        self.mocked_pynodebb_request_func.assert_has_calls([call(POST_METHOD, self.nodebb_api_urls['get_users_data'])])
+        self.assertEqual(self.mocked_pynodebb_request_func.call_count, 1)
 
-    @mock.patch('common.djangoapps.nodebb.tasks.task_update_user_profile_on_nodebb.delay')
-    def test_sync_users_with_nodebb_command_for_user_update(self, mocked_task_update_user_profile_on_nodebbb):
+    def test_sync_users_with_nodebb_command_for_user_update(self):
         """
         This test case is responsible for testing the user update part of command. This scenario is generated when a
         user is already generated on nodebb and later user settings(name, date_birth, etc) are updated on edX.
-
-        :param mocked_task_update_user_profile_on_nodebbb: Mocked task which takes data from command and send to nodebb.
         """
-        self.mocked_nodebb_response.return_value = [HTTP_SUCCESS, [self.nodebb_data]]
+        self.mocked_pynodebb_request_func.return_value = [HTTP_SUCCESS, [self.nodebb_data]]
         call_command('sync_users_with_nodebb')
-        mocked_task_update_user_profile_on_nodebbb.assert_called_once_with(username=self.user.username,
-                                                                           profile_data=self.user_edx_data)
+        self.mocked_pynodebb_request_func.assert_has_calls([call(POST_METHOD, self.nodebb_api_urls['get_users_data']),
+                                                            call(POST_METHOD, self.nodebb_api_urls['user_update'],
+                                                                 **self.user_edx_data)
+                                                            ])
+        self.assertEqual(self.mocked_pynodebb_request_func.call_count, 2)
 
     def _generate_edx_user_data(self):
         """
