@@ -40,13 +40,11 @@ TEST_PASSWORD = 'test_password'
     ]
 )
 class TeamsTestsBaseClass(ModuleStoreTestCase):
-    """Base class for all test cases of "Teams" module.
-    """
+    """Base class for all test cases of "Teams" module."""
 
     @classmethod
     def setUpClass(cls):
-        """Setup "philu" theme for testing. Required for testing templates that exist in the theme.
-        """
+        """ Setup "philu" theme for testing. Required for testing templates that exist in the theme ."""
         super(TeamsTestsBaseClass, cls).setUpClass()
         site = Site(domain='testserver', name='test')
         site.save()
@@ -54,8 +52,7 @@ class TeamsTestsBaseClass(ModuleStoreTestCase):
         theme.save()
 
     def setUp(self):
-        """Setup all test data required for testing any of the test cases.
-        """
+        """Setup all test data required for testing any of the test cases. """
         super(TeamsTestsBaseClass, self).setUp()
         self.topic = self._create_topic()
         self.course = self._create_course()
@@ -67,11 +64,13 @@ class TeamsTestsBaseClass(ModuleStoreTestCase):
         self._initiate_urls()
 
     def _create_topic(self):
+        """ Return a topic dict. """
         topic = {u'name': u'T0pic', u'description': u'The best topic!', u'id': u'0', 'url': 'example.com/topic/0'}
         return topic
 
     @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def _create_course(self, **kwargs):
+        """ Create and return a course with test data """
         org = kwargs.get('org') or 'edX'
         course_number = kwargs.get('course_number') or 'CS101'
         course_run = kwargs.get('course_run') or '2015_Q1'
@@ -91,6 +90,12 @@ class TeamsTestsBaseClass(ModuleStoreTestCase):
 
     @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def _create_team(self, course_id, topic_id):
+        """ Create a CourseTeam for provided course_id and topic_id
+
+        Arguments:
+            course_id {int} -- id of the course for which the team is to be created
+            topic_id {int} -- id of the topic for which the team is to be created
+        """
         team = CourseTeamFactory.create(
             course_id=course_id,
             topic_id=topic_id,
@@ -101,6 +106,13 @@ class TeamsTestsBaseClass(ModuleStoreTestCase):
 
     @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def _create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
+        """ Create a CourseTeam for provided course_id and topic_id
+
+        Arguments:
+            username {string} -- username for the user
+            password {string} -- password for the user
+            kwargs {dict} -- any additional attributes for the user
+        """
         user = UserFactory.create(username=username, password=password, **kwargs)
         return user
 
@@ -134,8 +146,7 @@ class TeamsTestsBaseClass(ModuleStoreTestCase):
         return enrollment
 
     def _initiate_urls(self):
-        """Initiale the urls which are going to be tested.
-        """
+        """ Initiale the urls which are going to be tested. """
         self.teams_dashboard_url = reverse('teams_dashboard', args=[self.course.id])
         self.topic_teams_url = reverse('browse_topic_teams', args=[self.course.id, self.topic['id']])
         self.create_team_url = reverse('create_team', args=[self.course.id, self.topic['id']])
@@ -149,8 +160,7 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
     """Test cases for browse_teams view."""
 
     def setUp(self):
-        """Initiate the test data which is required in more than one of the test cases.
-        """
+        """ Initiate the test data which is required in more than one of the test cases. """
         super(BrowseTeamsTestCase, self).setUp()
         self.topic_link_selector = 'a.other-continents-widget'
         self.teams_text_selector = 'div.continents-content span'
