@@ -347,6 +347,7 @@ simplefilter('ignore')
 ################################# Middleware ###################################
 
 MIDDLEWARE_CLASSES = (
+    'silk.middleware.SilkyMiddleware',
     'crum.CurrentRequestUserMiddleware',
     'request_cache.middleware.RequestCache',
     'openedx.core.djangoapps.header_control.middleware.HeaderControlMiddleware',
@@ -403,6 +404,8 @@ MIDDLEWARE_CLASSES = (
 
     # This must be last so that it runs first in the process_response chain
     'openedx.core.djangoapps.site_configuration.middleware.SessionCookieDomainOverrideMiddleware',
+
+
 )
 
 # Clickjacking protection can be enabled by setting this to 'DENY'

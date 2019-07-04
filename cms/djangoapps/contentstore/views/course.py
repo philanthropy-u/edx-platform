@@ -229,7 +229,10 @@ def _dismiss_notification(request, course_action_state_id):  # pylint: disable=u
 
 
 # pylint: disable=unused-argument
+from silk.profiling.profiler import silk_profile
+
 @login_required
+@silk_profile(name='Create Course')
 def course_handler(request, course_key_string=None):
     """
     The restful handler for course specific requests.

@@ -575,7 +575,7 @@ TEMPLATES = [
 
                 # PhilU context processors
                 'lms.djangoapps.philu_overrides.context_processor.add_nodebb_endpoint',
-                
+
                 # Philu CDN context processor
                 'lms.djangoapps.philu_overrides.context_processor.get_cdn_link'
             ],
@@ -1148,7 +1148,9 @@ simplefilter('ignore')
 ################################# Middleware ###################################
 
 MIDDLEWARE_CLASSES = (
+    'silk.middleware.SilkyMiddleware',
     'crum.CurrentRequestUserMiddleware',
+
 
     'request_cache.middleware.RequestCache',
     'newrelic_custom_metrics.middleware.NewRelicCustomMetrics',

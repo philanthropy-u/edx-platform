@@ -44,7 +44,7 @@ log = logging.getLogger("edx.onboarding")
 
 @login_required
 @can_not_update_onboarding_steps
-@transaction.atomic
+# @transaction.atomic
 def user_info(request):
     """
     The view to handle user info survey from the user.

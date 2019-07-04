@@ -30,6 +30,8 @@ urlpatterns = (
     # URL for home page
     url(r'', include('homepage.urls', namespace='homepage')),
 
+    url(r'^silk/', include('silk.urls', namespace='silk')),
+
     url(r'', include('lms.djangoapps.onboarding.urls')),
     url(r'', include('openedx.features.split_registration.urls')),
     url(r'^oef/', include('lms.djangoapps.oef.urls')),
@@ -1006,3 +1008,5 @@ if settings.FEATURES.get('ENABLE_FINANCIAL_ASSISTANCE_FORM'):
             name='submit_financial_assistance_request'
         )
     )
+
+

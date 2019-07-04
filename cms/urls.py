@@ -23,6 +23,8 @@ urlpatterns = patterns(
     # URL for custom_settings APP
     url(r'', include('custom_settings.urls')),
 
+    url(r'^silk/', include('silk.urls', namespace='silk')),
+
     url(r'^transcripts/upload$', 'contentstore.views.upload_transcripts', name='upload_transcripts'),
     url(r'^transcripts/download$', 'contentstore.views.download_transcripts', name='download_transcripts'),
     url(r'^transcripts/check$', 'contentstore.views.check_transcripts', name='check_transcripts'),
