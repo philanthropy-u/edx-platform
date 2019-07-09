@@ -52,36 +52,12 @@ class ForumCategory(Category):
         """
         return self.client.delete('/api/v2/categories/{}'.format(category_id))
 
-    def join(self, username, category_id, **kwargs):
+    def archive(self, category_id, **kwargs):
         """
-        Join category for specific user
-        :param username: username of the logged in user
+        Archive(disable) a category from NodeBB, including all topics, posts and subcategories inside of it
+        (Careful: There is no confirmation!)
         :param category_id: Id of the NodeBB category
         :return:
             * 200 status if successful
-            * 401 if user is unauthorized
-            * 400 if bad request
         """
-
-        payload = {
-            'username': username,
-            'category_id': category_id
-        }
-        return self.client.post('api/v2/users/join', **payload)
-
-    def leave(self, username, category_id, **kwargs):
-        """
-        Leave a category for some user
-        :param username: username of logged in user
-        :param category_id: Id of the NodeBB category
-        :return:
-            * 200 status if successfull
-            * 401 if user is unauthorized
-            * 400 if bad request
-        """
-
-        payload = {
-            'username': username,
-            'category_id': category_id
-        }
-        return self.client.post('api/v2/users/unjoin', **payload)
+        return self.client.put('/api/v2/categories/{}/disable'.format(category_id))
