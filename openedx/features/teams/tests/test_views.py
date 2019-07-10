@@ -56,12 +56,13 @@ class TeamsTestsBaseClass(ModuleStoreTestCase):
         super(TeamsTestsBaseClass, self).setUp()
         self.topic = self._create_topic()
         self.course = self._create_course()
+
         self.teams = []
         for i in range(TOTAL_TEAMS):
             self.teams.append(self._create_team(self.course.id, topic_id=self.course.teams_topics[0]['id']))
+
         self.user = self._create_user()
         self.team_membership = self._create_team_membership(self.teams[0], self.user)
-        self._initiate_urls()
 
     def _create_topic(self):
         """ Return a topic dict. """
@@ -145,16 +146,6 @@ class TeamsTestsBaseClass(ModuleStoreTestCase):
         enrollment = CourseEnrollmentFactory(user=user, course_id=course_id)
         return enrollment
 
-    def _initiate_urls(self):
-        """ Initiale the urls which are going to be tested. """
-        self.teams_dashboard_url = reverse('teams_dashboard', args=[self.course.id])
-        self.topic_teams_url = reverse('browse_topic_teams', args=[self.course.id, self.topic['id']])
-        self.create_team_url = reverse('create_team', args=[self.course.id, self.topic['id']])
-        self.my_team_url = reverse('my_team', args=[self.course.id])
-        self.view_team_url = reverse('view_team', args=[self.course.id, self.teams[0].team_id])
-        self.team_update_url = reverse('update_team', args=[self.course.id, self.teams[0].team_id])
-        self.team_edit_membership_url = reverse('edit_team_memberships', args=[self.course.id, self.teams[0].team_id])
-
 
 class BrowseTeamsTestCase(TeamsTestsBaseClass):
     """Test cases for browse_teams view."""
@@ -165,12 +156,13 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
         self.topic_link_selector = 'a.other-continents-widget'
         self.teams_text_selector = 'div.continents-content span'
         self.expexted_teams_count_text = '{} TEAMS'.format(TOTAL_TEAMS)
+        self.url = reverse('teams_dashboard', args=[self.course.id])
 
     def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot access the team dashboard, and is redirected to the login page."""
         anonymous_client = Client()
-        response = anonymous_client.get(self.teams_dashboard_url)
-        redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.teams_dashboard_url))
+        response = anonymous_client.get(self.url)
+        redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.url))
 
         self.assertRedirects(response, redirect_url)
 
@@ -180,7 +172,7 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
 
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
-        response = client.get(self.teams_dashboard_url, follow=True)
+        response = client.get(self.url, follow=True)
 
         self.assertEqual(response.status_code, 404)
 
@@ -188,7 +180,7 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
         """Test that 404 is returned if the user is neither enrolled in course nor a staff member."""
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
-        response = client.get(self.teams_dashboard_url, follow=True)
+        response = client.get(self.url, follow=True)
 
         self.assertEqual(response.status_code, 404)
 
@@ -198,7 +190,7 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
         staff_user = self._create_user(username='staff_test_user', is_staff=True)
         client.login(username=staff_user.username, password=TEST_PASSWORD)
 
-        response = client.get(self.teams_dashboard_url)
+        response = client.get(self.url)
 
         content = PyQuery(response.content)
         num_of_topics = len(content(self.topic_link_selector))
@@ -216,7 +208,7 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
         self._enroll_user_in_course(user=self.user, course_id=self.course.id)
         client.login(username=self.user.username, password=TEST_PASSWORD)
 
-        response = client.get(self.teams_dashboard_url)
+        response = client.get(self.url)
 
         content = PyQuery(response.content)
         num_of_topics = len(content(self.topic_link_selector))
@@ -235,7 +227,7 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
         enrolled_user = self._enroll_user_in_course(user=staff_user, course_id=self.course.id)
         client.login(username=staff_user.username, password=TEST_PASSWORD)
 
-        response = client.get(self.teams_dashboard_url)
+        response = client.get(self.url)
 
         content = PyQuery(response.content)
         num_of_topics = len(content(self.topic_link_selector))
@@ -249,13 +241,32 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
 class BrowseTopicTeamsTestCase(TeamsTestsBaseClass):
     """Test cases for browse_topic_teams view."""
 
+    def setUp(self):
+        super(BrowseTopicTeamsTestCase, self).setUp()
+        self.url = reverse('browse_topic_teams', args=[self.course.id, self.topic['id']])
+
+
     def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot access the team topics, and is redirected to the login page."""
         anonymous_client = Client()
-        response = anonymous_client.get(self.topic_teams_url)
-        redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.topic_teams_url))
+        response = anonymous_client.get(self.url)
+        redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.url))
 
         self.assertRedirects(response, redirect_url)
+
+    @mock.patch('openedx.features.teams.decorators.get_course_by_id', autospec=True)
+    def test_cannot_access_ended_course(self, mocked_method):
+        mocked_course = mocked_method.return_value
+        mocked_course.has_ended.return_value = True
+        mocked_course.id = self.course.id
+
+        client = Client()
+        client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        response = client.get(self.url, follow=False)
+        redirect_url = reverse('teams_dashboard', args=[self.course.id])
+
+        self.assertRedirects(response, redirect_url, target_status_code=302)
 
     def test_404_case_provide_invalid_topic_id(self):
         """Test that 404 is returned when invalid topic_id is provided."""
@@ -271,7 +282,7 @@ class BrowseTopicTeamsTestCase(TeamsTestsBaseClass):
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
 
-        response = client.get(self.topic_teams_url)
+        response = client.get(self.url)
 
         team_cards_selector = '.categories li'
         num_of_team_cards = len(PyQuery(response.content)(team_cards_selector))
@@ -283,15 +294,33 @@ class BrowseTopicTeamsTestCase(TeamsTestsBaseClass):
 class CreateTeamTestCase(TeamsTestsBaseClass):
     """Test cases for create_team view."""
 
+    def setUp(self):
+        super(CreateTeamTestCase, self).setUp()
+        self.url = reverse('create_team', args=[self.course.id, self.topic['id']])
+
     def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot access the create team page, and is redirected
         to the login page.
         """
         anonymous_client = Client()
-        response = anonymous_client.get(self.create_team_url)
-        redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.create_team_url))
+        response = anonymous_client.get(self.url)
+        redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.url))
 
         self.assertRedirects(response, redirect_url)
+
+    @mock.patch('openedx.features.teams.decorators.get_course_by_id', autospec=True)
+    def test_cannot_access_ended_course(self, mocked_method):
+        mocked_course = mocked_method.return_value
+        mocked_course.has_ended.return_value = True
+        mocked_course.id = self.course.id
+
+        client = Client()
+        client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        response = client.get(self.url, follow=False)
+        redirect_url = reverse('teams_dashboard', args=[self.course.id])
+
+        self.assertRedirects(response, redirect_url, target_status_code=302)
 
     def test_404_case_provide_invalid_topic(self):
         """Test that 404 is returned when invalid topic_id is provided"""
@@ -303,7 +332,7 @@ class CreateTeamTestCase(TeamsTestsBaseClass):
         self.assertEqual(response.status_code, 404)
 
     @factory.django.mute_signals(signals.post_delete)
-    def test_case_create_team_when_user_is_not_joined_in_team(self):
+    def test_case_create_team_when_user_is_not_joined_in_team(self): # CODE ISSUE: undefined
         """Test that "Create Team" header for form is displayed if user is not already a member of
         any team of the course.
         """
@@ -311,7 +340,7 @@ class CreateTeamTestCase(TeamsTestsBaseClass):
         client.login(username=self.user.username, password=TEST_PASSWORD)
         self.team_membership.delete()
 
-        response = client.get(self.create_team_url)
+        response = client.get(self.url)
 
         create_team_form_header_selector = 'div.create-team-instructions'
         is_create_team_header_exists = bool(PyQuery(response.content)(create_team_form_header_selector))
@@ -326,7 +355,7 @@ class CreateTeamTestCase(TeamsTestsBaseClass):
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
 
-        response = client.get(self.create_team_url)
+        response = client.get(self.url)
 
         already_joined_error_msg_selector = '.screen-reader-message + div p'
         expected_error = 'You are already in a team in this course.'
@@ -339,13 +368,31 @@ class CreateTeamTestCase(TeamsTestsBaseClass):
 class MyTeamTestCase(TeamsTestsBaseClass):
     """Test cases for my_teams view."""
 
+    def setUp(self):
+        super(MyTeamTestCase, self).setUp()
+        self.url = reverse('my_team', args=[self.course.id])
+
+    @mock.patch('openedx.features.teams.decorators.get_course_by_id', autospec=True)
+    def test_cannot_access_ended_course(self, mocked_method):
+        mocked_course = mocked_method.return_value
+        mocked_course.has_ended.return_value = True
+        mocked_course.id = self.course.id
+
+        client = Client()
+        client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        response = client.get(self.url, follow=False)
+        redirect_url = reverse('teams_dashboard', args=[self.course.id])
+
+        self.assertRedirects(response, redirect_url, target_status_code=302)
+
     def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot access the "my teams" page, and is redirected
         to the login page.
         """
         anonymous_client = Client()
-        response = anonymous_client.get(self.my_team_url)
-        redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.my_team_url))
+        response = anonymous_client.get(self.url)
+        redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.url))
         self.assertRedirects(response, redirect_url)
 
     def test_case_no_course_team_exists(self):
@@ -369,8 +416,8 @@ class MyTeamTestCase(TeamsTestsBaseClass):
         """
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
-        response = client.get(self.my_team_url, follow=True)
-        redirect_url = self.view_team_url
+        response = client.get(self.url, follow=True)
+        redirect_url = reverse('view_team', args=[self.course.id, self.teams[0].team_id])
 
         self.assertRedirects(response, redirect_url)
 
@@ -381,9 +428,9 @@ class MyTeamTestCase(TeamsTestsBaseClass):
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
 
-        response = client.get(self.my_team_url, {'topic_url': TEST_TOPIC_URL}, follow=True)
+        response = client.get(self.url, {'topic_url': TEST_TOPIC_URL}, follow=True)
 
-        redirect_url = self.view_team_url
+        redirect_url = reverse('view_team', args=[self.course.id, self.teams[0].team_id])
         redirect_url = add_or_replace_parameter(redirect_url, 'topic_url', TEST_TOPIC_URL)
 
         self.assertRedirects(response, redirect_url)
@@ -392,13 +439,31 @@ class MyTeamTestCase(TeamsTestsBaseClass):
 class ViewTeamTestCase(TeamsTestsBaseClass):
     """Test cases for view_team view."""
 
+    def setUp(self):
+        super(ViewTeamTestCase, self).setUp()
+        self.url = reverse('view_team', args=[self.course.id, self.teams[0].team_id])
+
     def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot view any team and is redirected to the login page."""
         anonymous_client = Client()
-        response = anonymous_client.get(self.my_team_url)
-        redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.my_team_url))
+        response = anonymous_client.get(self.url)
+        redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.url))
 
         self.assertRedirects(response, redirect_url)
+
+    @mock.patch('openedx.features.teams.decorators.get_course_by_id', autospec=True)
+    def test_cannot_access_ended_course(self, mocked_method):
+        mocked_course = mocked_method.return_value
+        mocked_course.has_ended.return_value = True
+        mocked_course.id = self.course.id
+
+        client = Client()
+        client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        response = client.get(self.url, follow=False)
+        redirect_url = reverse('teams_dashboard', args=[self.course.id])
+
+        self.assertRedirects(response, redirect_url, target_status_code=302)
 
     def test_404_case_no_team_exists_for_provided_team_id(self):
         """Test that 404 is returned when there is no team with provided team id."""
@@ -429,7 +494,7 @@ class ViewTeamTestCase(TeamsTestsBaseClass):
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
 
-        response = client.get(self.view_team_url, follow=True)
+        response = client.get(self.url, follow=True)
 
         content = PyQuery(response.content)
         team_edit_button_exists = bool(content(team_edit_button_selector))
@@ -443,21 +508,39 @@ class ViewTeamTestCase(TeamsTestsBaseClass):
 class UpdateTeamTestCase(TeamsTestsBaseClass):
     """Test cases for update_team view."""
 
+    def setUp(self):
+        super(UpdateTeamTestCase, self).setUp()
+        self.url = reverse('update_team', args=[self.course.id, self.teams[0].team_id])
+
     def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot access the update_team view, and is redirected to
         the login page.
         """
         anonymous_client = Client()
-        response = anonymous_client.get(self.team_update_url)
-        redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.team_update_url))
+        response = anonymous_client.get(self.url)
+        redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.url))
 
         self.assertRedirects(response, redirect_url)
+
+    @mock.patch('openedx.features.teams.decorators.get_course_by_id', autospec=True)
+    def test_cannot_access_ended_course(self, mocked_method):
+        mocked_course = mocked_method.return_value
+        mocked_course.has_ended.return_value = True
+        mocked_course.id = self.course.id
+
+        client = Client()
+        client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        response = client.get(self.url, follow=False)
+        redirect_url = reverse('teams_dashboard', args=[self.course.id])
+
+        self.assertRedirects(response, redirect_url, target_status_code=302)
 
     def test_404_case_user_is_not_staff(self):
         """Test that 404 is returned when current user is not staff member."""
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
-        response = client.get(self.team_update_url, follow=True)
+        response = client.get(self.url, follow=True)
 
         self.assertEqual(response.status_code, 404)
 
@@ -482,7 +565,7 @@ class UpdateTeamTestCase(TeamsTestsBaseClass):
         staff_user = self._create_user(username='staff_test_user', is_staff=True)
         client.login(username=staff_user.username, password=TEST_PASSWORD)
 
-        response = client.get(self.team_update_url)
+        response = client.get(self.url)
 
         content = PyQuery(response.content)
         edit_membership_button_exists = bool(content(edit_membership_button_selector))
@@ -496,21 +579,39 @@ class UpdateTeamTestCase(TeamsTestsBaseClass):
 class EditTeamMembershitTestCase(TeamsTestsBaseClass):
     """Test cases for edit_team_memberships view."""
 
+    def setUp(self):
+        super(EditTeamMembershitTestCase, self).setUp()
+        self.url = reverse('edit_team_memberships', args=[self.course.id, self.teams[0].team_id])
+
     def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot access the edit_team_memberships view, and is redirected
         to the login page.
         """
         anonymous_client = Client()
-        redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.team_edit_membership_url))
-        response = anonymous_client.get(self.team_edit_membership_url)
+        redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.url))
+        response = anonymous_client.get(self.url)
 
         self.assertRedirects(response, redirect_url)
+
+    @mock.patch('openedx.features.teams.decorators.get_course_by_id', autospec=True)
+    def test_cannot_access_ended_course(self, mocked_method):
+        mocked_course = mocked_method.return_value
+        mocked_course.has_ended.return_value = True
+        mocked_course.id = self.course.id
+
+        client = Client()
+        client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        response = client.get(self.url, follow=False)
+        redirect_url = reverse('teams_dashboard', args=[self.course.id])
+
+        self.assertRedirects(response, redirect_url, target_status_code=302)
 
     def test_404_case_user_is_not_staff(self):
         """Test that 404 is returned when current user is not a staff member"""
         client = Client()
         client.login(username=self.user.username, password=TEST_PASSWORD)
-        response = client.get(self.team_edit_membership_url, follow=True)
+        response = client.get(self.url, follow=True)
 
         self.assertEqual(response.status_code, 404)
 
@@ -534,7 +635,7 @@ class EditTeamMembershitTestCase(TeamsTestsBaseClass):
         staff_user = self._create_user(username='staff_test_user', is_staff=True)
         client.login(username=staff_user.username, password=TEST_PASSWORD)
 
-        response = client.get(self.team_edit_membership_url, follow=True)
+        response = client.get(self.url, follow=True)
         team_members_count = len(PyQuery(response.content)(team_member_selector))
 
         self.assertEqual(response.status_code, 200)
