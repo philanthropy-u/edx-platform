@@ -1,33 +1,49 @@
 """Tests for the user API at the HTTP request level. """
 
 import datetime
+import json
 import ddt
 import factory
-import json
+import httpretty
 import mock
-from unittest import skipUnless, SkipTest
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.urlresolvers import reverse
+from django.db import IntegrityError
 from django.db.models.signals import post_save
 from django.test.client import RequestFactory
+from django.test.testcases import TransactionTestCase
 from django.test.utils import override_settings
-from pytz import UTC
+from django.utils.importlib import import_module
+from opaque_keys.edx.locations import SlashSeparatedCourseKey
+from pytz import UTC, common_timezones_set
+from social.apps.django_app.default.models import UserSocialAuth
+from unittest import SkipTest, skipUnless
 
+from common.djangoapps.nodebb.signals.handlers import sync_extended_profile_info_with_nodebb
 from common.djangoapps.student.views import AccountValidationError
 from django_comment_common import models
-from openedx.core.lib.api.test_utils import ApiTestCase
+from lms.djangoapps.onboarding.models import UserExtendedProfile
 from lms.djangoapps.onboarding.tests.factories import UserFactory
-from third_party_auth.tests.testutil import simulate_running_pipeline, ThirdPartyAuthTestMixin
-from openedx.core.djangoapps.user_api.tests.test_helpers import TestCaseForm
-from openedx.core.djangoapps.user_api.tests.test_constants import SORTED_COUNTRIES
+from openedx.core.djangoapps.external_auth.models import ExternalAuthMap
+from openedx.core.djangoapps.user_api.accounts import (EMAIL_MAX_LENGTH, EMAIL_MIN_LENGTH,
+    NAME_MAX_LENGTH, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH)
 from openedx.core.djangoapps.user_api.accounts.api import get_account_settings
-from openedx.core.djangoapps.user_api.accounts import (
-    NAME_MAX_LENGTH, EMAIL_MIN_LENGTH, EMAIL_MAX_LENGTH, PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH,
-    USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH
-)
+from openedx.core.djangoapps.user_api.tests.test_constants import SORTED_COUNTRIES
+from openedx.core.djangoapps.user_api.tests.test_helpers import TestCaseForm
+from openedx.core.djangolib.testing.utils import CacheIsolationTestCase
+from openedx.core.lib.api.test_utils import TEST_API_KEY, ApiTestCase
+from openedx.core.lib.time_zone_utils import get_display_time_zone
+from third_party_auth.tests.testutil import ThirdPartyAuthTestMixin
+from third_party_auth.tests.utils import (ThirdPartyOAuthTestMixin, ThirdPartyOAuthTestMixinFacebook, 
+    ThirdPartyOAuthTestMixinGoogle)
+from xmodule.modulestore.tests.django_utils import SharedModuleStoreTestCase
+from xmodule.modulestore.tests.factories import CourseFactory
+
+from .utils import simulate_running_pipeline
+
 
 @ddt.ddt
 @skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
@@ -281,7 +297,6 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                 }
             }
         )
-
 
         self._assert_reg_field(
             no_extra_fields_setting,
@@ -918,54 +933,6 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
         self.assertEqual(account_settings["goals"], self.GOALS)
         self.assertEqual(account_settings["country"], self.COUNTRY)
 
-    # @override_settings(REGISTRATION_EXTENSION_FORM='openedx.core.djangoapps.user_api.tests.test_helpers.TestCaseForm')
-    # @mock.patch('openedx.core.djangoapps.user_api.tests.test_helpers.TestCaseForm.DUMMY_STORAGE', new_callable=dict)
-    # @mock.patch(
-    #     'openedx.core.djangoapps.user_api.tests.test_helpers.DummyRegistrationExtensionModel',
-    # )
-    # @factory.django.mute_signals(post_save)    
-    # def test_with_extended_form(self, dummy_model, storage_dict):
-    #     import pdb; pdb.set_trace()
-    #     dummy_model_instance = mock.Mock()
-    #     dummy_model.return_value = dummy_model_instance
-    #     # Create a new registration
-    #     self.assertEqual(storage_dict, {})
-    #     response = self.client.post(self.url, {
-    #         "email": self.EMAIL,
-    #         "name": self.NAME,
-    #         "username": self.USERNAME,
-    #         "password": self.PASSWORD,
-    #         "honor_code": "true",
-    #         "favorite_movie": "Inception",
-    #         "favorite_editor": "cat",
-    #         "first_name": self.FIRSTNAME,
-    #         "last_name": self.LASTNAME,
-    #         "confirm_password": self.PASSWORD,
-    #         "is_poc": 1,
-    #         "partners_opt_in": ""
-    #     })
-    #     self.assertHttpOK(response)
-    #     self.assertIn(settings.EDXMKTG_LOGGED_IN_COOKIE_NAME, self.client.cookies)
-    #     self.assertIn(settings.EDXMKTG_USER_INFO_COOKIE_NAME, self.client.cookies)
-
-    #     user = User.objects.get(username=self.USERNAME)
-    #     request = RequestFactory().get('/url')
-    #     request.user = user
-    #     account_settings = get_account_settings(request)[0]
-
-    #     self.assertEqual(self.USERNAME, account_settings["username"])
-    #     self.assertEqual(self.EMAIL, account_settings["email"])
-    #     self.assertFalse(account_settings["is_active"])
-    #     self.assertEqual(self.NAME, account_settings["name"])
-
-    #     self.assertEqual(storage_dict, {'favorite_movie': "Inception", "favorite_editor": "cat"})
-    #     self.assertEqual(dummy_model_instance.user, user)
-
-    #     # Verify that we've been logged in
-    #     # by trying to access a page that requires authentication
-    #     response = self.client.get(reverse("learner_profile", kwargs={'username': self.USERNAME}))
-    #     self.assertHttpOK(response)
-
     @mock.patch('mailchimp_pipeline.signals.handlers.task_send_account_activation_email')
     @factory.django.mute_signals(post_save)    
     def test_activation_email(self, mock_func):
@@ -1235,7 +1202,6 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
         """
         # Add in fields that are always present
 
-
         defaults = [
             ("label", ""),
             ("instructions", ""),
@@ -1247,8 +1213,6 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
         for key, value in defaults:
             if key not in expected_field:
                 expected_field[key] = value
-
-
 
         # Retrieve the registration form description
         with override_settings(REGISTRATION_EXTRA_FIELDS=extra_fields_setting):
@@ -1290,501 +1254,12 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
         self.assertContains(response, 'Kosovo')
 
 
-@override_settings(
-    MIDDLEWARE_CLASSES=[
-        klass for klass in settings.MIDDLEWARE_CLASSES
-        if klass != 'lms.djangoapps.onboarding.middleware.RedirectMiddleware'
-    ]
-)
-@ddt.ddt
-@skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
-class RegistrationViewTestV2(ThirdPartyAuthTestMixin, ApiTestCase):
+class RegistrationViewTestV2(RegistrationViewTest):
     """Tests for the registration version two end-points of the User API. """
-
-    maxDiff = None
-    USERNAME = "bob"
-    EMAIL = "bob@example.com"
-    PASSWORD = "password"
-    NAME = "Bob Smith"
-    FIRSTNAME = "Bob"
-    LASTNAME = "Smith"
-    EDUCATION = "m"
-    YEAR_OF_BIRTH = "1998"
-    ADDRESS = "123 Fake Street"
-    CITY = "Springfield"
-    COUNTRY = "us"
-    GOALS = "Learn all the things!"
 
     def setUp(self):
         super(RegistrationViewTestV2, self).setUp()
         self.url = reverse("user_api_registration_v2")
-
-    @ddt.data("get", "post")
-    def test_auth_disabled(self, method):
-        self.assertAuthDisabled(method, self.url)
-
-    def test_allowed_methods(self):
-        self.assertAllowedMethods(self.url, ["GET", "POST", "HEAD", "OPTIONS"])
-
-    def test_put_not_allowed(self):
-        response = self.client.put(self.url)
-        self.assertHttpMethodNotAllowed(response)
-
-    def test_delete_not_allowed(self):
-        response = self.client.delete(self.url)
-        self.assertHttpMethodNotAllowed(response)
-
-    def test_patch_not_allowed(self):
-        raise SkipTest("Django 1.4's test client does not support patch")
-
-    def test_register_form_default_fields(self):
-        no_extra_fields_setting = {}
-
-        self._assert_reg_field(
-            no_extra_fields_setting,
-            {
-                u"name": u"email",
-                u"type": u"email",
-                u"required": True,
-                u"label": u"Email",
-                u"placeholder": u"username@domain.com",
-                u"restrictions": {
-                    "min_length": EMAIL_MIN_LENGTH,
-                    "max_length": EMAIL_MAX_LENGTH
-                },
-                u"errorMessages": {
-                    u"email": u"The email you entered is not valid. Please provide"
-                    u" a valid email in order to create an account."
-                }
-            }
-        )
-
-
-        self._assert_reg_field(
-            no_extra_fields_setting,
-            {
-                u"name": u"username",
-                u"type": u"text",
-                u"required": True,
-                u"label": u"Public Username",
-                u"placeholder": u"Public Username",
-                u"instructions": u"The name that will identify you in your courses - <strong>(cannot be changed later)</strong>",  # pylint: disable=line-too-long
-                u"restrictions": {
-                    "min_length": USERNAME_MIN_LENGTH,
-                    "max_length": USERNAME_MAX_LENGTH
-                },
-            }
-        )
-
-        self._assert_reg_field(
-            no_extra_fields_setting,
-            {
-                u"placeholder": "Password",
-                u"name": u"password",
-                u"type": u"password",
-                u"required": True,
-                u"label": u"Password",
-                u"restrictions": {
-                    'min_length': PASSWORD_MIN_LENGTH,
-                    'max_length': PASSWORD_MAX_LENGTH
-                },
-            }
-        )
-
-    def _assert_reg_field(self, extra_fields_setting, expected_field):
-        """Retrieve the registration form description from the server and
-        verify that it contains the expected field.
-
-        Args:
-            extra_fields_setting (dict): Override the Django setting controlling
-                which extra fields are displayed in the form.
-
-            expected_field (dict): The field definition we expect to find in the form.
-
-        Raises:
-            AssertionError
-
-        """
-        # Add in fields that are always present
-
-
-        defaults = [
-            ("label", ""),
-            ("instructions", ""),
-            ("placeholder", ""),
-            ("defaultValue", ""),
-            ("restrictions", {}),
-            ("errorMessages", {}),
-        ]
-        for key, value in defaults:
-            if key not in expected_field:
-                expected_field[key] = value
-
-        # Retrieve the registration form description
-        with override_settings(REGISTRATION_EXTRA_FIELDS=extra_fields_setting):
-            response = self.client.get(self.url)
-            self.assertHttpOK(response)
-
-        # Verify that the form description matches what we'd expect
-        form_desc = json.loads(response.content)
-
-        # Search the form for this field
-        actual_field = None
-        for field in form_desc["fields"]:
-            if field["name"] == expected_field["name"]:
-                actual_field = field
-                break
-
-        self.assertIsNot(
-            actual_field, None,
-            msg="Could not find field {name}".format(name=expected_field["name"])
-        )
-
-        for key, value in expected_field.iteritems():
-            self.assertEqual(
-                expected_field[key], actual_field[key],
-                msg=u"Expected {expected} for {key} but got {actual} instead".format(
-                    key=key,
-                    expected=expected_field[key],
-                    actual=actual_field[key]
-                )
-            )
-    
-    def test_register_form_level_of_education(self):
-        self._assert_reg_field(
-            {"level_of_education": "optional"},
-            {
-                "name": "level_of_education",
-                "type": "select",
-                "required": False,
-                "label": "Highest level of education completed",
-                "options": [
-                    {"value": "", "name": "--", "default": True},
-                    {"value": "p", "name": "Doctorate"},
-                    {"value": "m", "name": "Master's or professional degree"},
-                    {"value": "b", "name": "Bachelor's degree"},
-                    {"value": "a", "name": "Associate degree"},
-                    {"value": "hs", "name": "Secondary/high school"},
-                    {"value": "jhs", "name": "Junior secondary/junior high/middle school"},
-                    {"value": "el", "name": "Elementary/primary school"},
-                    {"value": "none", "name": "No formal education"},
-                    {"value": "other", "name": "Other education"},
-                ],
-            }
-        )
-
-    @mock.patch('util.enterprise_helpers.active_provider_requests_data_sharing')
-    @mock.patch('util.enterprise_helpers.active_provider_enforces_data_sharing')
-    @mock.patch('util.enterprise_helpers.get_enterprise_customer_for_request')
-    @mock.patch('util.enterprise_helpers.configuration_helpers')
-    def test_register_form_consent_field(self, config_helper, get_ec, mock_enforce, mock_request):
-        """
-        Test that if we have an EnterpriseCustomer active for the request, and that
-        EnterpriseCustomer is set to require data sharing consent, the correct
-        field is added to the form descriptor.
-        """
-        fake_ec = mock.MagicMock(
-            enforces_data_sharing_consent=mock.MagicMock(return_value=True),
-            requests_data_sharing_consent=True,
-        )
-        fake_ec.name = 'MegaCorp'
-        get_ec.return_value = fake_ec
-        config_helper.get_value.return_value = 'OpenEdX'
-        mock_request.return_value = True
-        mock_enforce.return_value = True
-        self._assert_reg_field(
-            dict(),
-            {
-                u"name": u"data_sharing_consent",
-                u"type": u"checkbox",
-                u"required": True,
-                u"label": (
-                    "I agree to allow OpenEdX to share data about my enrollment, "
-                    "completion and performance in all OpenEdX courses and programs "
-                    "where my enrollment is sponsored by MegaCorp."
-                ),
-                u"defaultValue": False,
-                u"errorMessages": {
-                    u'required': u'To link your account with MegaCorp, you are required to consent to data sharing.',
-                }
-            }
-        )
-
-    @mock.patch('openedx.core.djangoapps.user_api.views._')
-    def test_register_form_level_of_education_translations(self, fake_gettext):
-        fake_gettext.side_effect = lambda text: text + ' TRANSLATED'
-
-        self._assert_reg_field(
-            {"level_of_education": "optional"},
-            {
-                "name": "level_of_education",
-                "type": "select",
-                "required": False,
-                "label": "Highest level of education completed TRANSLATED",
-                "options": [
-                    {"value": "", "name": "--", "default": True},
-                    {"value": "p", "name": "Doctorate TRANSLATED"},
-                    {"value": "m", "name": "Master's or professional degree TRANSLATED"},
-                    {"value": "b", "name": "Bachelor's degree TRANSLATED"},
-                    {"value": "a", "name": "Associate degree TRANSLATED"},
-                    {"value": "hs", "name": "Secondary/high school TRANSLATED"},
-                    {"value": "jhs", "name": "Junior secondary/junior high/middle school TRANSLATED"},
-                    {"value": "el", "name": "Elementary/primary school TRANSLATED"},
-                    {"value": "none", "name": "No formal education TRANSLATED"},
-                    {"value": "other", "name": "Other education TRANSLATED"},
-                ],
-            }
-        )
-
-    def test_register_form_gender(self):
-        self._assert_reg_field(
-            {"gender": "optional"},
-            {
-                "name": "gender",
-                "type": "select",
-                "required": False,
-                "label": "Gender",
-                "options": [
-                    {"value": "", "name": "--", "default": True},
-                    {"value": "m", "name": "Male"},
-                    {"value": "f", "name": "Female"},
-                    {"value": "o", "name": "Other/Prefer Not to Say"},
-                ],
-            }
-        )
-
-    @mock.patch('openedx.core.djangoapps.user_api.views._')
-    def test_register_form_gender_translations(self, fake_gettext):
-        fake_gettext.side_effect = lambda text: text + ' TRANSLATED'
-
-        self._assert_reg_field(
-            {"gender": "optional"},
-            {
-                "name": "gender",
-                "type": "select",
-                "required": False,
-                "label": "Gender TRANSLATED",
-                "options": [
-                    {"value": "", "name": "--", "default": True},
-                    {"value": "m", "name": "Male TRANSLATED"},
-                    {"value": "f", "name": "Female TRANSLATED"},
-                    {"value": "o", "name": "Other/Prefer Not to Say TRANSLATED"},
-                ],
-            }
-        )
-
-    def test_register_form_year_of_birth(self):
-        this_year = datetime.datetime.now(UTC).year
-        year_options = (
-            [{"value": "", "name": "--", "default": True}] + [
-                {"value": unicode(year), "name": unicode(year)}
-                for year in range(this_year, this_year - 120, -1)
-            ]
-        )
-        self._assert_reg_field(
-            {"year_of_birth": "optional"},
-            {
-                "name": "year_of_birth",
-                "type": "select",
-                "required": False,
-                "label": "Year of birth",
-                "options": year_options,
-            }
-        )
-
-    def test_registration_form_mailing_address(self):
-        self._assert_reg_field(
-            {"mailing_address": "optional"},
-            {
-                "name": "mailing_address",
-                "type": "textarea",
-                "required": False,
-                "label": "Mailing address",
-            }
-        )
-
-    def test_registration_form_goals(self):
-        self._assert_reg_field(
-            {"goals": "optional"},
-            {
-                "name": "goals",
-                "type": "textarea",
-                "required": False,
-                "label": u"Tell us why you're interested in {platform_name}".format(
-                    platform_name=settings.PLATFORM_NAME
-                )
-            }
-        )
-
-    def test_registration_form_city(self):
-        self._assert_reg_field(
-            {"city": "optional"},
-            {
-                "name": "city",
-                "type": "text",
-                "required": False,
-                "label": "City",
-            }
-        )
-
-    def test_registration_form_state(self):
-        self._assert_reg_field(
-            {"state": "optional"},
-            {
-                "name": "state",
-                "type": "text",
-                "required": False,
-                "label": "State/Province/Region",
-            }
-        )
-
-    def test_registration_form_country(self):
-        country_options = (
-            [{"name": "--", "value": "", "default": True}] +
-            [
-                {"value": country_code, "name": unicode(country_name)}
-                for country_code, country_name in SORTED_COUNTRIES
-            ]
-        )
-        self._assert_reg_field(
-            {"country": "required"},
-            {
-                "label": "Country",
-                "name": "country",
-                "type": "select",
-                "required": True,
-                "options": country_options,
-                "errorMessages": {
-                    "required": "Please select your Country."
-                },
-            }
-        )
-
-    @override_settings(
-        MKTG_URLS={"ROOT": "https://www.test.com/", "HONOR": "honor"},
-    )
-    @mock.patch.dict(settings.FEATURES, {"ENABLE_MKTG_SITE": True})
-    def test_registration_honor_code_mktg_site_enabled(self):
-        link_label = 'Terms of Service and Honor Code'
-        self._assert_reg_field(
-            {"honor_code": "required"},
-            {
-                "label": u"Check here if you agree to be bound by, and to comply with, our ",
-                "name": "honor_code",
-                "defaultValue": False,
-                "type": "checkbox",
-                "required": True,
-                "errorMessages": {
-                    "required": "Please accept our Terms and Conditions by checking the Terms and Conditions" \
-                    " checkbox before creating an account."
-                }
-            }
-        )
-
-    @override_settings(MKTG_URLS_LINK_MAP={"HONOR": "honor"})
-    @mock.patch.dict(settings.FEATURES, {"ENABLE_MKTG_SITE": False})
-    def test_registration_honor_code_mktg_site_disabled(self):
-        link_label = 'Terms of Service and Honor Code'
-        self._assert_reg_field(
-            {"honor_code": "required"},
-            {
-                "label": u"Check here if you agree to be bound by, and to comply with, our ",
-                "name": "honor_code",
-                "defaultValue": False,
-                "type": "checkbox",
-                "required": True,
-                "errorMessages": {
-                    "required": "Please accept our Terms and Conditions by checking the Terms and Conditions" \
-                    " checkbox before creating an account."
-                }
-            }
-        )
-
-    @override_settings(MKTG_URLS={
-        "ROOT": "https://www.test.com/",
-        "HONOR": "honor",
-        "TOS": "tos",
-    })
-    @mock.patch.dict(settings.FEATURES, {"ENABLE_MKTG_SITE": True})
-    def test_registration_separate_terms_of_service_mktg_site_enabled(self):
-        # Honor code field should say ONLY honor code,
-        # not "terms of service and honor code"
-        link_label = 'Honor Code'
-        self._assert_reg_field(
-            {"honor_code": "required", "terms_of_service": "required"},
-            {
-                "label": u"Check here if you agree to be bound by, and to comply with, our ",
-                "name": "honor_code",
-                "defaultValue": False,
-                "type": "checkbox",
-                "required": True,
-                "errorMessages": {
-                    "required": "Please accept our Terms and Conditions by checking the Terms and Conditions" \
-                    " checkbox before creating an account."
-                }                
-            }
-        )
-
-        # Terms of service field should also be present
-        link_label = 'Terms of Service'
-        self._assert_reg_field(
-            {"honor_code": "required", "terms_of_service": "required"},
-            {
-                "label": u"I agree to the {platform_name} {link_label}".format(
-                    platform_name=settings.PLATFORM_NAME,
-                    link_label=link_label
-                ),
-                "name": "terms_of_service",
-                "defaultValue": False,
-                "type": "checkbox",
-                "required": True,
-                "errorMessages": {
-                    "required": u"You must agree to the {platform_name} {link_label}".format(
-                        platform_name=settings.PLATFORM_NAME,
-                        link_label=link_label
-                    )
-                }
-            }
-        )
-
-    @override_settings(MKTG_URLS_LINK_MAP={"HONOR": "honor", "TOS": "tos"})
-    @mock.patch.dict(settings.FEATURES, {"ENABLE_MKTG_SITE": False})
-    def test_registration_separate_terms_of_service_mktg_site_disabled(self):
-        # Honor code field should say ONLY honor code,
-        # not "terms of service and honor code"
-        self._assert_reg_field(
-            {"honor_code": "required", "terms_of_service": "required"},
-            {
-                "label": u"Check here if you agree to be bound by, and to comply with, our ",
-                "name": "honor_code",
-                "defaultValue": False,
-                "type": "checkbox",
-                "required": True,
-                "errorMessages": {
-                    "required": "Please accept our Terms and Conditions by checking the Terms and Conditions" \
-                    " checkbox before creating an account."
-                }                
-            }
-        )
-
-        # Terms of service field should also be present
-        self._assert_reg_field(
-            {"honor_code": "required", "terms_of_service": "required"},
-            {
-                "label": u"I agree to the {platform_name} Terms of Service".format(
-                    platform_name=settings.PLATFORM_NAME
-                ),
-                "name": "terms_of_service",
-                "defaultValue": False,
-                "type": "checkbox",
-                "required": True,
-                "errorMessages": {
-                    "required": u"You must agree to the {platform_name} Terms of Service".format(  # pylint: disable=line-too-long
-                        platform_name=settings.PLATFORM_NAME
-                    )
-                }
-            }
-        )
 
     @override_settings(
         REGISTRATION_EXTRA_FIELDS={
@@ -1826,340 +1301,236 @@ class RegistrationViewTestV2(ThirdPartyAuthTestMixin, ApiTestCase):
             u'honor_code'
         ])
 
-    @factory.django.mute_signals(post_save)
-    def test_register(self):
-        # Create a new registration
-        response = self.client.post(self.url, {
-            "email": self.EMAIL,
-            "name": self.NAME,
-            "username": self.USERNAME,
-            "password": self.PASSWORD,
+    def test_extension_form_fields(self):
+        raise SkipTest("RegisterationView Versioi2 doesn't support this test")
+
+
+@httpretty.activate
+@ddt.ddt
+class ThirdPartyRegistrationTestMixin(ThirdPartyOAuthTestMixin, CacheIsolationTestCase):
+    """
+    Tests for the User API registration version one endpoint with 3rd party authentication.
+    """
+    CREATE_USER = False
+
+    ENABLED_CACHES = ['default']
+
+    __test__ = False
+
+    def setUp(self):
+        super(ThirdPartyRegistrationTestMixin, self).setUp()
+        self.url = reverse('user_api_registration')
+
+    def data(self, user=None):
+        """Returns the request data for the endpoint."""
+        return {
+            "provider": self.BACKEND,
+            "access_token": self.access_token,
+            "client_id": self.client_id,
             "honor_code": "true",
-            "first_name": self.FIRSTNAME,
-            "last_name": self.LASTNAME,
-            "confirm_password": self.PASSWORD,
+            "country": "US",
+            "username": user.username if user else "test_username",
+            "name": user.first_name if user else "Bob Allen",
+            "first_name": "Bob",
+            "last_name": "Allen",
+            "password": "dummy password",
+            "confirm_password": "dummy password",
             "is_poc": 1,
-            "partners_opt_in": ""
-        })
-        self.assertHttpOK(response)
-        self.assertIn(settings.EDXMKTG_LOGGED_IN_COOKIE_NAME, self.client.cookies)
-        self.assertIn(settings.EDXMKTG_USER_INFO_COOKIE_NAME, self.client.cookies)
-
-        user = User.objects.get(username=self.USERNAME)
-        request = RequestFactory().get('/url')
-        request.user = user
-        account_settings = get_account_settings(request)[0]
-
-        self.assertEqual(self.USERNAME, account_settings["username"])
-        self.assertEqual(self.EMAIL, account_settings["email"])
-        self.assertFalse(account_settings["is_active"])
-        self.assertEqual(self.NAME, account_settings["name"])
-
-        # Verify that we've been logged in
-        # by trying to access a page that requires authentication
-        response = self.client.get(reverse("learner_profile", kwargs={'username': self.USERNAME}))
-        self.assertHttpOK(response)
-
-    @override_settings(REGISTRATION_EXTRA_FIELDS={
-        "level_of_education": "optional",
-        "gender": "optional",
-        "year_of_birth": "optional",
-        "mailing_address": "optional",
-        "goals": "optional",
-        "country": "required",
-    })
-    @factory.django.mute_signals(post_save)
-    def test_register_with_profile_info(self):
-        # Register, providing lots of demographic info
-        response = self.client.post(self.url, {
-            "email": self.EMAIL,
-            "name": self.NAME,
-            "username": self.USERNAME,
-            "password": self.PASSWORD,
-            "level_of_education": self.EDUCATION,
-            "mailing_address": self.ADDRESS,
-            "year_of_birth": self.YEAR_OF_BIRTH,
-            "goals": self.GOALS,
-            "country": self.COUNTRY,
-            "honor_code": "true",
-            "first_name": self.FIRSTNAME,
-            "last_name": self.LASTNAME,
-            "confirm_password": self.PASSWORD,
-            "is_poc": 1,
-            "partners_opt_in": ""
-        })
-        self.assertHttpOK(response)
-
-        # Verify the user's account
-        user = User.objects.get(username=self.USERNAME)
-        request = RequestFactory().get('/url')
-        request.user = user
-        account_settings = get_account_settings(request)[0]
-
-        self.assertEqual(account_settings["level_of_education"], self.EDUCATION)
-        self.assertEqual(account_settings["mailing_address"], self.ADDRESS)
-        self.assertEqual(account_settings["year_of_birth"], int(self.YEAR_OF_BIRTH))
-        self.assertEqual(account_settings["goals"], self.GOALS)
-        self.assertEqual(account_settings["country"], self.COUNTRY)
-
-    @mock.patch('mailchimp_pipeline.signals.handlers.task_send_account_activation_email')
-    @factory.django.mute_signals(post_save)    
-    def test_activation_email(self, mock_func):
-        # Register, which should trigger an activation email
-        response = self.client.post(self.url, {
-            "email": self.EMAIL,
-            "name": self.NAME,
-            "username": self.USERNAME,
-            "password": self.PASSWORD,
-            "honor_code": "true",
-            "first_name": self.FIRSTNAME,
-            "last_name": self.LASTNAME,
-            "confirm_password": self.PASSWORD,
-            "is_poc": 1,
-            "partners_opt_in": ""
-        })
-        self.assertHttpOK(response)
-
-        # Verify that the activation email was sent
-        mock_func.assert_called_once()
-
-    @ddt.data(
-        {"email": ""},
-        {"email": "invalid"},
-        {"first_name": ""},
-        {"last_name": ""},
-        {"username": ""},
-        {"username": "a"},
-        {"password": ""},
-    )
-    def test_register_invalid_input(self, invalid_fields):
-        # Initially, the field values are all valid
-        data = {
-            "email": self.EMAIL,
-            "name": self.NAME,
-            "username": self.USERNAME,
-            "password": self.PASSWORD,
-            "honor_code": "true",
-            "first_name": self.FIRSTNAME,
-            "last_name": self.LASTNAME,
-            "confirm_password": self.PASSWORD,
-            "is_poc": 1,
-            "partners_opt_in": ""
-        }
-        # Override the valid fields, making the input invalid
-        data.update(invalid_fields)
-
-        # Attempt to create the account, expecting an error response
-        response = self.client.post(self.url, data)
-        self.assertHttpBadRequest(response)
-
-    @override_settings(REGISTRATION_EXTRA_FIELDS={"country": "required"})
-    @ddt.data("email", "username", "password", "country", ("first_name", "last_name"))
-    def test_register_missing_required_field(self, missing_field):
-        data = {
-            "email": self.EMAIL,
-            "name": self.NAME,
-            "username": self.USERNAME,
-            "password": self.PASSWORD,
-            "country": self.COUNTRY,
-            "honor_code": "true",
-            "first_name": self.FIRSTNAME,
-            "last_name": self.LASTNAME,
-            "confirm_password": self.PASSWORD,
-            "is_poc": 1,
+            "email": user.email if user else "test@test.com",
             "partners_opt_in": ""
         }
 
-        if isinstance(missing_field, tuple):
-            for key in missing_field:
-                del data[key]
-        else:
-            del data[missing_field]
-
-        # Send a request missing a field
-        response = self.client.post(self.url, data)
-        self.assertHttpBadRequest(response)
-
-    def test_register_duplicate_email(self):
-        # Register the first user
-        response = self.client.post(self.url, {
-            "email": self.EMAIL,
-            "name": self.NAME,
-            "username": self.USERNAME,
-            "password": self.PASSWORD,
-            "honor_code": "true",
-            "first_name": self.FIRSTNAME,
-            "last_name": self.LASTNAME,
-            "confirm_password": self.PASSWORD,
-            "is_poc": 1,
-            "partners_opt_in": ""
-
-        })
-        self.assertHttpOK(response)
-
-        # Try to create a second user with the same email address
-        response = self.client.post(self.url, {
-            "email": self.EMAIL,
-            "name": "Someone Else",
-            "username": "someone_else",
-            "password": self.PASSWORD,
-            "honor_code": "true",
-            "first_name": self.FIRSTNAME,
-            "last_name": self.LASTNAME,
-            "confirm_password": self.PASSWORD,
-            "is_poc": 1,
-            "partners_opt_in": ""
-
-        })
+    def _assert_existing_user_error(self, response):
+        """Assert that the given response was an error with the given status_code and error code."""
         self.assertEqual(response.status_code, 409)
-        response_json = json.loads(response.content)
-        self.assertEqual(
-            response_json,
-            {
-                "email": [{
-                    "user_message": (
-                        "It looks like {} belongs to an existing account. "
-                        "Try again with a different email address."
-                    ).format(
-                        self.EMAIL
-                    )
-                }]
-            }
-        )
+        errors = json.loads(response.content)
+        for conflict_attribute in ["username", "email"]:
+            self.assertIn(conflict_attribute, errors)
 
-    def test_register_duplicate_username(self):
-        # Register the first user
-        response = self.client.post(self.url, {
-            "email": self.EMAIL,
-            "name": self.NAME,
-            "username": self.USERNAME,
-            "password": self.PASSWORD,
-            "honor_code": "true",
-            "first_name": self.FIRSTNAME,
-            "last_name": self.LASTNAME,
-            "confirm_password": self.PASSWORD,
-            "is_poc": 1,
-            "partners_opt_in": ""
+        self.assertIn("belongs to an existing account", errors["email"][0]["user_message"])
+        self.assertIn("is already being used", errors["username"][0]["user_message"])
+        self.assertNotIn("partial_pipeline", self.client.session)
 
-        })
-        self.assertHttpOK(response)
-
-        # Try to create a second user with the same username
-        response = self.client.post(self.url, {
-            "email": "someone+else@example.com",
-            "name": "Someone Else",
-            "username": self.USERNAME,
-            "password": self.PASSWORD,
-            "honor_code": "true",
-            "first_name": self.FIRSTNAME,
-            "last_name": self.LASTNAME,
-            "confirm_password": self.PASSWORD,
-            "is_poc": 1,
-            "partners_opt_in": ""
-        })
-        self.assertEqual(response.status_code, 409)
-        response_json = json.loads(response.content)
-        self.assertEqual(
-            response_json,
-            {
-                "username": [{
-                    "user_message": "The username you entered is already being used. Please enter another username."                    
-                }]
-            }
-        )
-
-    def test_register_duplicate_username_and_email(self):
-        # Register the first user
-        response = self.client.post(self.url, {
-            "email": self.EMAIL,
-            "name": self.NAME,
-            "username": self.USERNAME,
-            "password": self.PASSWORD,
-            "honor_code": "true",
-            "first_name": self.FIRSTNAME,
-            "last_name": self.LASTNAME,
-            "confirm_password": self.PASSWORD,
-            "is_poc": 1,
-            "partners_opt_in": ""
-        })
-        self.assertHttpOK(response)
-
-        # Try to create a second user with the same username
-        response = self.client.post(self.url, {
-            "email": self.EMAIL,
-            "name": "Someone Else",
-            "username": self.USERNAME,
-            "password": self.PASSWORD,
-            "honor_code": "true",
-            "first_name": self.FIRSTNAME,
-            "last_name": self.LASTNAME,
-            "confirm_password": self.PASSWORD,
-            "is_poc": 1,
-            "partners_opt_in": ""
-        })
-        self.assertEqual(response.status_code, 409)
-        response_json = json.loads(response.content)
-        self.assertEqual(
-            response_json,
-            {
-                "username": [{
-                    "user_message": "The username you entered is already being used. Please enter another username."                    
-                }],
-                "email": [{
-                    "user_message": (
-                        "It looks like {} belongs to an existing account. "
-                        "Try again with a different email address."
-                    ).format(
-                        self.EMAIL
-                    )
-                }]
-            }
-        )
-
-    @override_settings(REGISTRATION_EXTRA_FIELDS={"honor_code": "hidden", "terms_of_service": "hidden"})
-    def test_register_hidden_honor_code_and_terms_of_service(self):
-        response = self.client.post(self.url, {
-            "email": self.EMAIL,
-            "name": self.NAME,
-            "username": self.USERNAME,
-            "password": self.PASSWORD,
-            "first_name": self.FIRSTNAME,
-            "last_name": self.LASTNAME,
-            "confirm_password": self.PASSWORD,
-            "is_poc": 1,
-            "partners_opt_in": ""
-        })
-        self.assertHttpOK(response)
-
-    def test_missing_fields(self):
-        response = self.client.post(
-            self.url,
-            {
-                "email": self.EMAIL,
-                "name": self.NAME,
-                "honor_code": "true",
-                "first_name": self.FIRSTNAME,
-                "last_name": self.LASTNAME,
-                "confirm_password": self.PASSWORD,
-                "is_poc": 1,
-                "partners_opt_in": ""
-            }
-        )
+    def _assert_access_token_error(self, response, expected_error_message):
+        """Assert that the given response was an error for the access_token field with the given error message."""
         self.assertEqual(response.status_code, 400)
         response_json = json.loads(response.content)
         self.assertEqual(
             response_json,
-            {
-                "username": [{"user_message": "Username must be minimum of two characters long"}],
-                "password": [{"user_message": "A valid password is required"}],
-            }
+            {"access_token": [{"user_message": expected_error_message}]}
         )
+        self.assertNotIn("partial_pipeline", self.client.session)
 
-    def test_country_overrides(self):
-        """Test that overridden countries are available in country list."""
-        # Retrieve the registration form description
-        with override_settings(REGISTRATION_EXTRA_FIELDS={"country": "required"}):
-            response = self.client.get(self.url)
-            self.assertHttpOK(response)
+    def _verify_user_existence(self, user_exists, social_link_exists, user_is_active=None, username=None):
+        """Verifies whether the user object exists."""
+        users = User.objects.filter(username=(username if username else "test_username"))
+        self.assertEquals(users.exists(), user_exists)
+        if user_exists:
+            self.assertEquals(users[0].is_active, user_is_active)
+            self.assertEqual(
+                UserSocialAuth.objects.filter(user=users[0], provider=self.BACKEND).exists(),
+                social_link_exists
+            )
+        else:
+            self.assertEquals(UserSocialAuth.objects.count(), 0)
+    
+    @factory.django.mute_signals(post_save)    
+    def test_success(self):
+        with simulate_running_pipeline(
+            "lms.djangoapps.philu_overrides.user_api.views.pipeline",
+            self.BACKEND
+        ): 
+            self._verify_user_existence(user_exists=False, social_link_exists=False)
 
-        self.assertContains(response, 'Kosovo')
+            self._setup_provider_response(success=True)
+            response = self.client.post(self.url, self.data())
+            self.assertEqual(response.status_code, 200)
+
+            self._verify_user_existence(user_exists=True, social_link_exists=True, user_is_active=False)
+
+    @factory.django.mute_signals(post_save)    
+    def test_unlinked_active_user(self):
+        with simulate_running_pipeline(
+            "lms.djangoapps.philu_overrides.user_api.views.pipeline",
+            self.BACKEND
+        ): 
+            user = UserFactory()
+            response = self.client.post(self.url, self.data(user))
+            self._assert_existing_user_error(response)
+            self._verify_user_existence(
+                user_exists=True, social_link_exists=False, user_is_active=True, username=user.username
+            )
+
+    @factory.django.mute_signals(post_save)    
+    def test_unlinked_inactive_user(self):
+        with simulate_running_pipeline(
+            "lms.djangoapps.philu_overrides.user_api.views.pipeline",
+            self.BACKEND
+        ):         
+            user = UserFactory(is_active=False)
+            response = self.client.post(self.url, self.data(user))
+            self._assert_existing_user_error(response)
+            self._verify_user_existence(
+                user_exists=True, social_link_exists=False, user_is_active=False, username=user.username
+            )
+
+    @factory.django.mute_signals(post_save)    
+    def test_user_already_registered(self):
+        with simulate_running_pipeline(
+            "lms.djangoapps.philu_overrides.user_api.views.pipeline",
+            self.BACKEND
+        ):             
+            self._setup_provider_response(success=True)
+            user = UserFactory()
+            UserSocialAuth.objects.create(user=user, provider=self.BACKEND, uid=self.social_uid)
+            response = self.client.post(self.url, self.data(user))
+            self._assert_existing_user_error(response)
+            self._verify_user_existence(
+                user_exists=True, social_link_exists=True, user_is_active=True, username=user.username
+            )
+
+    
+    @factory.django.mute_signals(post_save)    
+    def test_social_user_conflict(self):
+        with simulate_running_pipeline(
+            "lms.djangoapps.philu_overrides.user_api.views.pipeline",
+            self.BACKEND
+        ):             
+            self._setup_provider_response(success=True)
+            user = UserFactory()
+            UserSocialAuth.objects.create(user=user, provider=self.BACKEND, uid=self.social_uid)
+            response = self.client.post(self.url, self.data())
+            self._assert_access_token_error(response, "The provided access_token is already associated with another user.")
+            self._verify_user_existence(
+                user_exists=True, social_link_exists=True, user_is_active=True, username=user.username
+            )
+
+    @factory.django.mute_signals(post_save)    
+    def test_invalid_token(self):
+        with simulate_running_pipeline(
+            "lms.djangoapps.philu_overrides.user_api.views.pipeline",
+            self.BACKEND
+        ): 
+            self._setup_provider_response(success=False)
+            response = self.client.post(self.url, self.data())
+            self._assert_access_token_error(response, "The provided access_token is not valid.")
+            self._verify_user_existence(user_exists=False, social_link_exists=False)
+
+    @factory.django.mute_signals(post_save)    
+    def test_missing_token(self):
+        with simulate_running_pipeline(
+            "lms.djangoapps.philu_overrides.user_api.views.pipeline",
+            self.BACKEND
+        ): 
+            data = self.data()
+            data.pop("access_token")
+            response = self.client.post(self.url, data)
+            self._assert_access_token_error(
+                response,
+                "The provided access_token is not valid."
+            )
+            self._verify_user_existence(user_exists=False, social_link_exists=False)
+
+
+@skipUnless(settings.FEATURES.get("ENABLE_THIRD_PARTY_AUTH"), "third party auth not enabled")
+class TestFacebookRegistrationView(
+    ThirdPartyRegistrationTestMixin, ThirdPartyOAuthTestMixinFacebook, TransactionTestCase
+):
+    """Tests the User API registration endpoint one with Facebook authentication."""
+    __test__ = True
+
+    def test_social_auth_exception(self):
+        """
+        According to the do_auth method in social.backends.facebook.py,
+        the Facebook API sometimes responds back a JSON with just False as value.
+        """
+        self._setup_provider_response_with_body(200, json.dumps("false"))
+        response = self.client.post(self.url, self.data())
+        self._assert_access_token_error(response, "The provided access_token is not valid.")
+        self._verify_user_existence(user_exists=False, social_link_exists=False)
+
+
+@skipUnless(settings.FEATURES.get("ENABLE_THIRD_PARTY_AUTH"), "third party auth not enabled")
+class TestGoogleRegistrationView( 
+    ThirdPartyRegistrationTestMixin, ThirdPartyOAuthTestMixinGoogle, TransactionTestCase
+):
+    """Tests the User API registration version one endpoint with Google authentication."""
+    __test__ = True
+
+class ThirdPartyRegistrationTestMixinV2(ThirdPartyRegistrationTestMixin):
+    """Tests for the registration version two end-points of the User API. """
+
+    CREATE_USER = False
+
+    ENABLED_CACHES = ['default']
+
+    __test__ = False
+
+    def setUp(self):
+        super(ThirdPartyRegistrationTestMixinV2, self).setUp()
+        self.url = reverse('user_api_registration_v2')
+
+
+class TestGoogleRegistrationViewV2(
+    ThirdPartyRegistrationTestMixinV2, ThirdPartyOAuthTestMixinGoogle, TransactionTestCase
+):
+    """Tests the User API registration version two endpoint with Google authentication."""
+    __test__ = True
+
+
+@skipUnless(settings.FEATURES.get("ENABLE_THIRD_PARTY_AUTH"), "third party auth not enabled")
+class TestFacebookRegistrationViewV2(
+    ThirdPartyRegistrationTestMixinV2, ThirdPartyOAuthTestMixinFacebook, TransactionTestCase
+):
+    """Tests the User API registration version two endpoint with Facebook authentication."""
+    __test__ = True
+
+    def test_social_auth_exception(self):
+        """
+        According to the do_auth method in social.backends.facebook.py,
+        the Facebook API sometimes responds back a JSON with just False as value.
+        """
+        self._setup_provider_response_with_body(200, json.dumps("false"))
+        response = self.client.post(self.url, self.data())
+        self._assert_access_token_error(response, "The provided access_token is not valid.")
+        self._verify_user_existence(user_exists=False, social_link_exists=False)
