@@ -329,7 +329,9 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
             }
         )
 
-    @override_settings(REGISTRATION_EXTENSION_FORM='openedx.core.djangoapps.user_api.tests.test_helpers.TestCaseForm')
+    @override_settings(
+        REGISTRATION_EXTENSION_FORM='openedx.core.djangoapps.user_api.tests.test_helpers.TestCaseForm'
+        )
     def test_extension_form_fields(self):
         no_extra_fields_setting = {}
 
@@ -1283,22 +1285,22 @@ class RegistrationViewTestV2(RegistrationViewTest):
         form_desc = json.loads(response.content)
         field_names = [field["name"] for field in form_desc["fields"]]
         self.assertEqual(field_names, [
-            u'email',
-            u'username',
-            u'password',
-            u'confirm_password',
-            u'first_name',
-            u'last_name',
-            u'opt_in',
-            u'city',
-            u'state',
-            u'country',
-            u'gender',
-            u'year_of_birth',
-            u'level_of_education',
-            u'mailing_address',
-            u'goals',
-            u'honor_code'
+            u"email",
+            u"username",
+            u"password",
+            u"confirm_password",
+            u"first_name",
+            u"last_name",
+            u"opt_in",
+            u"city",
+            u"state",
+            u"country",
+            u"gender",
+            u"year_of_birth",
+            u"level_of_education",
+            u"mailing_address",
+            u"goals",
+            u"honor_code"        
         ])
 
     def test_extension_form_fields(self):
