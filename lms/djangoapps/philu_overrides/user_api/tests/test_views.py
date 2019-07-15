@@ -2,48 +2,35 @@
 
 import datetime
 import json
+from unittest import SkipTest, skipUnless
+
 import ddt
 import factory
 import httpretty
 import mock
-
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core import mail
 from django.core.urlresolvers import reverse
-from django.db import IntegrityError
 from django.db.models.signals import post_save
 from django.test.client import RequestFactory
 from django.test.testcases import TransactionTestCase
 from django.test.utils import override_settings
-from django.utils.importlib import import_module
-from opaque_keys.edx.locations import SlashSeparatedCourseKey
-from pytz import UTC, common_timezones_set
+from pytz import UTC
 from social.apps.django_app.default.models import UserSocialAuth
-from unittest import SkipTest, skipUnless
+from third_party_auth.tests.testutil import ThirdPartyAuthTestMixin
+from third_party_auth.tests.utils import (ThirdPartyOAuthTestMixin, ThirdPartyOAuthTestMixinFacebook,
+                                          ThirdPartyOAuthTestMixinGoogle)
 
-from common.djangoapps.nodebb.signals.handlers import sync_extended_profile_info_with_nodebb
-from common.djangoapps.student.views import AccountValidationError
-from django_comment_common import models
-from lms.djangoapps.onboarding.models import UserExtendedProfile
 from lms.djangoapps.onboarding.tests.factories import UserFactory
 from lms.djangoapps.philu_overrides.user_api.views import RegistrationViewCustom
-from openedx.core.djangoapps.external_auth.models import ExternalAuthMap
 from openedx.core.djangoapps.user_api.accounts import (EMAIL_MAX_LENGTH, EMAIL_MIN_LENGTH,
-    NAME_MAX_LENGTH, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH)
+                                                       PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH,
+                                                       USERNAME_MIN_LENGTH)
 from openedx.core.djangoapps.user_api.accounts.api import get_account_settings
 from openedx.core.djangoapps.user_api.tests.test_constants import SORTED_COUNTRIES
 from openedx.core.djangoapps.user_api.tests.test_helpers import TestCaseForm
 from openedx.core.djangolib.testing.utils import CacheIsolationTestCase
-from openedx.core.lib.api.test_utils import TEST_API_KEY, ApiTestCase
-from openedx.core.lib.time_zone_utils import get_display_time_zone
-from student.forms import AccountCreationForm, get_registration_extension_form
-from third_party_auth.tests.testutil import ThirdPartyAuthTestMixin
-from third_party_auth.tests.utils import (ThirdPartyOAuthTestMixin, ThirdPartyOAuthTestMixinFacebook, 
-    ThirdPartyOAuthTestMixinGoogle)
-from xmodule.modulestore.tests.django_utils import SharedModuleStoreTestCase
-from xmodule.modulestore.tests.factories import CourseFactory
-
+from openedx.core.lib.api.test_utils import ApiTestCase
 from .utils import simulate_running_pipeline, mocked_registration_view_post_method
 
 
@@ -207,7 +194,7 @@ class LoginSessionViewTest(ApiTestCase):
             "password": self.PASSWORD,
         })
         self.assertHttpForbidden(response)
-    
+
     @factory.django.mute_signals(post_save)
     def test_missing_login_params(self):
         # Create a test user
@@ -295,7 +282,7 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                 },
                 u"errorMessages": {
                     u"email": u"The email you entered is not valid. Please provide"
-                    u" a valid email in order to create an account."
+                              u" a valid email in order to create an account."
                 }
             }
         )
@@ -308,7 +295,8 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                 u"required": True,
                 u"label": u"Public Username",
                 u"placeholder": u"Public Username",
-                u"instructions": u"The name that will identify you in your courses - <strong>(cannot be changed later)</strong>",  # pylint: disable=line-too-long
+                u"instructions": u"The name that will identify you in your courses - <strong>(cannot be changed later)</strong>",
+                # pylint: disable=line-too-long
                 u"restrictions": {
                     "min_length": USERNAME_MIN_LENGTH,
                     "max_length": USERNAME_MAX_LENGTH
@@ -333,7 +321,7 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
 
     @override_settings(
         REGISTRATION_EXTENSION_FORM='openedx.core.djangoapps.user_api.tests.test_helpers.TestCaseForm'
-        )
+    )
     def test_extension_form_fields(self):
         no_extra_fields_setting = {}
 
@@ -352,7 +340,7 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                 },
                 u"errorMessages": {
                     u"email": u"The email you entered is not valid. Please provide"
-                    u" a valid email in order to create an account."
+                              u" a valid email in order to create an account."
                 }
             }
         )
@@ -398,9 +386,9 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
 
         self.configure_google_provider(enabled=True)
         with simulate_running_pipeline(
-            "openedx.core.djangoapps.user_api.views.third_party_auth.pipeline",
-            "google-oauth2", email="bob@example.com",
-            fullname="Bob", username="Bob123"
+                "openedx.core.djangoapps.user_api.views.third_party_auth.pipeline",
+                "google-oauth2", email="bob@example.com",
+                fullname="Bob", username="Bob123"
         ):
             # Password field should be hidden
             self._assert_reg_field(
@@ -434,7 +422,7 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                     },
                     u"errorMessages": {
                         u"email": u"The email you entered is not valid. Please provide"
-                        u" a valid email in order to create an account."
+                                  u" a valid email in order to create an account."
                     }
                 }
             )
@@ -479,7 +467,8 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                     u"required": True,
                     u"label": u"Public Username",
                     u"placeholder": u"Public Username",
-                    u"instructions": u"The name that will identify you in your courses - <strong>(cannot be changed later)</strong>",  # pylint: disable=line-too-long
+                    u"instructions": u"The name that will identify you in your courses - <strong>(cannot be changed later)</strong>",
+                    # pylint: disable=line-too-long
                     u"restrictions": {
                         "min_length": USERNAME_MIN_LENGTH,
                         "max_length": USERNAME_MAX_LENGTH
@@ -613,10 +602,10 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
     def test_register_form_year_of_birth(self):
         this_year = datetime.datetime.now(UTC).year
         year_options = (
-            [{"value": "", "name": "--", "default": True}] + [
-                {"value": unicode(year), "name": unicode(year)}
-                for year in range(this_year, this_year - 120, -1)
-            ]
+                [{"value": "", "name": "--", "default": True}] + [
+            {"value": unicode(year), "name": unicode(year)}
+            for year in range(this_year, this_year - 120, -1)
+        ]
         )
         self._assert_reg_field(
             {"year_of_birth": "optional"},
@@ -677,11 +666,11 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
 
     def test_registration_form_country(self):
         country_options = (
-            [{"name": "--", "value": "", "default": True}] +
-            [
-                {"value": country_code, "name": unicode(country_name)}
-                for country_code, country_name in SORTED_COUNTRIES
-            ]
+                [{"name": "--", "value": "", "default": True}] +
+                [
+                    {"value": country_code, "name": unicode(country_name)}
+                    for country_code, country_name in SORTED_COUNTRIES
+                ]
         )
         self._assert_reg_field(
             {"country": "required"},
@@ -713,7 +702,7 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                 "required": True,
                 "errorMessages": {
                     "required": "Please accept our Terms and Conditions by checking the Terms and Conditions" \
-                    " checkbox before creating an account."
+                                " checkbox before creating an account."
                 }
             }
         )
@@ -732,7 +721,7 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                 "required": True,
                 "errorMessages": {
                     "required": "Please accept our Terms and Conditions by checking the Terms and Conditions" \
-                    " checkbox before creating an account."
+                                " checkbox before creating an account."
                 }
             }
         )
@@ -757,8 +746,8 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                 "required": True,
                 "errorMessages": {
                     "required": "Please accept our Terms and Conditions by checking the Terms and Conditions" \
-                    " checkbox before creating an account."
-                }                
+                                " checkbox before creating an account."
+                }
             }
         )
 
@@ -799,8 +788,8 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                 "required": True,
                 "errorMessages": {
                     "required": "Please accept our Terms and Conditions by checking the Terms and Conditions" \
-                    " checkbox before creating an account."
-                }                
+                                " checkbox before creating an account."
+                }
             }
         )
 
@@ -816,7 +805,8 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                 "type": "checkbox",
                 "required": True,
                 "errorMessages": {
-                    "required": u"You must agree to the {platform_name} Terms of Service".format(  # pylint: disable=line-too-long
+                    "required": u"You must agree to the {platform_name} Terms of Service".format(
+                        # pylint: disable=line-too-long
                         platform_name=settings.PLATFORM_NAME
                     )
                 }
@@ -938,7 +928,7 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
         self.assertEqual(account_settings["country"], self.COUNTRY)
 
     @mock.patch('mailchimp_pipeline.signals.handlers.task_send_account_activation_email')
-    @factory.django.mute_signals(post_save)    
+    @factory.django.mute_signals(post_save)
     def test_activation_email(self, mock_func):
         # Register, which should trigger an activation email
         response = self.client.post(self.url, {
@@ -1098,7 +1088,7 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
             response_json,
             {
                 "username": [{
-                    "user_message": "The username you entered is already being used. Please enter another username."                    
+                    "user_message": "The username you entered is already being used. Please enter another username."
                 }]
             }
         )
@@ -1138,7 +1128,7 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
             response_json,
             {
                 "username": [{
-                    "user_message": "The username you entered is already being used. Please enter another username."                    
+                    "user_message": "The username you entered is already being used. Please enter another username."
                 }],
                 "email": [{
                     "user_message": (
@@ -1289,11 +1279,6 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
         })
 
 
-    
-    
-
-
-
 class RegistrationViewTestV2(RegistrationViewTest):
     """Tests for the registration version two end-points of the User API. """
 
@@ -1338,7 +1323,7 @@ class RegistrationViewTestV2(RegistrationViewTest):
             u"level_of_education",
             u"mailing_address",
             u"goals",
-            u"honor_code"        
+            u"honor_code"
         ])
 
     def test_extension_form_fields(self):
@@ -1413,13 +1398,13 @@ class ThirdPartyRegistrationTestMixin(ThirdPartyOAuthTestMixin, CacheIsolationTe
             )
         else:
             self.assertEquals(UserSocialAuth.objects.count(), 0)
-    
-    @factory.django.mute_signals(post_save)    
+
+    @factory.django.mute_signals(post_save)
     def test_success(self):
         with simulate_running_pipeline(
-            "lms.djangoapps.philu_overrides.user_api.views.pipeline",
-            self.BACKEND
-        ): 
+                "lms.djangoapps.philu_overrides.user_api.views.pipeline",
+                self.BACKEND
+        ):
             self._verify_user_existence(user_exists=False, social_link_exists=False)
 
             self._setup_provider_response(success=True)
@@ -1428,12 +1413,12 @@ class ThirdPartyRegistrationTestMixin(ThirdPartyOAuthTestMixin, CacheIsolationTe
 
             self._verify_user_existence(user_exists=True, social_link_exists=True, user_is_active=False)
 
-    @factory.django.mute_signals(post_save)    
+    @factory.django.mute_signals(post_save)
     def test_unlinked_active_user(self):
         with simulate_running_pipeline(
-            "lms.djangoapps.philu_overrides.user_api.views.pipeline",
-            self.BACKEND
-        ): 
+                "lms.djangoapps.philu_overrides.user_api.views.pipeline",
+                self.BACKEND
+        ):
             user = UserFactory()
             response = self.client.post(self.url, self.data(user))
             self._assert_existing_user_error(response)
@@ -1441,12 +1426,12 @@ class ThirdPartyRegistrationTestMixin(ThirdPartyOAuthTestMixin, CacheIsolationTe
                 user_exists=True, social_link_exists=False, user_is_active=True, username=user.username
             )
 
-    @factory.django.mute_signals(post_save)    
+    @factory.django.mute_signals(post_save)
     def test_unlinked_inactive_user(self):
         with simulate_running_pipeline(
-            "lms.djangoapps.philu_overrides.user_api.views.pipeline",
-            self.BACKEND
-        ):         
+                "lms.djangoapps.philu_overrides.user_api.views.pipeline",
+                self.BACKEND
+        ):
             user = UserFactory(is_active=False)
             response = self.client.post(self.url, self.data(user))
             self._assert_existing_user_error(response)
@@ -1454,12 +1439,12 @@ class ThirdPartyRegistrationTestMixin(ThirdPartyOAuthTestMixin, CacheIsolationTe
                 user_exists=True, social_link_exists=False, user_is_active=False, username=user.username
             )
 
-    @factory.django.mute_signals(post_save)    
+    @factory.django.mute_signals(post_save)
     def test_user_already_registered(self):
         with simulate_running_pipeline(
-            "lms.djangoapps.philu_overrides.user_api.views.pipeline",
-            self.BACKEND
-        ):             
+                "lms.djangoapps.philu_overrides.user_api.views.pipeline",
+                self.BACKEND
+        ):
             self._setup_provider_response(success=True)
             user = UserFactory()
             UserSocialAuth.objects.create(user=user, provider=self.BACKEND, uid=self.social_uid)
@@ -1469,39 +1454,39 @@ class ThirdPartyRegistrationTestMixin(ThirdPartyOAuthTestMixin, CacheIsolationTe
                 user_exists=True, social_link_exists=True, user_is_active=True, username=user.username
             )
 
-    
-    @factory.django.mute_signals(post_save)    
+    @factory.django.mute_signals(post_save)
     def test_social_user_conflict(self):
         with simulate_running_pipeline(
-            "lms.djangoapps.philu_overrides.user_api.views.pipeline",
-            self.BACKEND
-        ):             
+                "lms.djangoapps.philu_overrides.user_api.views.pipeline",
+                self.BACKEND
+        ):
             self._setup_provider_response(success=True)
             user = UserFactory()
             UserSocialAuth.objects.create(user=user, provider=self.BACKEND, uid=self.social_uid)
             response = self.client.post(self.url, self.data())
-            self._assert_access_token_error(response, "The provided access_token is already associated with another user.")
+            self._assert_access_token_error(response,
+                                            "The provided access_token is already associated with another user.")
             self._verify_user_existence(
                 user_exists=True, social_link_exists=True, user_is_active=True, username=user.username
             )
 
-    @factory.django.mute_signals(post_save)    
+    @factory.django.mute_signals(post_save)
     def test_invalid_token(self):
         with simulate_running_pipeline(
-            "lms.djangoapps.philu_overrides.user_api.views.pipeline",
-            self.BACKEND
-        ): 
+                "lms.djangoapps.philu_overrides.user_api.views.pipeline",
+                self.BACKEND
+        ):
             self._setup_provider_response(success=False)
             response = self.client.post(self.url, self.data())
             self._assert_access_token_error(response, "The provided access_token is not valid.")
             self._verify_user_existence(user_exists=False, social_link_exists=False)
 
-    @factory.django.mute_signals(post_save)    
+    @factory.django.mute_signals(post_save)
     def test_missing_token(self):
         with simulate_running_pipeline(
-            "lms.djangoapps.philu_overrides.user_api.views.pipeline",
-            self.BACKEND
-        ): 
+                "lms.djangoapps.philu_overrides.user_api.views.pipeline",
+                self.BACKEND
+        ):
             data = self.data()
             data.pop("access_token")
             response = self.client.post(self.url, data)
@@ -1531,11 +1516,12 @@ class TestFacebookRegistrationView(
 
 
 @skipUnless(settings.FEATURES.get("ENABLE_THIRD_PARTY_AUTH"), "third party auth not enabled")
-class TestGoogleRegistrationView( 
+class TestGoogleRegistrationView(
     ThirdPartyRegistrationTestMixin, ThirdPartyOAuthTestMixinGoogle, TransactionTestCase
 ):
     """Tests the User API registration version one endpoint with Google authentication."""
     __test__ = True
+
 
 class ThirdPartyRegistrationTestMixinV2(ThirdPartyRegistrationTestMixin):
     """Tests for the registration version two end-points of the User API. """

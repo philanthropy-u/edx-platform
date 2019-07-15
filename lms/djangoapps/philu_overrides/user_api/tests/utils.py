@@ -1,13 +1,14 @@
-import mock
-
 from contextlib import contextmanager
-from lms.djangoapps.onboarding.models import RegistrationType
-from student.cookies import set_logged_in_cookies
-from lms.djangoapps.philu_overrides.user_api.views import create_account_with_params_custom
-from lms.djangoapps.philu_overrides.helpers import save_user_partner_network_consent
-from util.json_request import JsonResponse
-from django.core.validators import ValidationError
+
+import mock
 from django.core.exceptions import NON_FIELD_ERRORS
+from django.core.validators import ValidationError
+from student.cookies import set_logged_in_cookies
+from util.json_request import JsonResponse
+
+from lms.djangoapps.onboarding.models import RegistrationType
+from lms.djangoapps.philu_overrides.helpers import save_user_partner_network_consent
+from lms.djangoapps.philu_overrides.user_api.views import create_account_with_params_custom
 
 
 @contextmanager
