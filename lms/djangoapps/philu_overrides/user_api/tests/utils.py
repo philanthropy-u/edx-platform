@@ -1,6 +1,13 @@
 import mock
 
 from contextlib import contextmanager
+from lms.djangoapps.onboarding.models import RegistrationType
+from student.cookies import set_logged_in_cookies
+from lms.djangoapps.philu_overrides.user_api.views import create_account_with_params_custom
+from lms.djangoapps.philu_overrides.helpers import save_user_partner_network_consent
+from util.json_request import JsonResponse
+from django.core.validators import ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS
 
 
 @contextmanager
@@ -83,3 +90,40 @@ def simulate_running_pipeline(pipeline_target, backend, email=None, fullname=Non
     finally:
         pipeline_get.stop()
         pipeline_running.stop()
+
+
+def mocked_registration_view_post_method(self, request):
+    data = request.POST.copy()
+
+    email = data.get('email')
+    username = data.get('username')
+    is_alquity_user = data.get('is_alquity_user') or False
+
+    # Backwards compatibility: the student view expects both
+    # terms of service and honor code values.  Since we're combining
+    # these into a single checkbox, the only value we may get
+    # from the new view is "honor_code".
+    # Longer term, we will need to make this more flexible to support
+    # open source installations that may have separate checkboxes
+    # for TOS, privacy policy, etc.
+    if data.get("honor_code") and "terms_of_service" not in data:
+        data["terms_of_service"] = data["honor_code"]
+
+    try:
+        user = create_account_with_params_custom(request, data, is_alquity_user)
+        self.save_user_utm_info(user)
+        save_user_partner_network_consent(user, data['partners_opt_in'])
+    except ValidationError as err:
+        # Should only get non-field errors from this function
+        assert NON_FIELD_ERRORS not in err.message_dict
+        # Only return first error for each field
+        errors = {
+            field: [{"user_message": error} for error in error_list]
+            for field, error_list in err.message_dict.items()
+        }
+        return JsonResponse(errors, status=400)
+
+    RegistrationType.objects.create(choice=1, user=request.user)
+    response = JsonResponse({"success": True})
+    set_logged_in_cookies(request, response, user)
+    return response
