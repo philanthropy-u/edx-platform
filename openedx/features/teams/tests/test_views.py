@@ -2,7 +2,7 @@ import urllib
 
 import mock
 import factory
-from pyquery import PyQuery as PyQuery
+from pyquery import PyQuery
 from django.conf import settings
 from django.db.models import signals
 from django.core.urlresolvers import reverse
@@ -245,7 +245,6 @@ class BrowseTopicTeamsTestCase(TeamsTestsBaseClass):
         super(BrowseTopicTeamsTestCase, self).setUp()
         self.url = reverse('browse_topic_teams', args=[self.course.id, self.topic['id']])
 
-
     def test_anonymous_client_is_redirected(self):
         """Verifies that an anonymous client cannot access the team topics, and is redirected to the login page."""
         anonymous_client = Client()
@@ -332,7 +331,7 @@ class CreateTeamTestCase(TeamsTestsBaseClass):
         self.assertEqual(response.status_code, 404)
 
     @factory.django.mute_signals(signals.post_delete)
-    def test_case_create_team_when_user_is_not_joined_in_team(self): # CODE ISSUE: undefined
+    def test_case_create_team_when_user_is_not_joined_in_team(self):  # CODE ISSUE: undefined
         """Test that "Create Team" header for form is displayed if user is not already a member of
         any team of the course.
         """
