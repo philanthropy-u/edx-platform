@@ -1328,7 +1328,7 @@ class RegistrationViewTestV2(RegistrationViewTest):
         ])
 
     def test_extension_form_fields(self):
-        raise SkipTest("RegisterationView Versioi2 doesn't support this test")
+        raise SkipTest("RegisterationView Version 2 doesn't support this test")
 
 
 @httpretty.activate
