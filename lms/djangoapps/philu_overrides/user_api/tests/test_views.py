@@ -4,6 +4,8 @@ import datetime
 import json
 from unittest import SkipTest, skipUnless
 
+from pytz import UTC
+
 import ddt
 import factory
 import httpretty
@@ -15,23 +17,22 @@ from django.db.models.signals import post_save
 from django.test.client import RequestFactory
 from django.test.testcases import TransactionTestCase
 from django.test.utils import override_settings
-from pytz import UTC
-from social.apps.django_app.default.models import UserSocialAuth
-from third_party_auth.tests.testutil import ThirdPartyAuthTestMixin
-from third_party_auth.tests.utils import (ThirdPartyOAuthTestMixin, ThirdPartyOAuthTestMixinFacebook,
-                                          ThirdPartyOAuthTestMixinGoogle)
-
 from lms.djangoapps.onboarding.tests.factories import UserFactory
 from lms.djangoapps.philu_overrides.user_api.views import RegistrationViewCustom
-from openedx.core.djangoapps.user_api.accounts import (EMAIL_MAX_LENGTH, EMAIL_MIN_LENGTH,
-                                                       PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH,
+from openedx.core.djangoapps.user_api.accounts import (EMAIL_MAX_LENGTH, EMAIL_MIN_LENGTH, PASSWORD_MAX_LENGTH,
+                                                       PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH,
                                                        USERNAME_MIN_LENGTH)
 from openedx.core.djangoapps.user_api.accounts.api import get_account_settings
 from openedx.core.djangoapps.user_api.tests.test_constants import SORTED_COUNTRIES
 from openedx.core.djangoapps.user_api.tests.test_helpers import TestCaseForm
 from openedx.core.djangolib.testing.utils import CacheIsolationTestCase
 from openedx.core.lib.api.test_utils import ApiTestCase
-from .utils import simulate_running_pipeline, mocked_registration_view_post_method
+from social.apps.django_app.default.models import UserSocialAuth
+from third_party_auth.tests.testutil import ThirdPartyAuthTestMixin
+from third_party_auth.tests.utils import (ThirdPartyOAuthTestMixin, ThirdPartyOAuthTestMixinFacebook,
+                                          ThirdPartyOAuthTestMixinGoogle)
+
+from .utils import mocked_registration_view_post_method, simulate_running_pipeline
 
 
 @ddt.ddt
@@ -602,10 +603,10 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
     def test_register_form_year_of_birth(self):
         this_year = datetime.datetime.now(UTC).year
         year_options = (
-                [{"value": "", "name": "--", "default": True}] + [
-            {"value": unicode(year), "name": unicode(year)}
-            for year in range(this_year, this_year - 120, -1)
-        ]
+            [{"value": "", "name": "--", "default": True}] + [
+                {"value": unicode(year), "name": unicode(year)}
+                for year in range(this_year, this_year - 120, -1)
+            ]
         )
         self._assert_reg_field(
             {"year_of_birth": "optional"},
@@ -666,11 +667,11 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
 
     def test_registration_form_country(self):
         country_options = (
-                [{"name": "--", "value": "", "default": True}] +
-                [
-                    {"value": country_code, "name": unicode(country_name)}
-                    for country_code, country_name in SORTED_COUNTRIES
-                ]
+            [{"name": "--", "value": "", "default": True}] +
+            [
+                {"value": country_code, "name": unicode(country_name)}
+                for country_code, country_name in SORTED_COUNTRIES
+            ]
         )
         self._assert_reg_field(
             {"country": "required"},
@@ -701,7 +702,7 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                 "type": "checkbox",
                 "required": True,
                 "errorMessages": {
-                    "required": "Please accept our Terms and Conditions by checking the Terms and Conditions" \
+                    "required": "Please accept our Terms and Conditions by checking the Terms and Conditions"
                                 " checkbox before creating an account."
                 }
             }
@@ -720,7 +721,7 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                 "type": "checkbox",
                 "required": True,
                 "errorMessages": {
-                    "required": "Please accept our Terms and Conditions by checking the Terms and Conditions" \
+                    "required": "Please accept our Terms and Conditions by checking the Terms and Conditions"
                                 " checkbox before creating an account."
                 }
             }
@@ -745,7 +746,7 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                 "type": "checkbox",
                 "required": True,
                 "errorMessages": {
-                    "required": "Please accept our Terms and Conditions by checking the Terms and Conditions" \
+                    "required": "Please accept our Terms and Conditions by checking the Terms and Conditions"
                                 " checkbox before creating an account."
                 }
             }
@@ -787,7 +788,7 @@ class RegistrationViewTest(ThirdPartyAuthTestMixin, ApiTestCase):
                 "type": "checkbox",
                 "required": True,
                 "errorMessages": {
-                    "required": "Please accept our Terms and Conditions by checking the Terms and Conditions" \
+                    "required": "Please accept our Terms and Conditions by checking the Terms and Conditions"
                                 " checkbox before creating an account."
                 }
             }
