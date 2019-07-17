@@ -12,6 +12,7 @@ from xmodule.seq_module import SequenceFields
 from xmodule.studio_editable import StudioEditableBlock
 from xmodule.x_module import STUDENT_VIEW, XModuleFields
 from xmodule.xml_module import XmlParserMixin
+from openedx.features.xmodules.helpers import get_due_date_for_problem_xblock
 
 log = logging.getLogger(__name__)
 
@@ -57,9 +58,12 @@ class VerticalBlock(SequenceFields, XModuleFields, StudioEditableBlock, XmlParse
         child_context['child_of_vertical'] = True
 
         is_child_of_vertical = context.get('child_of_vertical', False)
+        due_date_to_display = None
 
         # pylint: disable=no-member
         for child in self.get_display_items():
+            if not due_date_to_display:
+                due_date_to_display = get_due_date_for_problem_xblock(self.due, child.category)
             rendered_child = child.render(STUDENT_VIEW, child_context)
             fragment.add_frag_resources(rendered_child)
 
@@ -69,6 +73,7 @@ class VerticalBlock(SequenceFields, XModuleFields, StudioEditableBlock, XmlParse
             })
 
         fragment.add_content(self.system.render_template('vert_module.html', {
+            'due_date_to_display': due_date_to_display,
             'items': contents,
             'xblock_context': context,
             'unit_title': self.display_name_with_default if not is_child_of_vertical else None,
