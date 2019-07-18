@@ -83,19 +83,6 @@ class HelpersTestCase(ModuleStoreTestCase):
         )
         return team
 
-    def _create_team_membership(self, team, user):
-        """Create a team membership object that is responsible for joining of a user in a team.
-
-        Arguments:
-            team {CourseTeam} -- Team to join
-            user {User} -- User who is going to join the team
-
-        Returns:
-            CourseTeamMembership
-        """
-        membership = CourseTeamMembershipFactory.create(team=team, user=user)
-        return membership
-
     def test_generate_random_user_icon_color(self):
         """ Test that the icon color generated is from valid colors list. """
         color = generate_random_user_icon_color()
@@ -162,8 +149,13 @@ class HelpersTestCase(ModuleStoreTestCase):
         result = get_user_course_with_access(self.course.id.__str__(), self.user)
         self.assertEqual(result, self.course)
 
-    def test_get_team_topic(self):
+    def test_get_team_topic_with_topic_id_provided(self):
         """ Test that `get_team_topic` returns the topic with matching topic_id form
         current course team topics """
         result = get_team_topic(self.course, self.topics[0]['id'])
         self.assertEqual(result, self.topics[0])
+
+    def test_get_team_topic_with_no_topic_id_provided(self):
+        """ Test that `get_team_topic` returns None if no topic_id is provided"""
+        result = get_team_topic(self.course, None)
+        self.assertEqual(result, None)

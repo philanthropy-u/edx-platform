@@ -154,7 +154,6 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
         """ Initiate the test data which is required in more than one of the test cases. """
         super(BrowseTeamsTestCase, self).setUp()
         self.topic_link_selector = 'a.other-continents-widget'
-        self.teams_text_selector = 'div.continents-content span'
         self.expexted_teams_count_text = '{} TEAMS'.format(TOTAL_TEAMS)
         self.url = reverse('teams_dashboard', args=[self.course.id])
 
@@ -193,12 +192,12 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
         response = client.get(self.url)
 
         content = PyQuery(response.content)
+        teams_count_per_topic_exists = bool(content(':contains("{}")'.format(self.expexted_teams_count_text)))
         num_of_topics = len(content(self.topic_link_selector))
-        teams_count_text = content(self.teams_text_selector).html()
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(num_of_topics, TOTAL_TOPICS)
-        self.assertEqual(teams_count_text, self.expexted_teams_count_text)
+        self.assertTrue(teams_count_per_topic_exists)
 
     def test_case_user_is_enrolled_not_staff(self):
         """Test that correct number of topics and teams are rendered if user is enrolled in a course but
@@ -212,11 +211,11 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
 
         content = PyQuery(response.content)
         num_of_topics = len(content(self.topic_link_selector))
-        teams_count_text = content(self.teams_text_selector).html()
+        teams_count_per_topic_exists = bool(content(':contains("{}")'.format(self.expexted_teams_count_text)))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(num_of_topics, TOTAL_TOPICS)
-        self.assertEqual(teams_count_text, self.expexted_teams_count_text)
+        self.assertTrue(teams_count_per_topic_exists)
 
     def test_case_user_is_enrolled_and_staff(self):
         """Test that correct number of topics and teams are rendered if user is enrolled in a course and
@@ -231,11 +230,11 @@ class BrowseTeamsTestCase(TeamsTestsBaseClass):
 
         content = PyQuery(response.content)
         num_of_topics = len(content(self.topic_link_selector))
-        teams_count_text = content(self.teams_text_selector).html()
+        teams_count_per_topic_exists = bool(content(':contains("{}")'.format(self.expexted_teams_count_text)))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(num_of_topics, TOTAL_TOPICS)
-        self.assertEqual(teams_count_text, self.expexted_teams_count_text)
+        self.assertTrue(teams_count_per_topic_exists)
 
 
 class BrowseTopicTeamsTestCase(TeamsTestsBaseClass):
@@ -246,10 +245,12 @@ class BrowseTopicTeamsTestCase(TeamsTestsBaseClass):
         self.url = reverse('browse_topic_teams', args=[self.course.id, self.topic['id']])
 
     def test_anonymous_client_is_redirected(self):
-        """Verifies that an anonymous client cannot access the team topics, and is redirected to the login page."""
+        """Verifies that an anonymous client cannot access the edit_team_memberships view, and is redirected
+        to the login page.
+        """
         anonymous_client = Client()
-        response = anonymous_client.get(self.url)
         redirect_url = '{0}?next={1}'.format(settings.LOGIN_URL, urllib.quote(self.url))
+        response = anonymous_client.get(self.url)
 
         self.assertRedirects(response, redirect_url)
 
@@ -283,7 +284,7 @@ class BrowseTopicTeamsTestCase(TeamsTestsBaseClass):
 
         response = client.get(self.url)
 
-        team_cards_selector = '.categories li'
+        team_cards_selector = '.community-card-lits .community-card'
         num_of_team_cards = len(PyQuery(response.content)(team_cards_selector))
 
         self.assertEqual(response.status_code, 200)
@@ -331,7 +332,7 @@ class CreateTeamTestCase(TeamsTestsBaseClass):
         self.assertEqual(response.status_code, 404)
 
     @factory.django.mute_signals(signals.post_delete)
-    def test_case_create_team_when_user_is_not_joined_in_team(self):  # CODE ISSUE: undefined
+    def test_case_create_team_when_user_is_not_joined_in_team(self):
         """Test that "Create Team" header for form is displayed if user is not already a member of
         any team of the course.
         """
@@ -361,7 +362,7 @@ class CreateTeamTestCase(TeamsTestsBaseClass):
         error_msg_on_page = PyQuery(response.content)(already_joined_error_msg_selector).html()
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(error_msg_on_page, expected_error)
+        self.assertIn(expected_error, error_msg_on_page)
 
 
 class MyTeamTestCase(TeamsTestsBaseClass):
@@ -559,7 +560,7 @@ class UpdateTeamTestCase(TeamsTestsBaseClass):
         """
         edit_membership_button_selector = '.action-edit-members'
         update_team_button_selector = 'div.create-team.form-actions span.sr'
-        expected_update_team_button_text = 'Update team.'
+        expected_update_team_button_text = 'Update team'
         client = Client()
         staff_user = self._create_user(username='staff_test_user', is_staff=True)
         client.login(username=staff_user.username, password=TEST_PASSWORD)
@@ -571,7 +572,7 @@ class UpdateTeamTestCase(TeamsTestsBaseClass):
         update_team_button_text = content(update_team_button_selector).eq(0).html()
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(update_team_button_text, expected_update_team_button_text)
+        self.assertIn(expected_update_team_button_text, update_team_button_text)
         self.assertTrue(edit_membership_button_exists)
 
 
