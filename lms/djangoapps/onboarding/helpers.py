@@ -1,16 +1,17 @@
 import re
 import pytz
+from student.models import CourseEnrollment
 from dateutil.relativedelta import relativedelta
 from datetime import date, datetime
 from difflib import SequenceMatcher
 
 from django.conf import settings
 from django.core import serializers
+from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from lms.djangoapps.onboarding.models import Organization, OrganizationMetricUpdatePrompt, PartnerNetwork
 from lms.djangoapps.oef.models import OrganizationOefUpdatePrompt
-
 
 utc = pytz.UTC
 
@@ -7888,7 +7889,7 @@ def convert_date_to_utcdatetime(date):
     :param date:
     :return: return utc datetime object of current date object
     """
-    return pytz.UTC.localize(datetime(year=date.year,month=date.month, day=date.day))
+    return pytz.UTC.localize(datetime(year=date.year, month=date.month, day=date.day))
 
 
 def get_current_utc_date():
@@ -7953,7 +7954,7 @@ def get_org_metric_update_prompt(user):
     # becuase according to the scenario
     # https://philanthropyu.atlassian.net/browse/LP-1222?focusedCommentId=15084&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-15084
     # the user will be the admin of the organization of latest prompt
-    return OrganizationMetricUpdatePrompt.objects.filter(responsible_user_id=user.id)\
+    return OrganizationMetricUpdatePrompt.objects.filter(responsible_user_id=user.id) \
         .order_by('-latest_metric_submission').first()
 
 
@@ -8010,3 +8011,14 @@ def serialize_partner_networks():
         ))
 
     return data
+
+
+def get_user_self_paced_courses(user):
+    all_user_courses = CourseEnrollment.objects.filter(user=user, is_active=True)
+    courses = []
+    for user_course in all_user_courses:
+        try:
+            courses.append(CourseOverview.objects.get(id=user_course.course_id, self_paced=True))
+        except CourseOverview.DoesNotExist:
+            continue
+    return courses

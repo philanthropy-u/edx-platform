@@ -409,9 +409,16 @@ def update_account_settings(request):
     user_extended_profile = UserExtendedProfile.objects.get(user_id=request.user.id)
     partners_opt_in = request.POST.get('partners_opt_in', '')
 
+    from lms.djangoapps.onboarding.helpers import get_user_self_paced_courses
     if request.method == 'POST':
 
-        form = forms.UpdateRegModelForm(request.POST, instance=user_extended_profile)
+        form = forms.UpdateRegModelForm(
+            [(o.id, str(o.display_name)) for o in
+                                         get_user_self_paced_courses(request.user)] if len(
+                                            get_user_self_paced_courses(request.user)) > 0 else [],
+                                        True,
+                                        request.POST,
+                                        instance=user_extended_profile)
         if form.is_valid():
             user_extended_profile = form.save(user=user_extended_profile.user, commit=True)
             save_user_partner_network_consent(user_extended_profile.user, partners_opt_in)
@@ -425,7 +432,11 @@ def update_account_settings(request):
 
     else:
         email_preferences = getattr(request.user, 'email_preferences', None)
+
         form = forms.UpdateRegModelForm(
+            [(o.id, str(o.display_name)) for o in get_user_self_paced_courses(request.user)] if
+            len(get_user_self_paced_courses(request.user)) > 0 else [],
+            True,
             instance=user_extended_profile,
             initial={
                 'organization_name': user_extended_profile.organization.label if user_extended_profile.organization else "",
