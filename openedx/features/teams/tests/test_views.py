@@ -107,7 +107,7 @@ class TeamsTestsBaseClass(ModuleStoreTestCase):
 
     @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def _create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
-        """ Create a CourseTeam for provided course_id and topic_id
+        """ Create a User for provided username and password.
 
         Arguments:
             username {string} -- username for the user
