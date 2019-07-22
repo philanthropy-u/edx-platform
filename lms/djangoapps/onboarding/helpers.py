@@ -8022,3 +8022,13 @@ def get_user_self_paced_courses(user):
         except CourseOverview.DoesNotExist:
             continue
     return courses
+
+
+def get_email_pref_first_self_paced_courses(on_demand_courses=None):
+    from openedx.features.ondemand_email_preferences.models import OnDemandEmailPreferences
+    try:
+        email_pref = OnDemandEmailPreferences.objects.get(course_id=on_demand_courses[0].id)
+        return email_pref.is_enabled
+    except:
+        return True
+

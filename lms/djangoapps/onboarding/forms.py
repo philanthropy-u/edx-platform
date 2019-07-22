@@ -702,13 +702,13 @@ class RegModelForm(BaseOnboardingModelForm):
             user_email_preferences.opt_in = opt_in
             user_email_preferences.save()
 
-    def save_on_demand_email_preferences(self, user, on_demand_courses, on_demand_emails_enable):
+    def save_on_demand_email_preferences(self, user, on_demand_course, on_demand_emails_enable):
         map_bool = {
             'True': True,
             'False': False
         }
         on_demand_email_preferences, created = OnDemandEmailPreferences.objects.get_or_create(
-            user=user, course_id=CourseKey.from_string(on_demand_courses))
+            user=user, course_id=CourseKey.from_string(on_demand_course))
         on_demand_email_preferences.is_enabled = map_bool[on_demand_emails_enable]
         on_demand_email_preferences.save()
 
@@ -835,7 +835,7 @@ class UpdateRegModelForm(RegModelForm):
         organization_name = self.cleaned_data.get('organization_name', '').strip()
         is_poc = self.cleaned_data['is_poc']
         opt_in = self.cleaned_data['opt_in']
-        on_demand_courses = self.cleaned_data['on_demand_courses']
+        on_demand_course = self.cleaned_data['on_demand_courses']
         on_demand_emails_enable = self.cleaned_data['on_demand_emails_enable']
         first_name = self.cleaned_data['first_name']
         last_name = self.cleaned_data['last_name']
@@ -895,7 +895,7 @@ class UpdateRegModelForm(RegModelForm):
                 extended_profile.organization.save()
 
         self.save_email_preferences(user, opt_in)
-        self.save_on_demand_email_preferences(user, on_demand_courses, on_demand_emails_enable)
+        self.save_on_demand_email_preferences(user, on_demand_course, on_demand_emails_enable)
 
         return extended_profile
 
