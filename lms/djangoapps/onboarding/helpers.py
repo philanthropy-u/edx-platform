@@ -8056,5 +8056,5 @@ def get_email_pref_on_demand_course(user, on_demand_course_id):
     try:
         email_pref = OnDemandEmailPreferences.objects.get(user=user, course_id=on_demand_course_id)
         return email_pref.is_enabled
-    except:
+    except OnDemandEmailPreferences.DoesNotExis:
         return True

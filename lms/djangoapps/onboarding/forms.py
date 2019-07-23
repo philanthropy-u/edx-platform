@@ -11,7 +11,6 @@ from django import forms
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_noop
 from opaque_keys.edx.keys import CourseKey
-from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from rest_framework.compat import MinValueValidator, MaxValueValidator
 
 from openedx.features.ondemand_email_preferences.models import OnDemandEmailPreferences
@@ -703,16 +702,6 @@ class RegModelForm(BaseOnboardingModelForm):
             user_email_preferences.opt_in = opt_in
             user_email_preferences.save()
 
-    def save_on_demand_email_preferences(self, user, on_demand_course, on_demand_emails_enable):
-        map_bool = {
-            'True': True,
-            'False': False
-        }
-
-        on_demand_email_preferences, created = OnDemandEmailPreferences.objects.get_or_create(
-            user=user, course_id=CourseKey.from_string(on_demand_course))
-        on_demand_email_preferences.is_enabled = map_bool[on_demand_emails_enable]
-        on_demand_email_preferences.save()
 
     def clean_organization_name(self):
         organization_name = self.cleaned_data['organization_name']
@@ -899,6 +888,17 @@ class UpdateRegModelForm(RegModelForm):
         self.save_on_demand_email_preferences(user, on_demand_course, on_demand_emails_enable)
 
         return extended_profile
+
+    def save_on_demand_email_preferences(self, user, on_demand_course, on_demand_emails_enable):
+        map_bool = {
+            'True': True,
+            'False': False
+        }
+
+        on_demand_email_preferences, created = OnDemandEmailPreferences.objects.get_or_create(
+            user=user, course_id=CourseKey.from_string(on_demand_course))
+        on_demand_email_preferences.is_enabled = map_bool[on_demand_emails_enable]
+        on_demand_email_preferences.save()
 
 
 class OrganizationMetricModelForm(BaseOnboardingModelForm):

@@ -407,11 +407,11 @@ def update_account_settings(request):
     """
     View to handle update of registration extra fields
     """
+    from lms.djangoapps.onboarding.helpers import get_user_on_demand_courses, get_email_pref_on_demand_course
 
     user_extended_profile = UserExtendedProfile.objects.get(user_id=request.user.id)
     partners_opt_in = request.POST.get('partners_opt_in', '')
 
-    from lms.djangoapps.onboarding.helpers import get_user_on_demand_courses, get_email_pref_on_demand_course
     on_demand_courses = get_user_on_demand_courses(request.user)
 
     first_on_demand_course_email_preference = get_email_pref_on_demand_course(

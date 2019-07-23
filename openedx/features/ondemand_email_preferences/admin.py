@@ -18,7 +18,7 @@ class OnDemandEmailPreferencesAdminForm(ModelForm):
         """
         super(OnDemandEmailPreferencesAdminForm, self).__init__(*args, **kwargs)
 
-        self.fields['course_id'].widget = Select(choices=get_all_on_demand_courses)
+        self.fields['course_id'].widget = Select(choices=get_all_on_demand_courses())
 
     class Meta:
         model = OnDemandEmailPreferences
