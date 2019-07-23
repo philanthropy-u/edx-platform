@@ -2252,6 +2252,9 @@ INSTALLED_APPS = (
     # Course cards app
     'openedx.features.course_card',
 
+    # On demand course email preferences
+    'openedx.features.ondemand_email_preferences',
+
     # User Leads app
     'openedx.features.user_leads',
 
