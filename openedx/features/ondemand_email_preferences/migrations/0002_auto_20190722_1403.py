@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-import openedx.core.djangoapps.xmodule_django.models
+from django.conf import settings
 
 
 class Migration(migrations.Migration):
@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterField(
             model_name='ondemandemailpreferences',
-            name='course_id',
-            field=openedx.core.djangoapps.xmodule_django.models.CourseKeyField(max_length=255, db_index=True),
+            name='user',
+            field=models.ForeignKey(related_name='email_preferences_user', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE),
         ),
     ]

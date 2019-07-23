@@ -11,6 +11,7 @@ from django import forms
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_noop
 from opaque_keys.edx.keys import CourseKey
+from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from rest_framework.compat import MinValueValidator, MaxValueValidator
 
 from openedx.features.ondemand_email_preferences.models import OnDemandEmailPreferences
@@ -707,6 +708,7 @@ class RegModelForm(BaseOnboardingModelForm):
             'True': True,
             'False': False
         }
+
         on_demand_email_preferences, created = OnDemandEmailPreferences.objects.get_or_create(
             user=user, course_id=CourseKey.from_string(on_demand_course))
         on_demand_email_preferences.is_enabled = map_bool[on_demand_emails_enable]
@@ -821,14 +823,13 @@ class UpdateRegModelForm(RegModelForm):
 
     on_demand_courses = forms.CharField(
         label=ugettext_noop('Select course'),
-        label_suffix="*",
         widget=forms.Select(choices=())
     )
 
-    def __init__(self, self_courses, is_nudges_enable, *args, **kwargs):
+    def __init__(self, on_demand_courses, is_nudges_enable, *args, **kwargs):
         super(UpdateRegModelForm, self).__init__(*args, **kwargs)
         self.fields.pop('confirm_password')
-        self.fields['on_demand_courses'].widget.choices = self_courses
+        self.fields['on_demand_courses'].widget.choices = on_demand_courses
         self.fields['on_demand_emails_enable'].initial = is_nudges_enable
 
     def save(self, user=None, commit=True):

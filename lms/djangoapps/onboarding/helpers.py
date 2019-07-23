@@ -8013,7 +8013,7 @@ def serialize_partner_networks():
     return data
 
 
-def get_user_self_paced_courses(user):
+def get_user_on_demand_courses(user):
     all_user_courses = CourseEnrollment.objects.filter(user=user, is_active=True)
     courses = []
     for user_course in all_user_courses:
@@ -8024,10 +8024,10 @@ def get_user_self_paced_courses(user):
     return courses
 
 
-def get_email_pref_first_self_paced_courses(on_demand_courses=None):
+def get_email_pref_first_on_demand_courses(user, on_demand_courses=None):
     from openedx.features.ondemand_email_preferences.models import OnDemandEmailPreferences
     try:
-        email_pref = OnDemandEmailPreferences.objects.get(course_id=on_demand_courses[0].id)
+        email_pref = OnDemandEmailPreferences.objects.get(user=user, course_id=on_demand_courses[0].id)
         return email_pref.is_enabled
     except:
         return True

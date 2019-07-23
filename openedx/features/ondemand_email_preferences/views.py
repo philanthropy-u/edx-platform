@@ -5,12 +5,12 @@ import logging
 from django.http import JsonResponse
 from opaque_keys.edx.keys import CourseKey
 from openedx.features.ondemand_email_preferences.models import OnDemandEmailPreferences
-from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 
 log = logging.getLogger("edx.ondemand_email_preferences")
 
 
-@csrf_exempt
+@login_required
 def update_on_demand_emails_preferences_component(request, course_id, *args, **kwargs):
     """
     Used to fetch the email preferences of self paced course
