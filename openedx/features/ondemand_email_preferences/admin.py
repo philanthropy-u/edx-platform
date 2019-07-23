@@ -4,7 +4,7 @@ from openedx.core.djangoapps.content.course_overviews.models import CourseOvervi
 from openedx.features.ondemand_email_preferences.models import OnDemandEmailPreferences
 
 
-def get_parent_courses():
+def get_all_on_demand_courses():
     return tuple((co.id, "%s -- %s" % (co.display_name, co.id)) for co in CourseOverview.objects.filter(
         self_paced=True, start__isnull=False, end__isnull=False).order_by('id'))
 
@@ -18,7 +18,7 @@ class OnDemandEmailPreferencesAdminForm(ModelForm):
         """
         super(OnDemandEmailPreferencesAdminForm, self).__init__(*args, **kwargs)
 
-        self.fields['course_id'].widget = Select(choices=get_parent_courses())
+        self.fields['course_id'].widget = Select(choices=get_all_on_demand_courses)
 
     class Meta:
         model = OnDemandEmailPreferences

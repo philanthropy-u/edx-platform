@@ -1,13 +1,12 @@
 import re
 import pytz
-from student.models import CourseEnrollment
+
 from dateutil.relativedelta import relativedelta
 from datetime import date, datetime
 from difflib import SequenceMatcher
 
 from django.conf import settings
 from django.core import serializers
-from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from lms.djangoapps.onboarding.models import Organization, OrganizationMetricUpdatePrompt, PartnerNetwork
@@ -8014,6 +8013,21 @@ def serialize_partner_networks():
 
 
 def get_user_on_demand_courses(user):
+    """
+        Return user on demand courses
+
+        Parameters:
+        user: user object whom courses we need.
+
+        Returns:
+        list: List of on Demand courses and empty list in case user isn't enrolled in any on demand courses which is
+        currently active.
+
+    """
+
+    from student.models import CourseEnrollment
+    from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+
     all_user_courses = CourseEnrollment.objects.filter(user=user, is_active=True)
     courses = []
     for user_course in all_user_courses:
@@ -8024,11 +8038,23 @@ def get_user_on_demand_courses(user):
     return courses
 
 
-def get_email_pref_first_on_demand_courses(user, on_demand_courses=None):
+def get_email_pref_on_demand_course(user, on_demand_course_id):
+    """
+        Return email preferences of user for given on demand courses
+
+        Parameters:
+        user: user object whom courses we need.
+        on_demand_course_id: course id of on demand course which email preference would be required.
+
+        Returns:
+        list: Email preferences of given course
+
+    """
+
     from openedx.features.ondemand_email_preferences.models import OnDemandEmailPreferences
+
     try:
-        email_pref = OnDemandEmailPreferences.objects.get(user=user, course_id=on_demand_courses[0].id)
+        email_pref = OnDemandEmailPreferences.objects.get(user=user, course_id=on_demand_course_id)
         return email_pref.is_enabled
     except:
         return True
-

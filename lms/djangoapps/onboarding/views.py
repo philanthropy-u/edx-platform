@@ -411,13 +411,18 @@ def update_account_settings(request):
     user_extended_profile = UserExtendedProfile.objects.get(user_id=request.user.id)
     partners_opt_in = request.POST.get('partners_opt_in', '')
 
-    from lms.djangoapps.onboarding.helpers import get_user_on_demand_courses, get_email_pref_first_on_demand_courses
+    from lms.djangoapps.onboarding.helpers import get_user_on_demand_courses, get_email_pref_on_demand_course
     on_demand_courses = get_user_on_demand_courses(request.user)
+
+    first_on_demand_course_email_preference = get_email_pref_on_demand_course(
+        request.user, on_demand_courses[0].id) if len(on_demand_courses) > 0 else True
+    on_demand_courses_options = [(course.id, str(course.display_name)) for course in on_demand_courses]
+
     if request.method == 'POST':
 
         form = forms.UpdateRegModelForm(
-            [(course.id, str(course.display_name)) for course in on_demand_courses],
-            get_email_pref_first_on_demand_courses(request.user, on_demand_courses),
+            on_demand_courses_options,
+            first_on_demand_course_email_preference,
             request.POST,
             instance=user_extended_profile)
         if form.is_valid():
@@ -435,8 +440,8 @@ def update_account_settings(request):
         email_preferences = getattr(request.user, 'email_preferences', None)
 
         form = forms.UpdateRegModelForm(
-            [(course.id, str(course.display_name)) for course in on_demand_courses],
-            get_email_pref_first_on_demand_courses(request.user, on_demand_courses),
+            on_demand_courses_options,
+            first_on_demand_course_email_preference,
             instance=user_extended_profile,
             initial={
                 'organization_name': user_extended_profile.organization.label if user_extended_profile.organization else "",
