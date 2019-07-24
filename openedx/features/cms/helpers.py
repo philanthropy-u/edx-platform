@@ -1,21 +1,33 @@
+from django.contrib.auth.models import User
+
 from xmodule.course_module import CourseFields
 from courseware.courses import get_course_by_id
 from cms.djangoapps.contentstore.views.item import _save_xblock
 from openedx.features.course_card.helpers import initialize_course_settings
 
 
-def apply_post_rerun_creation_tasks(source_course_key, destination_course_key, user):
+def apply_post_rerun_creation_tasks(source_course_key, destination_course_key, user_id):
+    """
+    This method is responsible for applying all the tasks after re-run creation has successfully completed
+
+    :param source_course_key: source course key (from which the course was created)
+    :param destination_course_key: re run course key (key of the re run created)
+    :param user_id: user that created this course
+    """
+    user = User.objects.get(id=user_id)
+
     # initialize course custom settings
     initialize_course_settings(source_course_key, destination_course_key)
 
     re_run = get_course_by_id(destination_course_key)
 
-    # if re run has the default start date, it was created from old flow
+    # If re run has the default start date, it was created from old flow
     if re_run.start == CourseFields.start.default:
         return
 
     source_course = get_course_by_id(source_course_key)
 
+    # Set course re-run module start and due dates according to the source course
     set_rerun_course_module_dates(source_course, re_run, user)
 
 
