@@ -16,10 +16,10 @@ def apply_post_rerun_creation_tasks(source_course_key, destination_course_key, u
 
     source_course = get_course_by_id(source_course_key)
 
-    set_destination_course_module_dates(source_course, re_run, user)
+    set_rerun_course_module_dates(source_course, re_run, user)
 
 
-def set_destination_course_module_dates(source_course, re_run, user):
+def set_rerun_course_module_dates(source_course, re_run, user):
     source_course_start_date = source_course.start
     re_run_start_date = re_run.start
 
