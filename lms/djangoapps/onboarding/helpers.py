@@ -8032,7 +8032,8 @@ def get_user_on_demand_courses(user):
     courses = []
     for user_course in all_user_courses:
         try:
-            courses.append(CourseOverview.objects.get(id=user_course.course_id, self_paced=True))
+            today = datetime.now(utc).date()
+            courses.append(CourseOverview.objects.get(id=user_course.course_id, self_paced=True, end__gte=today))
         except CourseOverview.DoesNotExist:
             continue
     return courses
