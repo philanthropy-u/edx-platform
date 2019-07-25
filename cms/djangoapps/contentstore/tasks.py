@@ -52,7 +52,6 @@ def rerun_course(source_course_key_string, destination_course_key_string, user_i
         # call edxval to attach videos to the rerun
         copy_course_videos(source_course_key, destination_course_key)
 
-        # Apply post re run creation tasks
         apply_post_rerun_creation_tasks(source_course_key, destination_course_key, user_id)
 
         return "succeeded"

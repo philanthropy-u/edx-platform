@@ -32,6 +32,12 @@ def apply_post_rerun_creation_tasks(source_course_key, destination_course_key, u
 
 
 def set_rerun_course_module_dates(source_course, re_run, user):
+    """
+    This method is responsible for updating all section and subsection start and due dates for the re-run
+    according to source course. This is achieved by calculating the delta between a source section/subsection's
+    relevant date and start date, and then adding tha delta to the start_date of the re-run course.
+
+    """
     source_course_start_date = source_course.start
     re_run_start_date = re_run.start
 
