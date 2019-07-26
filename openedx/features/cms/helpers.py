@@ -2,7 +2,6 @@ from django.contrib.auth.models import User
 
 from xmodule.course_module import CourseFields
 from courseware.courses import get_course_by_id
-from cms.djangoapps.contentstore.views.item import _save_xblock
 from openedx.features.course_card.helpers import initialize_course_settings
 
 
@@ -38,6 +37,8 @@ def set_rerun_course_module_dates(source_course, re_run, user):
     relevant date and start date, and then adding tha delta to the start_date of the re-run course.
 
     """
+    from cms.djangoapps.contentstore.views.item import _save_xblock
+
     source_course_start_date = source_course.start
     re_run_start_date = re_run.start
 
