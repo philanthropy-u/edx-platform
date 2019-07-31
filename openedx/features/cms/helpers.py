@@ -8,6 +8,8 @@ from openedx.features.course_card.helpers import initialize_course_settings
 from openassessment.xblock.defaults import DEFAULT_START, DEFAULT_DUE
 from xmodule.modulestore.django import modulestore
 
+MODULE_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S%z'
+
 
 def apply_post_rerun_creation_tasks(source_course_key, destination_course_key, user_id):
     """
@@ -86,24 +88,25 @@ def set_rerun_ora_dates(re_run_subsections, re_run_start_date, source_course_sta
     :param source_course_start_date: course start date of source course
     :param user: user that created this course
     """
-    def update_date_by_delta(date_to_update, default_date):
+    def compute_ora_date_by_delta(date_to_update, default_date):
         """
-        Method to calculate new dates for ORA, on re-run, according to previous values. The delta
+        Method to calculate new date, on re-run, corresponding to previous value. The delta
         is calculated from course start date of source course and re-run course. Delta is then
-        added to previous dates in ORA. If date to update is default date then same date is
+        added to previous date in ORA. If date to update is default date then same date is
         returned with negative flag, indicating no need to update date.
-
         :param date_to_update: submission, start or due date from ORA
         :param default_date: DEFAULT_START or DEFAULT_DUE dates for ORA
         :return: date string and boolean flag indicating need for updating ORA date
         """
         date_update_required = date_to_update and not date_to_update.startswith(default_date)
+        updated_date = date_to_update
+
         if date_update_required:
-            date_delta = source_course_start_date - parse(date_to_update)
-            updated_date = (re_run_start_date - date_delta).strftime('%Y-%m-%dT%H:%M:%S%z')
-            return updated_date, date_update_required
-        else:
-            return date_to_update, date_update_required
+            updated_date = calculate_date_by_delta(parse(date_to_update), source_course_start_date,
+                                                   re_run_start_date)
+            updated_date = updated_date.strftime(MODULE_DATE_FORMAT)
+
+        return updated_date, date_update_required
 
     # flat sub-sections to the level of components and pick ORA only
     re_run_ora_list = [component for subsection in re_run_subsections for unit in
@@ -111,14 +114,14 @@ def set_rerun_ora_dates(re_run_subsections, re_run_start_date, source_course_sta
                   component.category == 'openassessment']
 
     for ora in re_run_ora_list:
-        ora.submission_start, to_update = update_date_by_delta(ora.submission_start, DEFAULT_START)
-        ora.submission_due, to_update = update_date_by_delta(ora.submission_due, DEFAULT_DUE)
+        ora.submission_start, to_update = compute_ora_date_by_delta(ora.submission_start, DEFAULT_START)
+        ora.submission_due, to_update = compute_ora_date_by_delta(ora.submission_due, DEFAULT_DUE)
 
         for assessment in ora.rubric_assessments:
             if 'start' in assessment:
-                assessment['start'], to_update = update_date_by_delta(assessment['start'], DEFAULT_START)
+                assessment['start'], to_update = compute_ora_date_by_delta(assessment['start'], DEFAULT_START)
             if 'due' in assessment:
-                assessment['due'], to_update = update_date_by_delta(assessment['due'], DEFAULT_DUE)
+                assessment['due'], to_update = compute_ora_date_by_delta(assessment['due'], DEFAULT_DUE)
 
         # If all dates in ORA are default then no need to update it during re-run process
         if not to_update:
