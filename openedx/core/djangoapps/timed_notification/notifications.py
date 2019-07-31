@@ -24,6 +24,7 @@ def enrollment_confirmation(sender, event=None, user=None, **kwargs):
             'course_url': get_course_link(course_id=course.id),
         }
 
+        subject = None
         if is_enrollment_email_enabled:
             if course.self_paced:
                 template = MandrillClient.ON_DEMAND_SCHEDULE_EMAIL_TEMPLATE
@@ -31,6 +32,7 @@ def enrollment_confirmation(sender, event=None, user=None, **kwargs):
                     {'module_list': get_chapters_text(course.id, user),
                      'first_name': user.first_name}
                 )
+                subject = 'Welcome to %s!' % course.display_name
             else:
                 template = MandrillClient.ENROLLMENT_CONFIRMATION_TEMPLATE
                 context.update(
@@ -41,6 +43,5 @@ def enrollment_confirmation(sender, event=None, user=None, **kwargs):
                 template,
                 user.email,
                 context,
-                subject=('Welcome to %s!' % course.display_name)
-                if template == MandrillClient.ON_DEMAND_SCHEDULE_EMAIL_TEMPLATE else None
+                subject=subject
             )
