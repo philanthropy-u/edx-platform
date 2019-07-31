@@ -1,11 +1,10 @@
-from dateutil.parser import parse
 from django.contrib.auth.models import User
 
-from xmodule.course_module import CourseFields
+from dateutil.parser import parse
 from courseware.courses import get_course_by_id
 from openedx.features.course_card.helpers import initialize_course_settings
-
 from openassessment.xblock.defaults import DEFAULT_START, DEFAULT_DUE
+from xmodule.course_module import CourseFields
 from xmodule.modulestore.django import modulestore
 
 MODULE_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S%z'
