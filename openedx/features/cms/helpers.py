@@ -52,8 +52,10 @@ def set_rerun_course_dates(source_course, re_run, user):
     if not re_run_sections:
         return
 
-    set_rerun_module_dates(re_run_sections + re_run_subsections, source_course_sections + source_course_subsections,
-                           source_course_start_date, re_run_start_date, user)
+    re_run_modules = re_run_sections + re_run_subsections
+    source_course_modules = source_course_sections + source_course_subsections
+
+    set_rerun_module_dates(re_run_modules, source_course_modules, source_course_start_date, re_run_start_date, user)
 
     set_rerun_ora_dates(re_run_subsections, re_run_start_date, source_course_start_date, user)
 
@@ -108,9 +110,13 @@ def set_rerun_ora_dates(re_run_subsections, re_run_start_date, source_course_sta
         return updated_date, date_update_required
 
     # flat sub-sections to the level of components and pick ORA only
-    re_run_ora_list = [component for subsection in re_run_subsections for unit in
-                  subsection.get_children() for component in unit.get_children() if
-                  component.category == 'openassessment']
+    re_run_ora_list = [
+        component
+        for subsection in re_run_subsections
+        for unit in subsection.get_children()
+        for component in unit.get_children()
+        if component.category == 'openassessment'
+    ]
 
     for ora in re_run_ora_list:
         ora.submission_start, to_update = compute_ora_date_by_delta(ora.submission_start, DEFAULT_START)
