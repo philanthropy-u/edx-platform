@@ -49,8 +49,7 @@ def set_rerun_course_dates(source_course, re_run, user):
     if not re_run_sections:
         return
 
-    set_rerun_module_dates(re_run_sections.extend(re_run_subsections),
-                           source_course_start_date, re_run_start_date, user)
+    set_rerun_module_dates(re_run_sections + re_run_subsections, source_course_start_date, re_run_start_date, user)
 
     set_rerun_ora_dates(re_run_subsections, re_run_start_date, source_course_start_date, user)
 
