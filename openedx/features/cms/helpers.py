@@ -8,6 +8,7 @@ from openedx.features.course_card.helpers import initialize_course_settings
 from openassessment.xblock.defaults import DEFAULT_START, DEFAULT_DUE
 from xmodule.modulestore.django import modulestore
 
+
 def apply_post_rerun_creation_tasks(source_course_key, destination_course_key, user_id):
     """
     This method is responsible for applying all the tasks after re-run creation has successfully completed
@@ -41,21 +42,20 @@ def set_rerun_course_dates(source_course, re_run, user):
     source_course_start_date = source_course.start
     re_run_start_date = re_run.start
 
-    source_course_sections = source_course.get_children()
     re_run_sections = re_run.get_children()
-    source_course_subsections = [sub_section for s in source_course_sections for sub_section in s.get_children()]
     re_run_subsections = [sub_section for s in re_run_sections for sub_section in s.get_children()]
 
-    set_rerun_module_dates(re_run_sections, re_run_subsections, source_course_subsections,
-                           re_run_start_date, source_course_sections, source_course_start_date,
-                           user)
+    # If there are no sections ignore setting dates
+    if not re_run_sections:
+        return
+
+    set_rerun_module_dates(re_run_sections.extend(re_run_subsections),
+                           source_course_start_date, re_run_start_date, user)
 
     set_rerun_ora_dates(re_run_subsections, re_run_start_date, source_course_start_date, user)
 
 
-def set_rerun_module_dates(re_run_sections, re_run_subsections, source_course_subsections,
-                           re_run_start_date, source_course_sections, source_course_start_date,
-                           user):
+def set_rerun_module_dates(re_run_sections, source_course_start_date, re_run_start_date, user):
     """
     This method is responsible for updating all section and subsection start and due dates for the re-run
     according to source course. This is achieved by calculating the delta between a source section/subsection's
@@ -63,21 +63,15 @@ def set_rerun_module_dates(re_run_sections, re_run_subsections, source_course_su
     """
     from cms.djangoapps.contentstore.views.item import _save_xblock
 
-    source_course_sections.extend(source_course_subsections)
-    re_run_sections.extend(re_run_subsections)
+    for xblock in re_run_sections:
+        meta_data = dict()
 
-    # setting release and due dates for sections and subsections
-    for source_xblock, re_run_xblock in zip(source_course_sections, re_run_sections):
-        meta_data = {}
+        meta_data['start'] = calculate_date_by_delta(xblock.start, source_course_start_date, re_run_start_date)
 
-        start_date_delta = source_course_start_date - source_xblock.start
-        meta_data['start'] = re_run_start_date - start_date_delta
+        if xblock.due:
+            meta_data['due'] = calculate_date_by_delta(xblock.due, source_course_start_date, re_run_start_date)
 
-        if source_xblock.due:
-            due_date_delta = source_course_start_date - source_xblock.due
-            meta_data['due'] = re_run_start_date - due_date_delta
-
-        _save_xblock(user, re_run_xblock, metadata=meta_data)
+        _save_xblock(user, xblock, metadata=meta_data)
 
 
 def set_rerun_ora_dates(re_run_subsections, re_run_start_date, source_course_start_date, user):
@@ -141,3 +135,15 @@ def component_update(descriptor, user):
 
     descriptor.xmodule_runtime = StudioEditModuleRuntime(user)
     modulestore().update_item(descriptor, user.id)
+
+
+def calculate_date_by_delta(date, source_date, destination_date):
+    """
+    This method is used to compute a date with a delta based on the difference of source_date and date
+    and adding that delta to the destination date
+    :param date: date for which delta is to be calculated
+    :param source_date: date from which delta is to be calculated
+    :param destination_date: date into which delta is to be added
+    """
+    date_delta = source_date - date
+    return destination_date - date_delta
