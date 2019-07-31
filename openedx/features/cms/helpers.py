@@ -42,6 +42,8 @@ def set_rerun_course_dates(source_course, re_run, user):
     source_course_start_date = source_course.start
     re_run_start_date = re_run.start
 
+    source_course_sections = source_course.get_children()
+    source_course_subsections = [sub_section for s in source_course_sections for sub_section in s.get_children()]
     re_run_sections = re_run.get_children()
     re_run_subsections = [sub_section for s in re_run_sections for sub_section in s.get_children()]
 
@@ -49,12 +51,13 @@ def set_rerun_course_dates(source_course, re_run, user):
     if not re_run_sections:
         return
 
-    set_rerun_module_dates(re_run_sections + re_run_subsections, source_course_start_date, re_run_start_date, user)
+    set_rerun_module_dates(re_run_sections + re_run_subsections, source_course_sections + source_course_subsections,
+                           source_course_start_date, re_run_start_date, user)
 
     set_rerun_ora_dates(re_run_subsections, re_run_start_date, source_course_start_date, user)
 
 
-def set_rerun_module_dates(re_run_sections, source_course_start_date, re_run_start_date, user):
+def set_rerun_module_dates(re_run_sections, source_course_sections, source_course_start_date, re_run_start_date, user):
     """
     This method is responsible for updating all section and subsection start and due dates for the re-run
     according to source course. This is achieved by calculating the delta between a source section/subsection's
@@ -62,15 +65,15 @@ def set_rerun_module_dates(re_run_sections, source_course_start_date, re_run_sta
     """
     from cms.djangoapps.contentstore.views.item import _save_xblock
 
-    for xblock in re_run_sections:
+    for source_xblock, re_run_xblock in zip(source_course_sections, re_run_sections):
         meta_data = dict()
 
-        meta_data['start'] = calculate_date_by_delta(xblock.start, source_course_start_date, re_run_start_date)
+        meta_data['start'] = calculate_date_by_delta(source_xblock.start, source_course_start_date, re_run_start_date)
 
-        if xblock.due:
-            meta_data['due'] = calculate_date_by_delta(xblock.due, source_course_start_date, re_run_start_date)
+        if source_xblock.due:
+            meta_data['due'] = calculate_date_by_delta(source_xblock.due, source_course_start_date, re_run_start_date)
 
-        _save_xblock(user, xblock, metadata=meta_data)
+        _save_xblock(user, re_run_xblock, metadata=meta_data)
 
 
 def set_rerun_ora_dates(re_run_subsections, re_run_start_date, source_course_start_date, user):
