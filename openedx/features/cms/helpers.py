@@ -89,7 +89,7 @@ def set_rerun_ora_dates(re_run_subsections, re_run_start_date, source_course_sta
     :param source_course_start_date: course start date of source course
     :param user: user that created this course
     """
-    def compute_ora_date_by_delta(date_to_update, default_date):
+    def compute_ora_date_by_delta(date_to_update, default_date, date_update_flags):
         """
         Method to calculate new date, on re-run, corresponding to previous value. The delta
         is calculated from course start date of source course and re-run course. Delta is then
@@ -97,6 +97,7 @@ def set_rerun_ora_dates(re_run_subsections, re_run_start_date, source_course_sta
         returned with negative flag, indicating no need to update date.
         :param date_to_update: submission, start or due date from ORA
         :param default_date: DEFAULT_START or DEFAULT_DUE dates for ORA
+        :param date_update_flags: list containing flags, indicating corresponding date changes or not
         :return: date string and boolean flag indicating need for updating ORA date
         """
         date_update_required = date_to_update and not date_to_update.startswith(default_date)
@@ -107,7 +108,8 @@ def set_rerun_ora_dates(re_run_subsections, re_run_start_date, source_course_sta
                                                    re_run_start_date)
             updated_date = updated_date.strftime(MODULE_DATE_FORMAT)
 
-        return updated_date, date_update_required
+        date_update_flags.append(date_update_required)
+        return updated_date
 
     # flat sub-sections to the level of components and pick ORA only
     re_run_ora_list = [
@@ -119,17 +121,18 @@ def set_rerun_ora_dates(re_run_subsections, re_run_start_date, source_course_sta
     ]
 
     for ora in re_run_ora_list:
-        ora.submission_start, to_update = compute_ora_date_by_delta(ora.submission_start, DEFAULT_START)
-        ora.submission_due, to_update = compute_ora_date_by_delta(ora.submission_due, DEFAULT_DUE)
+        date_update_flags = list()
+        ora.submission_start = compute_ora_date_by_delta(ora.submission_start, DEFAULT_START, date_update_flags)
+        ora.submission_due = compute_ora_date_by_delta(ora.submission_due, DEFAULT_DUE, date_update_flags)
 
         for assessment in ora.rubric_assessments:
             if 'start' in assessment:
-                assessment['start'], to_update = compute_ora_date_by_delta(assessment['start'], DEFAULT_START)
+                assessment['start'] = compute_ora_date_by_delta(assessment['start'], DEFAULT_START, date_update_flags)
             if 'due' in assessment:
-                assessment['due'], to_update = compute_ora_date_by_delta(assessment['due'], DEFAULT_DUE)
+                assessment['due'] = compute_ora_date_by_delta(assessment['due'], DEFAULT_DUE, date_update_flags)
 
         # If all dates in ORA are default then no need to update it during re-run process
-        if not to_update:
+        if not any(date_update_flags):
             continue
 
         component_update(ora, user)
