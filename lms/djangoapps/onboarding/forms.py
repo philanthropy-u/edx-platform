@@ -807,12 +807,14 @@ class UpdateRegModelForm(RegModelForm):
               'courses that you\'re enrolled in, select the course from the drop-down below '
               'and choose your desired email preferences.',
         choices=ON_DEMAND_EMAIL_CHOICES,
-        widget=forms.RadioSelect
+        widget=forms.RadioSelect,
+        required=False
     )
 
     on_demand_courses = forms.CharField(
         label=ugettext_noop('Select course'),
-        widget=forms.Select(choices=())
+        widget=forms.Select(choices=()),
+        required=False
     )
 
     def __init__(self, on_demand_courses, is_nudges_enable, *args, **kwargs):
@@ -890,15 +892,16 @@ class UpdateRegModelForm(RegModelForm):
         return extended_profile
 
     def save_on_demand_email_preferences(self, user, on_demand_course, on_demand_emails_enable):
-        map_bool = {
-            'True': True,
-            'False': False
-        }
+        if len(on_demand_course) > 0:
+            map_bool = {
+                'True': True,
+                'False': False
+            }
 
-        on_demand_email_preferences, created = OnDemandEmailPreferences.objects.get_or_create(
-            user=user, course_id=CourseKey.from_string(on_demand_course))
-        on_demand_email_preferences.is_enabled = map_bool[on_demand_emails_enable]
-        on_demand_email_preferences.save()
+            on_demand_email_preferences, created = OnDemandEmailPreferences.objects.get_or_create(
+                user=user, course_id=CourseKey.from_string(on_demand_course))
+            on_demand_email_preferences.is_enabled = map_bool[on_demand_emails_enable]
+            on_demand_email_preferences.save()
 
 
 class OrganizationMetricModelForm(BaseOnboardingModelForm):
