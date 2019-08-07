@@ -975,6 +975,9 @@ INSTALLED_APPS = (
 
     # Custom settings app
     'custom_settings',
+
+    # Customized cms app
+    'openedx.features.cms',
 )
 
 
