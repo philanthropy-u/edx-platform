@@ -1,13 +1,42 @@
+from pytz import utc
 from django.contrib.auth.models import User
 
 from dateutil.parser import parse
 from courseware.courses import get_course_by_id
-from openedx.features.course_card.helpers import initialize_course_settings
 from openassessment.xblock.defaults import DEFAULT_START, DEFAULT_DUE
 from xmodule.course_module import CourseFields
 from xmodule.modulestore.django import modulestore
+from custom_settings.models import CustomSettings
+from models.settings.course_metadata import CourseMetadata
 
 MODULE_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S%z'
+
+
+def initialize_course_settings(source_course, re_run_course, skip_open_date=True):
+    """
+    When ever a new course is created
+    1: We add a default entry for the given course in the CustomSettings Model
+    2: We add a an honor mode for the given course so students can view certificates
+       on their dashboard and progress page
+    3: set rerun course's course open date that exists in the course custom settings
+       on the basis of delta from the source_course start date with the source_course course open date
+
+    """
+
+    if not source_course:
+        return
+
+    _settings = CustomSettings.objects.filter(id=source_course.id).first()
+    tags = _settings.tags
+
+    source_course_open_date = _settings.course_open_date
+
+    if source_course_open_date and not skip_open_date:
+        rerun_course_open_date = calculate_date_by_delta(source_course_open_date,
+                                                         source_course.start, re_run_course.start)
+        CustomSettings.objects.filter(id=re_run_course.id).update(tags=tags, course_open_date=rerun_course_open_date)
+    else:
+        CustomSettings.objects.filter(id=re_run_course.id).update(tags=tags)
 
 
 def apply_post_rerun_creation_tasks(source_course_key, destination_course_key, user_id):
@@ -20,16 +49,17 @@ def apply_post_rerun_creation_tasks(source_course_key, destination_course_key, u
     """
     user = User.objects.get(id=user_id)
 
-    # initialize course custom settings
-    initialize_course_settings(source_course_key, destination_course_key)
-
     re_run = get_course_by_id(destination_course_key)
+    source_course = get_course_by_id(source_course_key)
 
     # If re run has the default start date, it was created from old flow
-    if re_run.start == CourseFields.start.default:
-        return
+    is_default_re_run = re_run.start == CourseFields.start.default
 
-    source_course = get_course_by_id(source_course_key)
+    # initialize course custom settings
+    initialize_course_settings(source_course, re_run, is_default_re_run)
+
+    if is_default_re_run:
+        return
 
     # Set course re-run module start and due dates according to the source course
     set_rerun_course_dates(source_course, re_run, user)
@@ -55,9 +85,43 @@ def set_rerun_course_dates(source_course, re_run, user):
     re_run_modules = re_run_sections + re_run_subsections
     source_course_modules = source_course_sections + source_course_subsections
 
+    set_rerun_schedule_dates(re_run, source_course, user)
+    set_advanced_settings_due_date(re_run, source_course, user)
+
     set_rerun_module_dates(re_run_modules, source_course_modules, source_course_start_date, re_run_start_date, user)
 
     set_rerun_ora_dates(re_run_subsections, re_run_start_date, source_course_start_date, user)
+
+
+def set_rerun_schedule_dates(re_run_course, source_course, user):
+    """
+    This methods sets rerun course's enrollment start date, enrollment end date and course end date on the basis
+    of delta from the source course's start date
+    """
+    re_run_course.end = calculate_date_by_delta(source_course.end, source_course.start, re_run_course.start)
+
+    re_run_course.enrollment_start = calculate_date_by_delta(source_course.enrollment_start,
+                                                             source_course.start, re_run_course.start)
+
+    re_run_course.enrollment_end = calculate_date_by_delta(source_course.enrollment_end,
+                                                           source_course.start, re_run_course.start)
+
+    modulestore().update_item(re_run_course, user.id)
+
+
+def set_advanced_settings_due_date(re_run_course, source_course, user):
+    """
+    This methods sets rerun course's due date that exists in the course advanced settings
+    on the basis of delta from the source_course start date with the source_course due date
+
+    """
+    source_due_date = source_course.due
+
+    if not source_due_date:
+        return
+
+    re_run_due_date = calculate_date_by_delta(source_due_date, source_course.start, re_run_course.start)
+    CourseMetadata.update_from_dict({'due': re_run_due_date}, re_run_course, user)
 
 
 def set_rerun_module_dates(re_run_sections, source_course_sections, source_course_start_date, re_run_start_date, user):
@@ -158,5 +222,11 @@ def calculate_date_by_delta(date, source_date, destination_date):
     :param source_date: date from which delta is to be calculated
     :param destination_date: date into which delta is to be added
     """
+
+    # Sometimes date is coming without timezone (primarily in case of ORA)
+    # Hence we'll be adding default timezone i.e. UTC to the datetime object passed
+    if not date.tzinfo:
+        date = date.replace(tzinfo=utc)
+
     date_delta = source_date - date
     return destination_date - date_delta
