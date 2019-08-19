@@ -71,7 +71,11 @@ class Command(BaseCommand):
 
                                             from submissions.models import Submission
                                             # user = User.objects.get(id=student['id'])
-                                            anonymous_user = user.anonymoususerid_set.get(course_id=course.id)
+
+                                            from student.models import AnonymousUserId
+                                            anonymous_user = AnonymousUserId.objects.get(user=user, course_id=course.id)
+
+                                            # anonymous_user = user.anonymoususerid_set.get(course_id=course.id)
                                             log.info('Anonymous User ID: %s', anonymous_user.anonymous_user_id)
                                             try:
                                                 response_submissions = Submission.objects.get(student_item__student_id=anonymous_user.anonymous_user_id,
@@ -85,7 +89,7 @@ class Command(BaseCommand):
                                                     try:
                                                         from openassessment.workflow.models import AssessmentWorkflow
                                                         AssessmentWorkflow.objects.get(status=AssessmentWorkflow.STATUSES[0], course_id=course.id, item_id=block_id, submission_uuid=response_submissions.uuid)
-                                                        autoscore_ora(user, course.id, unicode(visible_blocks[0]))
+                                                        autoscore_ora(user, course.id, unicode(visible_blocks[0]), anonymous_user)
                                                     except AssessmentWorkflow.DoesNotExist:
                                                         continue
 
@@ -96,18 +100,15 @@ class Command(BaseCommand):
                         i = i + 1
 
 
-def autoscore_ora(user, course_id, usage_key):
+def autoscore_ora(user, course_id, usage_key, anonymous_user):
     from submissions.models import Submission
     from submissions.api import reset_score, set_score
     from openassessment.assessment.serializers import rubric_from_dict
     from openassessment.assessment.models import Assessment, AssessmentPart
-    student = {
-        'id': user.id,
-        'username': user.username,
-        'email': user.email
-    }
-    anonymous_user = user.anonymoususerid_set.get(course_id=course_id)
-    student['anonymous_user_id'] = anonymous_user.anonymous_user_id
+    student = {'id': user.id, 'username': user.username, 'email': user.email,
+               'anonymous_user_id': anonymous_user.anonymous_user_id}
+
+    # anonymous_user = user.anonymoususerid_set.get(course_id=course_id)
 
     # Find the associated rubric for that course_id & item_id
     rubric_dict = _get_rubric_for_course(course_id, usage_key)
