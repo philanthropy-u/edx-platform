@@ -734,24 +734,6 @@ def _progress(request, course_key, student_id):
         except User.DoesNotExist:
             raise Http404
 
-    # try:
-    #     from openedx.core.djangoapps.content.course_structures.models import CourseStructure
-    #     course_struct = CourseStructure.objects.get(
-    #         course_id=course_key
-    #     )
-    #     from lms.djangoapps.course_blocks.api import get_course_blocks
-    #     course_blocks = get_course_blocks(student, course.location)
-    #     course_grade = CourseGrade(student, course, course_blocks)
-    #     chapters = course_blocks.get_children(course.location)
-    #
-    #     modulestore().get_items(
-    #         course.id,
-    #         # qualifiers={'category': 'openassessment'}
-    #     )
-    # except CourseStructure.DoesNotExist:
-    #     log.error("Course doesn't have a proper structure.")
-    #     raise
-
     # NOTE: To make sure impersonation by instructor works, use
     # student instead of request.user in the rest of the function.
 
