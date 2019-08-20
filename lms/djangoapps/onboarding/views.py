@@ -580,15 +580,10 @@ def recommendations(request):
     """
     recommended_courses = get_recommended_xmodule_courses(request)
     joined_communities = get_joined_communities(request.user)
-    user_extended_profile = request.user.extended_profile
 
     context = {
         'recommended_courses': recommended_courses,
         'joined_communities': joined_communities,
-        'user_has_organization': bool(user_extended_profile.organization),
-        'is_nonprofit_org': Organization.is_non_profit(user_extended_profile),
-        'is_poc': user_extended_profile.is_organization_admin,
-        'oef_eligible_first_learner': oef_eligible_first_learner(user_extended_profile),
     }
 
     return render_to_response('onboarding/recommendations.html', context)
