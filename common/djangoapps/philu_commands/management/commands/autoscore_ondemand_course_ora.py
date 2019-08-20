@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from lms.djangoapps.grades.new.course_grade import CourseGradeFactory
+from lms.djangoapps.grades.new.course_grade import CourseGradeFactory, CourseGrade
 from pytz import utc
 from datetime import datetime, timedelta
 
@@ -50,10 +50,13 @@ class Command(BaseCommand):
 
                 else:
                     i = 1
-                    student = User.objects.prefetch_related("groups").get(id=user.id)
-                    course_access = get_course_with_access(user, 'load', course.id, depth=None, check_if_enrolled=True)
-
-                    course_grade = CourseGradeFactory().create(student, course_access)
+                    # student = User.objects.prefetch_related("groups").get(id=user.id)
+                    # course_access = get_course_with_access(user, 'load', course.id, depth=None, check_if_enrolled=True)
+                    #
+                    # course_grade = CourseGradeFactory().create(student, course_access)
+                    from lms.djangoapps.course_blocks.api import get_course_blocks
+                    course_blocks = get_course_blocks(user, course.location)
+                    course_grade = CourseGrade(user, course, course_blocks)
                     courseware_summary = course_grade.chapter_grades
 
                     for index_chapter, chapter in enumerate(courseware_summary):

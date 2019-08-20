@@ -157,6 +157,8 @@ def anonymous_id_for_user(user, course_id, save=True):
     if save is False:
         return digest
 
+    log.info("############################### Anonymous ID ###################### %s:", settings.SECRET_KEY)
+
     try:
         AnonymousUserId.objects.get_or_create(
             user=user,
