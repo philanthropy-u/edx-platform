@@ -37,7 +37,7 @@ from rest_framework import status
 from common.djangoapps.student.views import get_course_related_keys
 from lms.djangoapps.instructor.views.api import require_global_staff
 from lms.djangoapps.ccx.utils import prep_course_for_grading
-from lms.djangoapps.grades.new.course_grade import CourseGradeFactory, CourseGrade
+from lms.djangoapps.grades.new.course_grade import CourseGradeFactory
 from lms.djangoapps.instructor.enrollment import uses_shib
 from lms.djangoapps.verify_student.models import SoftwareSecurePhotoVerification
 from lms.djangoapps.ccx.custom_exception import CCXLocatorValidationException
