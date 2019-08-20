@@ -2,20 +2,19 @@ from logging import getLogger
 
 from pytz import utc
 from datetime import datetime, timedelta
-
-from student.models import AnonymousUserId
 from django.core.management.base import BaseCommand
-from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
-
-from student.models import CourseEnrollment
 
 from submissions.models import Submission
+from student.models import CourseEnrollment, AnonymousUserId
 from openassessment.workflow.models import AssessmentWorkflow
 
 from xmodule.modulestore.django import modulestore
 from openedx.features.assessment.helpers import autoscore_ora
+from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 
 log = getLogger(__name__)
+
+DAYS_TO_WAIT_AUTO_ASSESSMENT = 14
 
 
 class Command(BaseCommand):
@@ -37,7 +36,7 @@ class Command(BaseCommand):
 
                 today = datetime.now(utc).date()
                 delta_days = today - enrollment.created.date()
-                current_module = delta_days.days / 7 + 1
+                current_module = (delta_days.days / 7) + 1
                 user = enrollment.user
 
                 if current_module < 3:
@@ -61,13 +60,14 @@ class Command(BaseCommand):
                                     for index_block, block in enumerate(vertical_blocks.children):
                                         if block.block_type == 'openassessment':
 
-                                            # check if this chapter is 2 weeks older or not.
-                                            module_access_days = delta_days.days - (index_chapter * 7)
-
                                             try:
                                                 anonymous_user = AnonymousUserId.objects.get(user=user,
                                                                                              course_id=course.id)
-                                            except:
+                                            except AnonymousUserId.DoesNotExist:
+                                                log.info('Anonymous Id doesn\'t exists for User: %s', user)
+                                                continue
+                                            except AnonymousUserId.MultipleObjectsReturned:
+                                                log.info('Multiple Anonymous Ids for User: %s', user)
                                                 continue
 
                                             try:
@@ -79,8 +79,13 @@ class Command(BaseCommand):
 
                                                 response_submission_delta = today - response_submissions.created_at.date()
 
-                                                if module_access_days >= 14 and response_submission_delta.days >= 14:
+                                                # check if this chapter is 2 weeks older or not.
+                                                module_access_days = delta_days.days - (index_chapter * 7)
+
+                                                if module_access_days >= DAYS_TO_WAIT_AUTO_ASSESSMENT \
+                                                        and response_submission_delta.days >= DAYS_TO_WAIT_AUTO_ASSESSMENT:
                                                     try:
+                                                        # Status[0] is the status of assessment that are in waiting mode
                                                         AssessmentWorkflow.objects.get(
                                                             status=AssessmentWorkflow.STATUSES[0],
                                                             course_id=course.id, item_id=block,
