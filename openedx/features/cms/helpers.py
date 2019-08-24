@@ -3,13 +3,16 @@ from django.contrib.auth.models import User
 
 from dateutil.parser import parse
 from courseware.courses import get_course_by_id
+from opaque_keys.edx.keys import CourseKey
 from openassessment.xblock.defaults import DEFAULT_START, DEFAULT_DUE
 from xmodule.course_module import CourseFields
 from xmodule.modulestore.django import modulestore
+from course_action_state.models import CourseRerunState, CourseRerunUIStateManager
 from custom_settings.models import CustomSettings
 from models.settings.course_metadata import CourseMetadata
 
 MODULE_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S%z'
+RUN_DATE_FORMAT = '%Y%m%d'
 
 
 def initialize_course_settings(source_course, re_run_course, skip_open_date=True):
@@ -230,3 +233,73 @@ def calculate_date_by_delta(date, source_date, destination_date):
 
     date_delta = source_date - date
     return destination_date - date_delta
+
+
+def update_course_re_run_details(course_re_run_details):
+    """
+    This method gets new rerun data in dict and return it with necessary data for rerun creation
+    along with updated run id's for each rerun
+    :param course_re_run_details: dict containing rerun data for all courses
+    :return: dict with new run ids
+    """
+    for course_detail in course_re_run_details:
+        course_key = CourseKey.from_string(course_detail['source_course_key'])
+        source_course = modulestore().get_course(course_key)
+
+        if not source_course.end:
+            course_detail['error'] = 'Course ID not found'
+            course_detail['has_errors'] = True
+            break
+
+        run_number = calculate_next_rerun_number(source_course.id)
+        course_detail['display_name'] = source_course.display_name
+        course_detail['number'] = source_course.number
+        course_detail['org'] = source_course.org
+
+        runs = course_detail['runs']
+        for n, run in enumerate(runs):
+            # create new rerun id and increment each rerun number
+            run['run'] = create_new_run_id(run, source_course, run_number + n)
+    return course_re_run_details
+
+
+def calculate_next_rerun_number(source_course_id):
+    """
+    This method will calculate next rerun number, which should be used for creating course rerun
+    :param source_course_id: Id of the source_course
+    :return: new run number
+    """
+    split_course_run = source_course_id.run.split('_')
+    # validate rerun number, valid run number must have four sections
+    if len(split_course_run) == 4 and split_course_run[0].isdigit():
+        # if run number pass basic validation then extract run number and increment it
+        return int(split_course_run[0]) + 1
+    else:
+        # If run number can not be extracted from run number than
+        # count all rerun in group and use it as run number
+        course_rerun = CourseRerunState.objects.filter(
+            course_key=source_course_id, state=CourseRerunUIStateManager.State.SUCCEEDED).first()
+        if course_rerun:
+            sibling_re_runs = CourseRerunState.objects.filter(
+                source_course_key=course_rerun.source_course_key).all()
+            # sibling do not include parent, so group count must be increment by 1
+            return len(sibling_re_runs) + 2
+        else:
+            return 1
+
+
+def create_new_run_id(run_dict, course, run_number):
+    """
+    This method will create complete new run id for rerun course
+    :param run_dict: dict containing run details provided by user
+    :param course: Source course of which rerun is being created
+    :param run_number: new calculated run number
+    :return: complete new run id
+    """
+    course_end_date = calculate_date_by_delta(run_dict['start'], course.start, course.end)
+
+    new_run_id = "{}_{}_{}_{}".format(
+        run_number, run_dict['release_number'], run_dict['start'].strftime(RUN_DATE_FORMAT),
+        course_end_date.strftime(RUN_DATE_FORMAT)
+    )
+    return new_run_id
