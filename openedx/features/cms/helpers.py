@@ -306,6 +306,18 @@ def create_new_run_id(run_dict, course, run_number):
 
 
 def get_course_group(course_key):
+    """
+    This method evaluates a course's family(all related courses) to which it belongs to.
+
+    A course can be of 3 types:
+
+    - Course Rerun - method will return all its sibling re runs along with its parent
+                     sorted by order creation time(latest first)
+    - Parent Course - method will return all its child re runs along with its parent
+                      sorted by order creation time(latest first)
+    - Course Without Rerun - will return only the course itself
+
+    """
     course_rerun = CourseRerunState.objects.filter(course_key=course_key).first()
     is_course_parent_course = not bool(course_rerun) and bool(CourseRerunState.objects.filter(
         source_course_key=course_key,
