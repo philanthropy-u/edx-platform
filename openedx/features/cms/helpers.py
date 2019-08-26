@@ -244,24 +244,29 @@ def update_course_re_run_details(course_re_run_details):
     """
     for course_detail in course_re_run_details:
         course_key = CourseKey.from_string(course_detail['source_course_key'])
+
         # replacing string course key with course key object in course rerun details dict
         course_detail['source_course_key'] = course_key
         source_course = modulestore().get_course(course_key)
 
         if not source_course.end:
-            course_detail['error'] = 'Course ID not found'
+            error_message = 'This course does not have end date'
+            course_detail['error'] = error_message
             course_detail['has_errors'] = True
-            break
+            raise Exception(error_message)
 
         run_number = calculate_next_rerun_number(source_course.id)
+
         course_detail['display_name'] = source_course.display_name
         course_detail['number'] = source_course.number
         course_detail['org'] = source_course.org
 
         runs = course_detail['runs']
-        for n, run in enumerate(runs):
+
+        for re_run_index, run in enumerate(runs):
             # create new rerun id and increment each rerun number
-            run['run'] = create_new_run_id(run, source_course, run_number + n)
+            run['run'] = create_new_run_id(run, source_course, run_number + re_run_index)
+
     return course_re_run_details
 
 
@@ -272,6 +277,7 @@ def calculate_next_rerun_number(source_course_id):
     :return: new run number
     """
     split_course_run = source_course_id.run.split('_')
+
     # validate rerun number, valid run number must have four sections
     if len(split_course_run) == 4 and split_course_run[0].isdigit():
         # if run number pass basic validation then extract run number and increment it

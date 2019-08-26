@@ -6,6 +6,7 @@ from datetime import datetime
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from logging import getLogger
 
 from cms.djangoapps.contentstore.views.course import get_courses_accessible_to_user
 from contentstore.tasks import rerun_course
@@ -21,6 +22,8 @@ from xmodule.modulestore.exceptions import DuplicateCourseError
 from xmodule.modulestore.django import modulestore
 from . import helpers
 
+logger = getLogger(__name__)  # pylint: disable=invalid-name
+
 
 def latest_course_reruns(courses):
     """
@@ -28,12 +31,26 @@ def latest_course_reruns(courses):
     :param courses: list of courses to compute latest courses from
     :return: list of latest course reruns (CourseSummary Objects)
     """
-    latest_courses_ids = set()
+    courses_map = {course.id: course for course in courses}
+    latest_courses = list()
+    visited_courses = set()
 
     for course in courses:
-        latest_courses_ids.add(helpers.get_course_group(course.id)[0])
+        if course.id in visited_courses:
+            continue
 
-    return [course for course in courses if course.id in latest_courses_ids]
+        course_group = helpers.get_course_group(course.id)
+
+        # Adding this course's group to set of visited courses
+        visited_courses |= set(course_group)
+
+        latest_course_id = course_group[0]
+
+        # Adding latest course id to list of latest course ids
+        if latest_course_id in courses_map:
+            latest_courses.append(courses_map[latest_course_id])
+
+    return latest_courses
 
 
 @expect_json
@@ -52,27 +69,10 @@ def course_multiple_rerun_handler(request):
         course_ids = [str(course.id) for course in courses]
         course_re_run_details = deepcopy(request.json)
 
-        for course in course_re_run_details:
-            for re_run in course['runs']:
-                start = '{}-{}'.format(re_run['start_date'], re_run['start_time'])
-                try:
-                    re_run['start'] = datetime.strptime(start, '%m/%d/%Y-%H:%M').replace(tzinfo=utc)
-                except ValueError:
-                    re_run['error'] = 'Start date/time format is incorrect'
-                    course['has_errors'] = True
-
-            if course['source_course_key'] not in course_ids:
-                course['error'] = 'Course ID not found'
-                course['has_errors'] = True
-
-        course_re_run_details = helpers.update_course_re_run_details(course_re_run_details)
-
-        if any([c.get('has_errors', False) for c in course_re_run_details]):
-            return JsonResponse(course_re_run_details, status=400)
-
         try:
-            create_multiple_reruns(course_re_run_details, request.user)
-        except:
+            create_multiple_reruns(course_re_run_details, course_ids, request.user)
+        except Exception as e:
+            logger.error('Multiple rerun creation failed with exception: %s', str(e))
             return JsonResponse(course_re_run_details, status=400)
 
         return JsonResponse(status=200)
@@ -86,7 +86,26 @@ def course_multiple_rerun_handler(request):
     return render_to_response('rerun/create_multiple_rerun.html', context)
 
 
-def create_multiple_reruns(course_re_run_details, user):
+def create_multiple_reruns(course_re_run_details, course_ids, user):
+    for course in course_re_run_details:
+        for re_run in course['runs']:
+            start = '{}-{}'.format(re_run['start_date'], re_run['start_time'])
+            try:
+                re_run['start'] = datetime.strptime(start, '%m/%d/%Y-%H:%M').replace(tzinfo=utc)
+            except ValueError:
+                error_message = 'Start date/time format is incorrect'
+                re_run['error'] = error_message
+                course['has_errors'] = True
+                raise ValueError(error_message)
+
+        if course['source_course_key'] not in course_ids:
+            error_message = 'Course key not found'
+            course['error'] = error_message
+            course['has_errors'] = True
+            raise ValueError(error_message)
+
+    course_re_run_details = helpers.update_course_re_run_details(course_re_run_details)
+
     re_runs = []
 
     for course in course_re_run_details:
