@@ -277,7 +277,7 @@ def calculate_next_rerun_number(source_course_id):
     else:
         # If run number can not be extracted from run number than
         # count all rerun in group and use it as run number
-        len(get_course_group(source_course_id)) + 1
+        return len(get_course_group(source_course_id)) + 1
 
 
 def create_new_run_id(run_dict, course, run_number):
