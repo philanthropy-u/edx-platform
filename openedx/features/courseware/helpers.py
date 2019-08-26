@@ -7,8 +7,6 @@ from xmodule.modulestore.django import modulestore
 
 log = getLogger(__name__)
 
-base_url = settings.LMS_ROOT_URL
-
 
 def get_nth_chapter_link(course, chapter_index=0):
     course_chapters = modulestore().get_items(
@@ -28,10 +26,5 @@ def get_nth_chapter_link(course, chapter_index=0):
               subsection.block_id]
     )
 
+    base_url = settings.LMS_ROOT_URL
     return base_url + course_target
-
-
-def get_my_account_link(course_id):
-    my_account_url = reverse('update_account_settings')
-    url_target = '{my_account_url}?course_id={course_id}'.format(my_account_url=my_account_url, course_id=course_id)
-    return base_url + url_target

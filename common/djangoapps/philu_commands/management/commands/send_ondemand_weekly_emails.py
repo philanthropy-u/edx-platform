@@ -54,6 +54,8 @@ class Command(BaseCommand):
 
             for enrollment in enrollments:
                 delta_days = today - enrollment.created.date()
+
+                # one is added to get user's current module.
                 current_module = int(math.floor((delta_days.days / DAYS_TO_COMPLETE_ONE_MODULE)) + 1)
                 user = enrollment.user
 
@@ -78,6 +80,8 @@ class Command(BaseCommand):
                     # To maintain counter of graded sub section.
                     graded_subsections = 0
 
+                    # We are subtracting 2 from current module, 1 for adjusting index as list indexs starts from 0 and
+                    # current module starts from 1 and other 1 to get previous module.
                     chapter = course_chapters[0].children[current_module - 2]
                     sequentials = modulestore().get_item(chapter)
                     for index_sequential, sequential in enumerate(sequentials.children):
@@ -175,6 +179,7 @@ def send_weekly_email(user, course, chapter, all_blocks, current_module):
         'course_name': course.display_name,
         'module_title': current_chapter_name,
         'next_module_url': next_chapter_url,
+        'email_address': user.email,
         'unsubscribe_link': get_my_account_link(course.id)
     }
 
