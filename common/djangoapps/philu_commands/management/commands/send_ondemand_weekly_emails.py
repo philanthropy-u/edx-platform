@@ -61,6 +61,7 @@ class Command(BaseCommand):
                 current_module = int(math.floor((delta_days.days / DAYS_TO_COMPLETE_ONE_MODULE)) + 1)
                 user = enrollment.user
 
+                # If user hasn't enable email preferences for on demand course, no need to go further.
                 if not get_user_email_preferences(user, course.id):
                     continue
 
@@ -91,7 +92,7 @@ class Command(BaseCommand):
                     sequentials = modulestore().get_item(chapter)
                     for index_sequential, sequential in enumerate(sequentials.children):
                         if course_blocks[str(sequential)]['graded']:
-                            graded_subsections = graded_subsections + 1
+                            graded_subsections += 1
                             verticals = modulestore().get_item(sequential)
                             for index_vertical, vertical in enumerate(verticals.children):
                                 vertical_blocks = modulestore().get_item(vertical)
@@ -155,7 +156,7 @@ class Command(BaseCommand):
 def has_block_graded(all_blocks, block):
     if all_blocks[block]['display_name'] in UNGRADED_BLOCKS:
         return False
-    return True if all_blocks[block]['graded'] else False
+    return all_blocks[block]['graded']
 
 
 def has_view_html(user, block):
@@ -177,13 +178,12 @@ def get_anonymous_id(user, course_id):
 
 
 def get_user_email_preferences(user, course_id):
-    email_pref = OnDemandEmailPreferences()
     try:
         email_pref = OnDemandEmailPreferences.objects.get(user=user, course_id=course_id)
+        return email_pref.is_enabled
     except OnDemandEmailPreferences.DoesNotExist:
         log.info("No email preferences found for %s hence considered True", user)
-        email_pref.is_enabled = True
-    return email_pref.is_enabled
+        return True
 
 
 def send_weekly_email(user, course, chapter, all_blocks, current_module):
