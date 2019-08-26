@@ -13,7 +13,8 @@ from student.models import CourseEnrollment, AnonymousUserId
 from xmodule.modulestore.django import modulestore
 from openedx.core.djangoapps.content.course_structures.models import CourseStructure
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
-from openedx.features.courseware.helpers import get_nth_chapter_link, get_my_account_link
+from openedx.features.courseware.helpers import get_nth_chapter_link
+from openedx.features.ondemand_email_preferences.helpers import get_my_account_link
 
 log = getLogger(__name__)
 
