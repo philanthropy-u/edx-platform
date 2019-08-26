@@ -15,6 +15,7 @@ from openedx.core.djangoapps.content.course_structures.models import CourseStruc
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from openedx.features.courseware.helpers import get_nth_chapter_link
 from openedx.features.ondemand_email_preferences.helpers import get_my_account_link
+from openedx.features.ondemand_email_preferences.models import OnDemandEmailPreferences
 
 log = getLogger(__name__)
 
@@ -59,6 +60,9 @@ class Command(BaseCommand):
                 # one is added to get user's current module.
                 current_module = int(math.floor((delta_days.days / DAYS_TO_COMPLETE_ONE_MODULE)) + 1)
                 user = enrollment.user
+
+                if not get_user_email_preferences(user, course.id):
+                    continue
 
                 log.info('User: %s ****** Current Module: %s', user, current_module)
 
@@ -143,6 +147,7 @@ class Command(BaseCommand):
                                 else:
                                     continue  # only executed if the inner loop did NOT break
                                 break
+
                     if graded_subsections > 0:
                         send_weekly_email(user, course, str(chapter), course_blocks, current_module)
 
@@ -169,6 +174,16 @@ def get_anonymous_id(user, course_id):
     except AnonymousUserId.MultipleObjectsReturned:
         log.error('Multiple Anonymous Ids for User: %s', user)
     return anonymous_user
+
+
+def get_user_email_preferences(user, course_id):
+    email_pref = OnDemandEmailPreferences()
+    try:
+        email_pref = OnDemandEmailPreferences.objects.get(user=user, course_id=course_id)
+    except OnDemandEmailPreferences.DoesNotExist:
+        log.info("No email preferences found for %s hence considered True", user)
+        email_pref.is_enabled = True
+    return email_pref.is_enabled
 
 
 def send_weekly_email(user, course, chapter, all_blocks, current_module):
