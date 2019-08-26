@@ -244,6 +244,8 @@ def update_course_re_run_details(course_re_run_details):
     """
     for course_detail in course_re_run_details:
         course_key = CourseKey.from_string(course_detail['source_course_key'])
+        # replacing string course key with course key object in course rerun details dict
+        course_detail['source_course_key'] = course_key
         source_course = modulestore().get_course(course_key)
 
         if not source_course.end:
