@@ -70,9 +70,11 @@ def course_multiple_rerun_handler(request):
         if any([c.get('has_errors', False) for c in course_re_run_details]):
             return JsonResponse(course_re_run_details, status=400)
 
-        create_multiple_reruns(course_re_run_details, request.user)
+        try:
+            create_multiple_reruns(course_re_run_details, request.user)
+        except:
+            return JsonResponse(course_re_run_details, status=400)
 
-        # Success response here
         return JsonResponse(status=200)
 
     latest_courses = latest_course_reruns(courses)
@@ -85,6 +87,8 @@ def course_multiple_rerun_handler(request):
 
 
 def create_multiple_reruns(course_re_run_details, user):
+    re_runs = []
+
     for course in course_re_run_details:
         for rerun in course['runs']:
             fields = dict()
@@ -94,28 +98,41 @@ def create_multiple_reruns(course_re_run_details, user):
             fields['wiki_slug'] = u"{0}.{1}.{2}".format(course['org'], course['number'], rerun['run'])
             fields['advertised_start'] = None
 
-            # _rerun_course(course['source_course_key'], course['org'], course['number'], rerun['run'], user, fields)
+            # verify user has access to the original course
+            if not has_studio_write_access(user, course['source_course_key']):
+                course['error'] = 'User does not have access to the parent course'
+                course['has_errors'] = True
+                raise PermissionDenied()
+
+            # create destination course key
+            store = modulestore()
+            with store.default_store('split'):
+                destination_course_key = store.make_course_key(course['org'], course['number'], rerun['run'])
+
+            # verify org course and run don't already exist
+            if store.has_course(destination_course_key, ignore_case=True):
+                rerun['error'] = 'There is already a course defined with the same ID computed for this rerun'
+                course['has_errors'] = True
+                raise DuplicateCourseError(course['source_course_key'], destination_course_key)
+
+            # Prepare a rerun creation arguments list
+            re_runs.append({
+                'source_course_key': course['source_course_key'],
+                'destination_course_key': destination_course_key,
+                'user': user,
+                fields: fields
+            })
+
+    # Since the loop contains raise, if there were errors in re-run creation code would have exited.
+    for re_run_arguments in re_runs:
+        _rerun_course(**re_run_arguments)
 
 
-def _rerun_course(source_course_key, org, number, run, user, fields):
+def _rerun_course(source_course_key, destination_course_key, user, fields):
     """
     Reruns an existing course.
     Returns the URL for the course listing page.
     """
-
-    # verify user has access to the original course
-    if not has_studio_write_access(user, source_course_key):
-        raise PermissionDenied()
-
-    # create destination course key
-    store = modulestore()
-    with store.default_store('split'):
-        destination_course_key = store.make_course_key(org, number, run)
-
-    # verify org course and run don't already exist
-    if store.has_course(destination_course_key, ignore_case=True):
-        raise DuplicateCourseError(source_course_key, destination_course_key)
-
     # Make sure user has instructor and staff access to the destination course
     # so the user can see the updated status for that course
     add_instructor(destination_course_key, user, user)
