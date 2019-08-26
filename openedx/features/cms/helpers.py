@@ -277,15 +277,7 @@ def calculate_next_rerun_number(source_course_id):
     else:
         # If run number can not be extracted from run number than
         # count all rerun in group and use it as run number
-        course_rerun = CourseRerunState.objects.filter(
-            course_key=source_course_id, state=CourseRerunUIStateManager.State.SUCCEEDED).first()
-        if course_rerun:
-            sibling_re_runs = CourseRerunState.objects.filter(
-                source_course_key=course_rerun.source_course_key).all()
-            # sibling do not include parent, so group count must be increment by 1
-            return len(sibling_re_runs) + 2
-        else:
-            return 1
+        len(get_course_group(source_course_id)) + 1
 
 
 def create_new_run_id(run_dict, course, run_number):
@@ -303,3 +295,32 @@ def create_new_run_id(run_dict, course, run_number):
         course_end_date.strftime(RUN_DATE_FORMAT)
     )
     return new_run_id
+
+
+def get_course_group(course_key):
+    course_rerun = CourseRerunState.objects.filter(course_key=course_key).first()
+    is_course_parent_course = bool(CourseRerunState.objects.filter(
+        source_course_key=course_key,
+        state=CourseRerunUIStateManager.State.SUCCEEDED)
+    )
+
+    if not course_rerun and not is_course_parent_course:
+        return [course_key]
+
+    relevant_course_key = course_key
+
+    # Relevant course key for a course which is a rerun would be its parent's course key
+    if not is_course_parent_course:
+        relevant_course_key = course_rerun.source_course_key
+
+    courses = [
+        c.course_key
+        for c in
+        CourseRerunState.objects.filter(
+            source_course_key=relevant_course_key,
+            state=CourseRerunUIStateManager.State.SUCCEEDED).order_by(
+            '-created_time').all()
+    ]
+    courses.append(relevant_course_key)
+
+    return courses

@@ -1,3 +1,4 @@
+import json
 from pytz import utc
 from copy import deepcopy
 from datetime import datetime
@@ -6,11 +7,19 @@ from . import helpers
 from edxmako.shortcuts import render_to_response
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 
+from contentstore.tasks import rerun_course
+from contentstore.utils import add_instructor
 from xmodule.error_module import ErrorDescriptor
 from course_action_state.models import CourseRerunState, CourseRerunUIStateManager
 from cms.djangoapps.contentstore.views.course import get_courses_accessible_to_user
 from util.json_request import expect_json, JsonResponse
+from openedx.features.course_card.helpers import get_related_card_id
+from xmodule.modulestore import EdxJSONEncoder
+from xmodule.modulestore.exceptions import DuplicateCourseError
+from xmodule.modulestore.django import modulestore
+from student.auth import has_studio_write_access
 
 
 def latest_course_reruns(courses):
@@ -22,30 +31,7 @@ def latest_course_reruns(courses):
     latest_courses_ids = set()
 
     for course in courses:
-        course_rerun = CourseRerunState.objects.filter(course_key=course.id).first()
-        is_course_parent_course = bool(
-            CourseRerunState.objects.filter(source_course_key=course.id,
-                                            state=CourseRerunUIStateManager.State.SUCCEEDED))
-
-        if not course_rerun and not is_course_parent_course:
-            latest_courses_ids.add(course.id)
-            continue
-
-        if is_course_parent_course:
-            sibling_re_runs = CourseRerunState.objects.filter(
-                source_course_key=course.id,
-                state=CourseRerunUIStateManager.State.SUCCEEDED).order_by(
-                '-created_time').all()
-        else:
-            sibling_re_runs = CourseRerunState.objects.filter(
-                source_course_key=course_rerun.source_course_key,
-                state=CourseRerunUIStateManager.State.SUCCEEDED).order_by(
-                '-created_time').all()
-
-        if sibling_re_runs:
-            latest_courses_ids.add(sibling_re_runs[0].course_key)
-        else:
-            latest_courses_ids.add(course_rerun.course_key)
+        latest_courses_ids.add(helpers.get_course_group(course.id)[0])
 
     return [course for course in courses if course.id in latest_courses_ids]
 
@@ -79,14 +65,12 @@ def course_multiple_rerun_handler(request):
                 course['error'] = 'Course ID not found'
                 course['has_errors'] = True
 
-        # Generate ids
-
         course_re_run_details = helpers.update_course_re_run_details(course_re_run_details)
 
         if any([c.get('has_errors', False) for c in course_re_run_details]):
             return JsonResponse(course_re_run_details, status=400)
 
-        # Create courses here
+        create_multiple_reruns(course_re_run_details, request.user)
 
         # Success response here
         return JsonResponse(status=200)
@@ -98,3 +82,49 @@ def course_multiple_rerun_handler(request):
     }
 
     return render_to_response('rerun/create_multiple_rerun.html', context)
+
+
+def create_multiple_reruns(course_re_run_details, user):
+    for course in course_re_run_details:
+        for rerun in course['runs']:
+            fields = dict()
+
+            fields['display_name'] = course['display_name']
+            fields['start'] = rerun['start']
+            fields['wiki_slug'] = u"{0}.{1}.{2}".format(course['org'], course['number'], rerun['run'])
+            fields['advertised_start'] = None
+
+            # _rerun_course(course['source_course_key'], course['org'], course['number'], rerun['run'], user, fields)
+
+
+def _rerun_course(source_course_key, org, number, run, user, fields):
+    """
+    Reruns an existing course.
+    Returns the URL for the course listing page.
+    """
+
+    # verify user has access to the original course
+    if not has_studio_write_access(user, source_course_key):
+        raise PermissionDenied()
+
+    # create destination course key
+    store = modulestore()
+    with store.default_store('split'):
+        destination_course_key = store.make_course_key(org, number, run)
+
+    # verify org course and run don't already exist
+    if store.has_course(destination_course_key, ignore_case=True):
+        raise DuplicateCourseError(source_course_key, destination_course_key)
+
+    # Make sure user has instructor and staff access to the destination course
+    # so the user can see the updated status for that course
+    add_instructor(destination_course_key, user, user)
+
+    parent_course_key = get_related_card_id(source_course_key)
+
+    # Mark the action as initiated
+    CourseRerunState.objects.initiated(parent_course_key, destination_course_key, user, fields['display_name'])
+
+    # Rerun the course as a new celery task
+    json_fields = json.dumps(fields, cls=EdxJSONEncoder)
+    rerun_course.delay(unicode(source_course_key), unicode(destination_course_key), user.id, json_fields)
