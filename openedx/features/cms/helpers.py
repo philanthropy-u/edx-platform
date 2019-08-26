@@ -301,7 +301,7 @@ def create_new_run_id(run_dict, course, run_number):
 
 def get_course_group(course_key):
     course_rerun = CourseRerunState.objects.filter(course_key=course_key).first()
-    is_course_parent_course = bool(CourseRerunState.objects.filter(
+    is_course_parent_course = not bool(course_rerun) and bool(CourseRerunState.objects.filter(
         source_course_key=course_key,
         state=CourseRerunUIStateManager.State.SUCCEEDED)
     )
@@ -309,20 +309,20 @@ def get_course_group(course_key):
     if not course_rerun and not is_course_parent_course:
         return [course_key]
 
-    relevant_course_key = course_key
+    parent_course_key = course_key
 
     # Relevant course key for a course which is a rerun would be its parent's course key
     if not is_course_parent_course:
-        relevant_course_key = course_rerun.source_course_key
+        parent_course_key = course_rerun.source_course_key
 
     courses = [
         c.course_key
         for c in
         CourseRerunState.objects.filter(
-            source_course_key=relevant_course_key,
+            source_course_key=parent_course_key,
             state=CourseRerunUIStateManager.State.SUCCEEDED).order_by(
             '-created_time').all()
     ]
-    courses.append(relevant_course_key)
+    courses.append(parent_course_key)
 
     return courses
