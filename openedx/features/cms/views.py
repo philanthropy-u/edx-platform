@@ -120,7 +120,7 @@ def create_multiple_reruns(course_re_run_details, user):
                 'source_course_key': course['source_course_key'],
                 'destination_course_key': destination_course_key,
                 'user': user,
-                fields: fields
+                'fields': fields
             })
 
     # Since the loop contains raise, if there were errors in re-run creation code would have exited.
