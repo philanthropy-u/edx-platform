@@ -27,6 +27,7 @@ class MandrillClient(object):
     ALQUITY_FAKE_SUBMIT_CONFIRMATION_TEMPLATE = 'alquity-fake-submit-confirmation'
     COURSE_ACTIVATION_REMINDER_TEMPLATE = 'activation-reminder'
     ON_DEMAND_SCHEDULE_EMAIL_TEMPLATE = 'on-demand-course-schedule'
+    ON_DEMAND_WEEKLY_MODULE_COMPLETE_TEMPLATE = 'module-completion-weekly-email'
 
     def __init__(self):
         self.mandrill_client = mandrill.Mandrill(settings.MANDRILL_API_KEY)
