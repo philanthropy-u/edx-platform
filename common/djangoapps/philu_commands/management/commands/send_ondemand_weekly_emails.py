@@ -88,7 +88,11 @@ class Command(BaseCommand):
 
                     # We are subtracting 2 from current module, 1 for adjusting index as list indexs starts from 0 and
                     # current module starts from 1 and other 1 to get previous module.
-                    chapter = course_chapters[0].children[current_module - 2]
+                    try:
+                        chapter = course_chapters[0].children[current_module - 2]
+                    except IndexError:
+                        log.info("Course modules are ended for %s", user)
+                        continue
                     sequentials = modulestore().get_item(chapter)
                     for index_sequential, sequential in enumerate(sequentials.children):
                         if course_blocks[str(sequential)]['graded']:
@@ -149,7 +153,9 @@ class Command(BaseCommand):
                                     continue  # only executed if the inner loop did NOT break
                                 break
 
-                    if graded_subsections > 0:
+                    # We don't want to send email for last module so check if user's current module is less than
+                    # total number of modules.
+                    if graded_subsections > 0 and (current_module - 1) < len(course_chapters[0].children):
                         send_weekly_email(user, course, str(chapter), course_blocks, current_module)
 
 

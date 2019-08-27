@@ -16,7 +16,12 @@ def get_nth_chapter_link(course, chapter_index=0):
     if not course_chapters:
         log.info("%s Course dont have any chapters", course.display_name)
 
-    chapter = course_chapters[0].children[chapter_index]
+
+    try:
+        chapter = course_chapters[0].children[chapter_index]
+    except IndexError:
+        return ""
+
     subsection = modulestore().get_item(chapter).children[0]
 
     course_target = reverse(
@@ -27,4 +32,5 @@ def get_nth_chapter_link(course, chapter_index=0):
     )
 
     base_url = settings.LMS_ROOT_URL
+
     return base_url + course_target
