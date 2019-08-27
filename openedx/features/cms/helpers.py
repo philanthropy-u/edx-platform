@@ -240,7 +240,8 @@ def update_course_re_run_details(course_re_run_details):
     This method gets new rerun data in dict and return it with necessary data for rerun creation
     along with updated run id's for each rerun
     :param course_re_run_details: dict containing rerun data for all courses
-    :return: dict with new run ids
+    :return: the input dictionary updated with a generated run id for all reruns and all fields
+             necessary for re-run creation
     """
     for course_detail in course_re_run_details:
         course_key = CourseKey.from_string(course_detail['source_course_key'])
