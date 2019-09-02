@@ -40,6 +40,9 @@ class Command(BaseCommand):
         courses = CourseOverview.objects.filter(self_paced=True)
 
         for course in courses:
+            from opaque_keys.edx.keys import CourseKey
+            if course.id != CourseKey.from_string('course-v1:ORAArbi+OR_102+2019_01'):
+                continue
             try:
                 course_struct = CourseStructure.objects.get(course_id=course.id).structure
             except CourseStructure.DoesNotExist:
@@ -75,6 +78,8 @@ class Command(BaseCommand):
                              ' right after module due date expires', delta_days.days % DAYS_TO_COMPLETE_ONE_MODULE)
                     continue
                 else:
+                    # Flag to check if section is completed or not. By default it will be True
+                    section_complete = True
                     course_chapters = modulestore().get_items(
                         course.id,
                         qualifiers={'category': 'course'}
@@ -124,7 +129,7 @@ class Command(BaseCommand):
                                                 log.info("%s problem isn't graded", block)
                                                 continue
                                         except StudentModule.DoesNotExist:
-                                            log.error("Module don't exists")
+                                            log.error("Module entry don't exists in Student Module Table")
                                             break
                                     elif block.block_type == BLOCKS_TYPES.get('ora_type'):
                                         anonymous_user = get_anonymous_id(user, course.id)
@@ -149,13 +154,24 @@ class Command(BaseCommand):
                                                 break
                                         else:
                                             log.error("%s isn't graded yet", block.block_type)
+                                # This will break the vertical_blocks loop so that blocks in other verticals will be
+                                # checked in case user hasn't attempted any graded block.
                                 else:
                                     continue  # only executed if the inner loop did NOT break
+                                # This flag suggests that there is some uncompleted graded blocks
+                                #  so emails will not be sent in this case
+                                section_complete = False
                                 break
+                            # This will break the sequentials loop so that other blocks will be checked in case user
+                            # hasn't attempted any graded block.
+                            else:
+                                continue  # only executed if the inner loop did NOT break
+                            break
 
                     # We don't want to send email for last module so check if user's current module is less than
                     # total number of modules.
-                    if graded_subsections > 0 and (current_module - 1) < len(course_chapters[0].children):
+                    if graded_subsections > 0 and \
+                            (current_module - 1) < len(course_chapters[0].children) and section_complete:
                         send_weekly_email(user, course, str(chapter), course_blocks, current_module)
 
 
