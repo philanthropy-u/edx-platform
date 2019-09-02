@@ -76,7 +76,7 @@ class Command(BaseCommand):
                     continue
                 else:
                     # Flag to check if section is completed or not. By default it will be True
-                    section_complete = True
+                    is_section_complete = True
                     course_chapters = modulestore().get_items(
                         course.id,
                         qualifiers={'category': 'course'}
@@ -157,7 +157,7 @@ class Command(BaseCommand):
                                     continue  # only executed if the inner loop did NOT break
                                 # This flag suggests that there is some uncompleted graded blocks
                                 #  so emails will not be sent in this case
-                                section_complete = False
+                                is_section_complete = False
                                 break
                             # This will break the sequentials loop so that other blocks will be checked in case user
                             # hasn't attempted any graded block.
@@ -168,7 +168,7 @@ class Command(BaseCommand):
                     # We don't want to send email for last module so check if user's current module is less than
                     # total number of modules.
                     if graded_subsections > 0 and \
-                            (current_module - 1) < len(course_chapters[0].children) and section_complete:
+                            (current_module - 1) < len(course_chapters[0].children) and is_section_complete:
                         send_weekly_email(user, course, str(chapter), course_blocks, current_module)
 
 
