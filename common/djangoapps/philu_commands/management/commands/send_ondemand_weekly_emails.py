@@ -40,9 +40,6 @@ class Command(BaseCommand):
         courses = CourseOverview.objects.filter(self_paced=True)
 
         for course in courses:
-            from opaque_keys.edx.keys import CourseKey
-            if course.id != CourseKey.from_string('course-v1:ORAArbi+OR_102+2019_01'):
-                continue
             try:
                 course_struct = CourseStructure.objects.get(course_id=course.id).structure
             except CourseStructure.DoesNotExist:
