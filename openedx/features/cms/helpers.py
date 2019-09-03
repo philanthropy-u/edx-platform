@@ -253,7 +253,7 @@ def update_course_re_run_details(course_re_run_details):
         error_message = None
 
         if not source_course.end:
-            error_message = 'This course does not have end date',
+            error_message = 'This course does not have end date'
 
         if not source_course.enrollment_start:
             error_message = 'This course does not have enrollment start date'
