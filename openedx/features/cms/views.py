@@ -146,7 +146,6 @@ def create_multiple_reruns(course_re_run_details, course_ids, user):
 def _rerun_course(source_course_key, destination_course_key, user, fields):
     """
     Reruns an existing course.
-    Returns the URL for the course listing page.
     """
     # Make sure user has instructor and staff access to the destination course
     # so the user can see the updated status for that course
