@@ -73,12 +73,7 @@ def course_multiple_rerun_handler(request):
             create_multiple_reruns(course_re_run_details, course_ids, request.user)
         except Exception as e:
             logger.error('Multiple rerun creation failed with exception: %s', str(e))
-
-            # CourseLocator object is not json decode-able
-            for course in course_re_run_details:
-                course['source_course_key'] = str(course['source_course_key'])
-
-            return JsonResponse(course_re_run_details, status=400)
+            return JsonResponse(course_re_run_details, encoder=EdxJSONEncoder, status=400)
 
         return JsonResponse(status=200)
 

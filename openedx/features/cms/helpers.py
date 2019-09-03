@@ -356,6 +356,13 @@ def get_course_group(course_key):
 
 
 def raise_rerun_creation_exception(details_dict, error_message, exception_class=None):
+    """
+    This method adds an error message and sets the flag "has_errors" to True in the
+    details_dict dictionary which can be either a dictionary of a re-run or a course.
+
+    :return: if an exception_class is passed, this method raises that exception
+             otherwise returns error_message
+    """
     details_dict['error'] = error_message
     details_dict['has_errors'] = True
 
