@@ -250,11 +250,19 @@ def update_course_re_run_details(course_re_run_details):
         course_detail['source_course_key'] = course_key
         source_course = modulestore().get_course(course_key)
 
+        error_message = None
+
         if not source_course.end:
-            error_message = 'This course does not have end date'
-            course_detail['error'] = error_message
-            course_detail['has_errors'] = True
-            raise Exception(error_message)
+            error_message = 'This course does not have end date',
+
+        if not source_course.enrollment_start:
+            error_message = 'This course does not have enrollment start date',
+
+        if not source_course.enrollment_end:
+            error_message = 'This course does not have enrollment end date'
+
+        if error_message:
+            raise_rerun_creation_exception(course_detail, error_message, exception_class=Exception)
 
         run_number = calculate_next_rerun_number(source_course.id)
 
@@ -345,3 +353,13 @@ def get_course_group(course_key):
     courses.append(parent_course_key)
 
     return courses
+
+
+def raise_rerun_creation_exception(details_dict, error_message, exception_class=None):
+    details_dict['error'] = error_message
+    details_dict['has_errors'] = True
+
+    if exception_class:
+        raise exception_class(error_message)
+
+    return error_message
