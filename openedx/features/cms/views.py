@@ -93,7 +93,6 @@ def create_multiple_reruns(course_re_run_details, course_ids, user):
             try:
                 re_run['start'] = datetime.strptime(start, '%m/%d/%Y-%H:%M').replace(tzinfo=utc)
             except ValueError:
-                course['has_errors'] = True
                 helpers.raise_rerun_creation_exception(re_run, 'Start date/time format is incorrect',
                                                        exception_class=ValueError)
 
@@ -126,7 +125,6 @@ def create_multiple_reruns(course_re_run_details, course_ids, user):
             # verify org course and run don't already exist
             if store.has_course(destination_course_key, ignore_case=True):
                 error_message = 'There is already a course defined with the same ID computed for this rerun'
-                course['has_errors'] = True
                 helpers.raise_rerun_creation_exception(rerun, error_message)
                 raise DuplicateCourseError(course['source_course_key'], destination_course_key)
 
