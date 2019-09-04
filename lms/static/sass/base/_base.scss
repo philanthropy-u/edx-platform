@@ -100,7 +100,6 @@ p {
     &:hover,
     &:focus {
       color: $link-hover;
-      text-decoration: underline;
     }
   }
 }
@@ -116,7 +115,6 @@ a:visited:not(.btn) {
   &:hover,
   &:focus {
     color: $link-hover;
-    text-decoration: underline;
   }
 
   &:disabled,
