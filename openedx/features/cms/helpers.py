@@ -3,13 +3,16 @@ from django.contrib.auth.models import User
 
 from dateutil.parser import parse
 from courseware.courses import get_course_by_id
+from opaque_keys.edx.keys import CourseKey
 from openassessment.xblock.defaults import DEFAULT_START, DEFAULT_DUE
 from xmodule.course_module import CourseFields
 from xmodule.modulestore.django import modulestore
+from course_action_state.models import CourseRerunState, CourseRerunUIStateManager
 from custom_settings.models import CustomSettings
 from models.settings.course_metadata import CourseMetadata
 
 MODULE_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S%z'
+RUN_DATE_FORMAT = '%Y%m%d'
 
 
 def initialize_course_settings(source_course, re_run_course, skip_open_date=True):
@@ -230,3 +233,142 @@ def calculate_date_by_delta(date, source_date, destination_date):
 
     date_delta = source_date - date
     return destination_date - date_delta
+
+
+def update_course_re_run_details(course_re_run_details):
+    """
+    This method gets new rerun data in dict and return it with necessary data for rerun creation
+    along with updated run id's for each rerun
+    :param course_re_run_details: dict containing rerun data for all courses
+    :return: the input dictionary updated with a generated run id for all reruns and all fields
+             necessary for re-run creation
+    """
+    for course_detail in course_re_run_details:
+        course_key = CourseKey.from_string(course_detail['source_course_key'])
+
+        # replacing string course key with course key object in course rerun details dict
+        course_detail['source_course_key'] = course_key
+        source_course = modulestore().get_course(course_key)
+
+        error_message = None
+
+        if not source_course.end:
+            error_message = 'This course does not have end date'
+
+        if not source_course.enrollment_start:
+            error_message = 'This course does not have enrollment start date'
+
+        if not source_course.enrollment_end:
+            error_message = 'This course does not have enrollment end date'
+
+        if error_message:
+            raise_rerun_creation_exception(course_detail, error_message, exception_class=Exception)
+
+        run_number = calculate_next_rerun_number(source_course.id)
+
+        course_detail['display_name'] = source_course.display_name
+        course_detail['number'] = source_course.number
+        course_detail['org'] = source_course.org
+
+        runs = course_detail['runs']
+
+        for re_run_index, run in enumerate(runs):
+            # create new rerun id and increment each rerun number
+            run['run'] = create_new_run_id(run, source_course, run_number + re_run_index)
+
+    return course_re_run_details
+
+
+def calculate_next_rerun_number(source_course_id):
+    """
+    This method will calculate next rerun number, which should be used for creating course rerun
+    :param source_course_id: Id of the source_course
+    :return: new run number
+    """
+    split_course_run = source_course_id.run.split('_')
+
+    # validate rerun number, valid run number must have four sections
+    if len(split_course_run) == 4 and split_course_run[0].isdigit():
+        # if run number pass basic validation then extract run number and increment it
+        return int(split_course_run[0]) + 1
+    else:
+        # If run number can not be extracted from run number than
+        # count all rerun in group and use it as run number
+        return len(get_course_group(source_course_id)) + 1
+
+
+def create_new_run_id(run_dict, course, run_number):
+    """
+    This method will create complete new run id for rerun course
+    :param run_dict: dict containing run details provided by user
+    :param course: Source course of which rerun is being created
+    :param run_number: new calculated run number
+    :return: complete new run id
+    """
+    course_end_date = calculate_date_by_delta(run_dict['start'], course.start, course.end)
+
+    new_run_id = "{}_{}_{}_{}".format(
+        run_number, run_dict['release_number'], run_dict['start'].strftime(RUN_DATE_FORMAT),
+        course_end_date.strftime(RUN_DATE_FORMAT)
+    )
+    return new_run_id
+
+
+def get_course_group(course_key):
+    """
+    This method evaluates a course's family(all related courses) to which it belongs to.
+
+    A course can be of 3 types:
+
+    - Course Rerun - method will return all its sibling re runs along with its parent
+                     sorted by order creation time(latest first)
+    - Parent Course - method will return all its child re runs along with its parent
+                      sorted by order creation time(latest first)
+    - Course Without Rerun - will return only the course itself
+
+    """
+    course_rerun = CourseRerunState.objects.filter(course_key=course_key).first()
+    is_course_parent_course = not bool(course_rerun) and bool(CourseRerunState.objects.filter(
+        source_course_key=course_key,
+        state=CourseRerunUIStateManager.State.SUCCEEDED)
+    )
+
+    if not course_rerun and not is_course_parent_course:
+        return [course_key]
+
+    parent_course_key = course_key
+
+    # Relevant course key for a course which is a rerun would be its parent's course key
+    if not is_course_parent_course:
+        parent_course_key = course_rerun.source_course_key
+
+    courses = [
+        c.course_key
+        for c in
+        CourseRerunState.objects.filter(
+            source_course_key=parent_course_key,
+            state=CourseRerunUIStateManager.State.SUCCEEDED).order_by(
+            '-created_time').all()
+    ]
+    courses.append(parent_course_key)
+
+    return courses
+
+
+def raise_rerun_creation_exception(details_dict, error_message, exception_class=None):
+    """
+    This method adds an error message in the details_dict
+
+    :param details_dict: either a dictionary of a re-run or a course.
+    :param error_message: error message to set
+    :param exception_class: the exception class to raise
+
+    :return: if an exception_class is passed, this method raises that exception
+             otherwise returns error_message
+    """
+    details_dict['error'] = error_message
+
+    if exception_class:
+        raise exception_class(error_message)
+
+    return error_message
