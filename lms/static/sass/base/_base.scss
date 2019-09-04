@@ -104,12 +104,10 @@ p {
   }
 }
 
-a:not(.btn),
-a:visited:not(.btn) {
+a, a:visited {
   color: $link-color;
   font: inherit;
   text-decoration: none;
-
   @include transition(all 0.1s linear 0s);
 
   &:hover,
