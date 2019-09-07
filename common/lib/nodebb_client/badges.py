@@ -1,18 +1,17 @@
 from pynodebb.api import Resource
 
 
-class ForumUser(Resource):
+class ForumBadge(Resource):
 
-    def save(self, data):
+    def save(self, badge_info):
         """
         save badge configuration
         """
-        payload = data
-        return self.client.post('/api/v2/badge-config/1', **payload)
+        payload = badge_info
+        return self.client.post('/api/v2/badge-config/{}?_uid=1'.format(badge_info['id']), **payload)
 
-    def delete(self, data):
+    def delete(self, badge_id):
         """
         delete badge configuration
         """
-        payload = data
-        return self.client.delete('/api/v2/badge-config/1', **payload)
+        return self.client.delete('/api/v2/badge-config/{}?_uid=1'.format(badge_id))
