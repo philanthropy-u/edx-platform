@@ -8,6 +8,7 @@ class ForumBadge(Resource):
         save badge configuration
         """
         payload = badge_info
+        # TODO: We need to define CONSTANTS for api urls instead hadrcoding them everywhere.
         return self.client.post('/api/v2/badge-config/{}'.format(badge_info['id']), **payload)
 
     def delete(self, badge_id):
