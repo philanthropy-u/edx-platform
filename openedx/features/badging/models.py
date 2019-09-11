@@ -1,13 +1,12 @@
 from django.db import models
-from django.utils.translation import ugettext_noop
 
 from .constants import CONVERSATIONALIST, TEAM_PLAYER
 
 
 class Badge(models.Model):
     BADGE_TYPES = (
-        (CONVERSATIONALIST[0], ugettext_noop(CONVERSATIONALIST[1])),
-        (TEAM_PLAYER[0], ugettext_noop(TEAM_PLAYER[1]))
+        CONVERSATIONALIST,
+        TEAM_PLAYER
     )
 
     name = models.CharField(max_length=255, blank=False, null=False)
