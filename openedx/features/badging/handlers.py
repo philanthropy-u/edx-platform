@@ -11,5 +11,5 @@ def sync_badge_info_with_nodebb(sender, instance, update_fields, **kwargs):
 
 
 @receiver(post_delete, sender=Badge)
-def delete_badge_info_from_nodebb(sender, instance, update_fields, **kwargs):
+def delete_badge_info_from_nodebb(sender, instance, **kwargs):
     task_delete_badge_info_from_nodebb.delay(instance)

@@ -73,7 +73,7 @@ def task_sync_badge_info_with_nodebb(badge_data):
     """
 
     badge_info = {
-        'id' : badge_data.id,
+        'id': badge_data.id,
         'name': badge_data.name,
         'type': badge_data.type,
         'threshold': badge_data.threshold,

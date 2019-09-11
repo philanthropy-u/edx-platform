@@ -15,9 +15,9 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=255)),
-                ('description', models.CharField(max_length=255, null=True, blank=True)),
+                ('description', models.TextField(null=True, blank=True)),
                 ('threshold', models.IntegerField()),
-                ('type', models.CharField(max_length=100, choices=[(b'Conversationalist', b'Conversationalist'), (b'Team Player', b'Team Player')])),
+                ('type', models.CharField(max_length=100, choices=[(b'conversationalist', b'Conversationalist'), (b'team', b'Team player')])),
                 ('image', models.CharField(max_length=255)),
                 ('date_created', models.DateTimeField(auto_now=True)),
             ],
