@@ -1,2 +1,2 @@
-CONVERSATIONALIST = "Conversationalist"
-TEAM_PLAYER = "Team Player"
+CONVERSATIONALIST = {'value': 'Conversationalist', 'key': 'conversationalist'}
+TEAM_PLAYER = {'value': 'Team player', 'key': 'team'}

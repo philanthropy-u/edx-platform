@@ -7,8 +7,8 @@ from .constants import CONVERSATIONALIST, TEAM_PLAYER
 
 class Badge(models.Model):
     BADGE_TYPES = (
-        (CONVERSATIONALIST, ugettext_noop(CONVERSATIONALIST)),
-        (TEAM_PLAYER, ugettext_noop(TEAM_PLAYER))
+        (CONVERSATIONALIST['key'], ugettext_noop(CONVERSATIONALIST['value'])),
+        (TEAM_PLAYER['key'], ugettext_noop(TEAM_PLAYER['value']))
     )
 
     name = models.CharField(max_length=255, blank=False, null=False)
