@@ -124,10 +124,10 @@ class Command(BaseCommand):
                                     # greater than 0 and atleast one ora sub mitted in last 24 hours.
                                     if index_chapter != last_chapter_index and \
                                             graded_subsection > 0 and atleast_one_ora_submitted:
-                                        send_weekly_email(user, course, str(chapter), course_blocks, index_chapter)
+                                        send_weekly_email(user, course, str(chapter), course_blocks, index_chapter+1)
 
                                     # We need to send skip email if user has completed last
-                                    # module but has skipped one or more previous module.
+                                    # module but has skipped one or more prevedxious module.
                                     elif index_chapter == last_chapter_index and len(chapters_skipped) > 0:
                                         days_last_module_submission = today - last_module_ora_submission_date
 
@@ -139,10 +139,21 @@ class Command(BaseCommand):
                                 break
 
 
-def send_weekly_email(user, course, chapter, all_blocks, current_module):
-    current_chapter_name = all_blocks[chapter]['display_name']
+def send_weekly_email(user, course, chapter_block, all_course_blocks, next_chapter_index):
+    """
+        Send weekly emails for completed module
+
+        Parameters:
+        user: user, whom we are sending emails.
+        course: Course for which we want to send email.
+        chapter_block: XBlock info of Chapter block.
+        all_course_blocks: Complete list of blocks in a course.
+        next_chapter_index: next chapter index which url we will be sending to user.
+
+        """
+    current_chapter_name = all_course_blocks[chapter_block]['display_name']
     template = MandrillClient.ON_DEMAND_WEEKLY_MODULE_COMPLETE_TEMPLATE
-    next_chapter_url = get_nth_chapter_link(course, chapter_index=current_module + 1)
+    next_chapter_url = get_nth_chapter_link(course, chapter_index=next_chapter_index)
     context = {
         'first_name': user.first_name,
         'course_name': course.display_name,
@@ -159,6 +170,15 @@ def send_weekly_email(user, course, chapter, all_blocks, current_module):
 
 
 def send_module_skip_email(user, course, chapters_skipped):
+    """
+        Send skip module emails after completing final module
+
+        Parameters:
+        user: user, whom we are sending emails.
+        course: Course for which we want to send email.
+        chapters_skipped: dict that are storing skipped chapter.
+
+    """
     template = MandrillClient.ON_DEMAND_WEEKLY_MODULE_SKIP_TEMPLATE
     skip_module_url = get_nth_chapter_link(course, chapter_index=chapters_skipped.keys()[0])
     context = {
@@ -174,12 +194,13 @@ def send_module_skip_email(user, course, chapters_skipped):
 
 
 def get_module_list(chapter_names):
-    module_text = ''
+    chapters_text = ''
     for chapter in chapter_names:
         module_text = ON_DEMAND_MODULE_TEXT.format(
             module_name=chapter,
         )
-    return module_text
+        chapters_text = chapters_text + module_text
+    return chapters_text
 
 
 def get_ora_list(verticals):
