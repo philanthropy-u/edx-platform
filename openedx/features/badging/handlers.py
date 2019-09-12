@@ -7,9 +7,20 @@ from .models import Badge
 
 @receiver(post_save, sender=Badge)
 def sync_badge_info_with_nodebb(sender, instance, update_fields, **kwargs):
-    task_sync_badge_info_with_nodebb.delay(instance)
+    badge_info = {
+        'id': instance.id,
+        'name': instance.name,
+        'type': instance.type,
+        'threshold': instance.threshold,
+        'image': instance.image
+    }
+    task_sync_badge_info_with_nodebb.delay(badge_info)
 
 
 @receiver(post_delete, sender=Badge)
 def delete_badge_info_from_nodebb(sender, instance, **kwargs):
-    task_delete_badge_info_from_nodebb.delay(instance)
+
+    badge_data = {
+        "id": instance.id
+    }
+    task_delete_badge_info_from_nodebb.delay(badge_data)
