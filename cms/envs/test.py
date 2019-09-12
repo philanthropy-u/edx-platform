@@ -131,7 +131,7 @@ CONTENTSTORE = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': "cms",
+        'NAME': "edxtest",
         'USER': 'root',
         'PASSWORD': '',
         'HOST': '127.0.0.1',
