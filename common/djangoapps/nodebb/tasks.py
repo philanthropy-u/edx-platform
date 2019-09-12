@@ -67,18 +67,10 @@ def task_update_user_profile_on_nodebb(username, profile_data):
 
 
 @task(default_retry_delay=RETRY_DELAY, max_retries=None, routing_key=settings.HIGH_PRIORITY_QUEUE)
-def task_sync_badge_info_with_nodebb(badge_data):
+def task_sync_badge_info_with_nodebb(badge_info):
     """
     Celery task to sync badge info in NodeBB
     """
-
-    badge_info = {
-        'id': badge_data.id,
-        'name': badge_data.name,
-        'type': badge_data.type,
-        'threshold': badge_data.threshold,
-        'image': badge_data.image
-    }
 
     status_code, response = NodeBBClient().badges.save(badge_info=badge_info)
     handle_response(task_sync_badge_info_with_nodebb, 'Save badge information', status_code, response)
@@ -89,10 +81,9 @@ def task_delete_badge_info_from_nodebb(badge_data):
     """
     Celery task to delete badge info in NodeBB
     """
-    badge_id = badge_data.id
-    if badge_id:
-        status_code, response = NodeBBClient().badges.delete(badge_id=badge_id)
-        handle_response(task_delete_badge_info_from_nodebb, 'Delete badge information', status_code, response)
+    
+    status_code, response = NodeBBClient().badges.delete(badge_id=badge_data['id'])
+    handle_response(task_delete_badge_info_from_nodebb, 'Delete badge information', status_code, response)
 
 
 @task(default_retry_delay=RETRY_DELAY, max_retries=None)
