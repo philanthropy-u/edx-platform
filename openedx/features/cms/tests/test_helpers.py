@@ -9,7 +9,7 @@ from . import helpers as test_helpers
 from .factories import CourseRerunFactory
 from opaque_keys.edx.locator import CourseLocator
 from custom_settings.models import CustomSettings
-from cms.djangoapps.contentstore.tests.utils import CourseTestCase
+from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from lms.djangoapps.courseware.courses import get_course_by_id
 from openedx.features.cms import helpers
 from openassessment.xblock.defaults import DEFAULT_START, DEFAULT_DUE
@@ -17,7 +17,7 @@ from xmodule.modulestore.tests.factories import CourseFactory
 from xmodule.course_module import CourseFields
 
 
-class CourseRerunAutomationTestCase(CourseTestCase):
+class CourseRerunAutomationTestCase(ModuleStoreTestCase):
     """
     Class for test cases related to course re-run (course automation, in general)
     """
@@ -427,6 +427,7 @@ class CourseRerunAutomationTestCase(CourseTestCase):
 
         # course course had only two ORA components, re-run course must have same count
         self.assertEqual(len(ora_list_in_course), 2)
+        ora_list_in_course.sort(key=lambda course: course.display_name, reverse=True)
 
         ora1 = ora_list_in_course[0]
         ora2 = ora_list_in_course[1]
@@ -740,6 +741,19 @@ class CourseRerunAutomationTestCase(CourseTestCase):
 
         self.assertEqual(details_dict, expected_details_dict)
         self.assertEqual(error_message, returned_error_message)
+
+    def test_latest_course_reruns(self):
+
+        expected_latest_course = test_helpers.create_course(self.store, self.user)
+        # Get all course summaries from the store
+        courses = self.store.get_course_summaries()
+
+        latest_courses = helpers.latest_course_reruns(courses)
+
+        latest_courses_id = [course.id for course in latest_courses]
+        expected_latest_courses_id = [course.id for course in expected_latest_course]
+
+        self.assertItemsEqual(latest_courses_id, expected_latest_courses_id)
 
     def tearDown(self):
         super(CourseRerunAutomationTestCase, self).tearDown()

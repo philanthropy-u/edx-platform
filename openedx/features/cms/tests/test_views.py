@@ -49,7 +49,7 @@ class CourseRerunAutomationViewTestCase(ModuleStoreTestCase):
         self.assertRedirects(response, '{}?next={}'.format(reverse('login'), self.rerun_path))
 
     @patch('openedx.features.cms.views.render_to_response')
-    @patch('openedx.features.cms.views.latest_course_reruns')
+    @patch('openedx.features.cms.views.helpers.latest_course_reruns')
     @patch('openedx.features.cms.views.create_multiple_reruns')
     @patch('openedx.features.cms.views.get_courses_accessible_to_user')
     def test_course_multiple_rerun_handler_listing(
@@ -82,7 +82,7 @@ class CourseRerunAutomationViewTestCase(ModuleStoreTestCase):
                                                         expected_context)
 
     @patch('openedx.features.cms.views.render_to_response')
-    @patch('openedx.features.cms.views.latest_course_reruns')
+    @patch('openedx.features.cms.views.helpers.latest_course_reruns')
     @patch('openedx.features.cms.views.create_multiple_reruns')
     @patch('openedx.features.cms.views.get_courses_accessible_to_user')
     def test_course_multiple_rerun_handler_create_rerun(
@@ -117,7 +117,7 @@ class CourseRerunAutomationViewTestCase(ModuleStoreTestCase):
 
 
     @patch('openedx.features.cms.views.render_to_response')
-    @patch('openedx.features.cms.views.latest_course_reruns')
+    @patch('openedx.features.cms.views.helpers.latest_course_reruns')
     @patch('openedx.features.cms.views.create_multiple_reruns')
     @patch('openedx.features.cms.views.get_courses_accessible_to_user')
     def test_course_multiple_rerun_handler_raise_rerun_exception(
@@ -142,18 +142,6 @@ class CourseRerunAutomationViewTestCase(ModuleStoreTestCase):
 
         assert not mock_latest_course_reruns.called
         assert not mock_render_to_response.called
-
-    def test_latest_course_reruns(self):
-
-        # Get all course summaries from the store
-        courses = self.store.get_course_summaries()
-
-        latest_courses = rerun_views.latest_course_reruns(courses)
-
-        latest_courses_id = [course.id for course in latest_courses]
-        required_latest_courses_id = [course.id for course in self.latest_course]
-
-        self.assertItemsEqual(latest_courses_id, required_latest_courses_id)
 
     @patch('openedx.features.cms.views._rerun_course')
     @patch('openedx.features.cms.views.helpers.update_course_re_run_details')
