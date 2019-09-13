@@ -18,10 +18,11 @@ from lms.djangoapps.onboarding.helpers import get_email_pref_on_demand_course, g
 
 log = getLogger(__name__)
 
+HOURS_TO_WAIT_FOR_EMAIL = 24
 today = datetime.now().date()
 ORA_ASSESSMENT_BLOCK = 'openassessment'
 EMAIL_SUBJECT_LINE = 'Get started on the next module of {course_name}'
-ON_DEMAND_MODULE_TEXT = "<li> {module_name} </li>"
+ON_DEMAND_MODULE_TEXT_FOMATTER = "<li> {module_name} </li>"
 
 
 class Command(BaseCommand):
@@ -110,7 +111,9 @@ class Command(BaseCommand):
                                             student_item__item_id=ora_block)
                                         if index_chapter == last_chapter_index:
                                             last_module_ora_submission_date = response_submissions.created_at.date()
-                                        if today - timedelta(hours=24) <= \
+                                        # Response submitted date must be within last
+                                        # 24 hours and we are checking that below
+                                        if today - timedelta(hours=HOURS_TO_WAIT_FOR_EMAIL) <= \
                                                 response_submissions.created_at.date() <= today:
                                             atleast_one_ora_submitted = True
                                             log.info('Response Created at: %s',response_submissions.created_at.date())
@@ -196,7 +199,7 @@ def send_module_skip_email(user, course, chapters_skipped):
 def get_module_list(chapter_names):
     chapters_text = ''
     for chapter in chapter_names:
-        module_text = ON_DEMAND_MODULE_TEXT.format(
+        module_text = ON_DEMAND_MODULE_TEXT_FOMATTER.format(
             module_name=chapter,
         )
         chapters_text = chapters_text + module_text
