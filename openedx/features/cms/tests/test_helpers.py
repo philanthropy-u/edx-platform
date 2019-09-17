@@ -264,11 +264,13 @@ class CourseRerunAutomationTestCase(ModuleStoreTestCase):
         """
         source_course = test_helpers.create_source_course(self.store, self.user,
                                                           datetime(2019, 9, 1, tzinfo=UTC))
+
+        rerun_course_start_date = datetime(2019, 10, 1, tzinfo=UTC)
         result, rerun_course_id = CourseRerunFactory.create(
             source_course_id=source_course.id,
             user=self.user,
             run="rerun_test",
-            start=datetime(2019, 10, 1, tzinfo=UTC)
+            start=rerun_course_start_date
         )
         self.assertEqual(result.get(), "succeeded")
 
@@ -280,7 +282,7 @@ class CourseRerunAutomationTestCase(ModuleStoreTestCase):
         source_course_start_date = source_course.start
         re_run_start_date = rerun_course.start
 
-        self.assertEqual(re_run_start_date, datetime(2019, 10, 1, tzinfo=UTC))
+        self.assertEqual(re_run_start_date, rerun_course_start_date)
 
         source_course_sections = source_course.get_children()
         source_course_subsections = [sub_section for s in source_course_sections for sub_section in
@@ -289,18 +291,12 @@ class CourseRerunAutomationTestCase(ModuleStoreTestCase):
         re_run_subsections = [sub_section for s in re_run_sections for sub_section in
                               s.get_children()]
 
-        # If there are no sections ignore setting dates
-        if not re_run_sections:
-            return
-
         re_run_modules = re_run_sections + re_run_subsections
         source_course_modules = source_course_sections + source_course_subsections
 
         helpers.set_rerun_module_dates(re_run_modules, source_course_modules,
                                        source_course_start_date,
                                        re_run_start_date, self.user)
-
-        rerun_course = get_course_by_id(rerun_course_id)
 
         # chapter 1 (section)
         chapter1 = rerun_course.get_children()[0]
@@ -370,7 +366,7 @@ class CourseRerunAutomationTestCase(ModuleStoreTestCase):
         Testing future date by adding delta into it
         """
         date_to_update = datetime(2019, 9, 15, tzinfo=UTC)
-        # delta is be (-ive) 9 years 3 months 14 days
+        # delta is be 9 years 3 months 14 days
         source_course_start_date = datetime(2019, 1, 1, tzinfo=UTC)
         re_run_course_start_date = datetime(2028, 4, 15, tzinfo=UTC)
 
@@ -654,6 +650,8 @@ class CourseRerunAutomationTestCase(ModuleStoreTestCase):
             run='5_1.1_2009_10_10_2010_10_10',
             start=datetime(2009, 10, 1, tzinfo=UTC),
         )
+        # let get_course_group return dummy list of group ids of size 10
+        # so that we can assure we have a group of 10 courses
         mock_get_course_group.return_value = [0] * 10
         run_number = helpers.calculate_next_rerun_number(course.id)
         # If run is not as per required pattern,
@@ -669,6 +667,8 @@ class CourseRerunAutomationTestCase(ModuleStoreTestCase):
             run='xyz_1.1_20091010_20101010',
             start=datetime(2009, 10, 1, tzinfo=UTC),
         )
+        # let get_course_group return dummy list of group ids of size 10
+        # so that we can assure we have a group of 10 courses
         mock_get_course_group.return_value = [0] * 10
         run_number = helpers.calculate_next_rerun_number(course.id)
         # If run is not as per required pattern,
