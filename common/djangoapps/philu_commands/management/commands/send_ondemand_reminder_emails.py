@@ -1,5 +1,3 @@
-import math
-from pytz import utc
 from datetime import datetime, timedelta
 from logging import getLogger
 
@@ -33,7 +31,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         # Getting all self paced courses.
-        courses = CourseOverview.objects.filter(self_paced=True)
+        courses = CourseOverview.objects.filter(self_paced=True, end__gte=today)
 
         for course in courses:
             try:
@@ -74,7 +72,7 @@ class Command(BaseCommand):
                     qualifiers={'category': 'course'}
                 )
 
-                course_deadline = get_course_deadline(enrollment.created.date(), course_chapters[0].children)
+                course_deadline = get_suggested_course_deadline(enrollment.created.date(), course_chapters[0].children)
 
                 # Get all user submission in descending order by date
                 response_submissions = Submission.objects.filter(
@@ -91,7 +89,7 @@ class Command(BaseCommand):
                 # Count to keep track of how many times user shows an inactivity for "INACTIVITY_REMINDER_DAYS"
                 time_passed_count = 0
 
-                if len(response_submissions) == 0 and is_time_passed(enrollment.created.date(), today):
+                if len(response_submissions) == 0 and has_time_passed_since_activity(enrollment.created.date(), today):
                     send_reminder_email(user, course, course_deadline)
                     continue
                 elif len(response_submissions) > 0:
@@ -100,11 +98,11 @@ class Command(BaseCommand):
                     # but before that we need to check is it the first time user shows an inactivity for
                     # "INACTIVITY_REMINDER_DAYS" days or not if yes than send email else means that emails has already
                     #  been sent to user so no need to send it again.
-                    if is_time_passed(latest_submission.created_at.date(), today):
+                    if has_time_passed_since_activity(latest_submission.created_at.date(), today):
                         last_response_time = latest_submission.created_at.date()
                         # We have checked first entry separately so starting from second index.
                         for index_response, response in enumerate(response_submissions[1:]):
-                            if is_time_passed(response.created_at.date(), last_response_time):
+                            if has_time_passed_since_activity(response.created_at.date(), last_response_time):
                                 time_passed_count += 1
                         # If user haven't been inactive in past before today than send email.
                         if time_passed_count == 0:
@@ -113,11 +111,11 @@ class Command(BaseCommand):
                         continue
 
 
-def is_time_passed(first_date, second_date):
+def has_time_passed_since_activity(first_date, second_date):
     return True if (second_date - first_date).days == INACTIVITY_REMINDER_DAYS else False
 
 
-def get_course_deadline(enrollment_date, chapters):
+def get_suggested_course_deadline(enrollment_date, chapters):
     return enrollment_date + timedelta(days=(len(chapters) * DAYS_FOR_EACH_MODULE))
 
 
