@@ -12,6 +12,7 @@ source =
     pavelib
     openedx/features/course_card
     openedx/features/teams
+    openedx/features/student_certificates
 
 omit =
     cms/envs/*
@@ -28,6 +29,7 @@ omit =
     openedx/core/djangoapps/*/migrations/*
     openedx/core/djangoapps/debug/*
     openedx/features/course_card/migrations/*
+    openedx/features/student_certificates/migrations/*
 
 concurrency=multiprocessing
 
