@@ -13,6 +13,7 @@ source =
     openedx/features/course_card
     openedx/features/teams
     openedx/features/student_certificates
+    openedx/features/cms
 
 omit =
     cms/envs/*
@@ -30,6 +31,7 @@ omit =
     openedx/core/djangoapps/debug/*
     openedx/features/course_card/migrations/*
     openedx/features/student_certificates/migrations/*
+    openedx/features/cms/migrations/*
 
 concurrency=multiprocessing
 
