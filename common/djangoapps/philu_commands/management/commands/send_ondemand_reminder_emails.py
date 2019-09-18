@@ -4,14 +4,13 @@ from logging import getLogger
 from django.core.management.base import BaseCommand
 
 from submissions.models import Submission
-from common.lib.mandrill_client.client import MandrillClient
 from student.models import CourseEnrollment
-
 from xmodule.modulestore.django import modulestore
 from openedx.core.djangoapps.content.course_structures.models import CourseStructure
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from openedx.features.courseware.helpers import get_nth_chapter_link
 from openedx.features.ondemand_email_preferences.helpers import get_my_account_link
+from common.lib.mandrill_client.client import MandrillClient
 from lms.djangoapps.onboarding.helpers import get_email_pref_on_demand_course, get_user_anonymous_id
 
 log = getLogger(__name__)
@@ -30,7 +29,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        # Getting all self paced courses.
+        # Getting all self paced courses with end dates greater than today (Only active ones).
         courses = CourseOverview.objects.filter(self_paced=True, end__gte=today)
 
         for course in courses:
@@ -40,7 +39,7 @@ class Command(BaseCommand):
                 log.error('Course doesn\'t have a proper structure.')
                 raise
 
-            ora_blocks = get_all_oras(course_struct)
+            ora_blocks = get_all_ora_blocks(course_struct)
 
             # If course doesn't have any ORA blocks, continue.
             if not ora_blocks:
@@ -79,39 +78,43 @@ class Command(BaseCommand):
                     student_item__student_id=anonymous_user.anonymous_user_id,
                     student_item__course_id=course.id.to_deprecated_string()).order_by('-created_at')
 
-                # Check if user has submitted last modules graded oras or not. If yes not need to send email OR
-                # If user's submission gets equal to graded oras count than don't need to continue..
+                # Check if user has submitted last modules graded oras or not. If yes no need to send email OR
+                # If user's submission gets equal to graded oras count than don't need to continue.
                 if (last_module_oras and check_for_last_module_submission(last_module_oras, anonymous_user)) or \
                         len(response_submissions) == graded_oras_count:
                     continue
 
                 latest_submission = response_submissions.first()
-                # Count to keep track of how many times user shows an inactivity for "INACTIVITY_REMINDER_DAYS"
-                time_passed_count = 0
 
-                if len(response_submissions) == 0 and has_time_passed_since_activity(enrollment.created.date(), today):
-                    send_reminder_email(user, course, course_deadline)
+                if len(response_submissions) == 0:
+                    if has_inactivity_threshold_reached(enrollment.created.date(), today):
+                        send_reminder_email(user, course, course_deadline)
                     continue
-                elif len(response_submissions) > 0:
-                    # Check for latest submission entry from submission table if the difference of created date and
-                    # today is equals to "INACTIVITY_REMINDER_DAYS" days this means that email should be send to user
-                    # but before that we need to check is it the first time user shows an inactivity for
-                    # "INACTIVITY_REMINDER_DAYS" days or not if yes than send email else means that emails has already
-                    #  been sent to user so no need to send it again.
-                    if has_time_passed_since_activity(latest_submission.created_at.date(), today):
-                        last_response_time = latest_submission.created_at.date()
-                        # We have checked first entry separately so starting from second index.
-                        for index_response, response in enumerate(response_submissions[1:]):
-                            if has_time_passed_since_activity(response.created_at.date(), last_response_time):
-                                time_passed_count += 1
-                        # If user haven't been inactive in past before today than send email.
-                        if time_passed_count == 0:
-                            send_reminder_email(user, course, course_deadline)
-                    else:
-                        continue
+
+                # Check for latest submission entry from submission table if the difference of created date and
+                # today is equals to "INACTIVITY_REMINDER_DAYS" days this means that email should be send to user
+                # but before that we need to check is it the first time user shows an inactivity for
+                # "INACTIVITY_REMINDER_DAYS" days or not if yes than send email else means that emails has already
+                #  been sent to user so no need to send it again.
+                if has_inactivity_threshold_reached(latest_submission.created_at.date(), today):
+                    last_response_time = latest_submission.created_at.date()
+
+                    # Boolean to keep track if user has shown an inactivity for "INACTIVITY_REMINDER_DAYS"
+                    is_threshold_reached_before = False
+
+                    # We have checked first entry separately so starting from second index.
+                    for response in response_submissions[1:]:
+                        if has_inactivity_threshold_reached(response.created_at.date(), last_response_time):
+                            is_threshold_reached_before = True
+                            break
+                        last_response_time = response.created_at.date()
+
+                    # If user haven't been inactive in past before today than send email.
+                    if not is_threshold_reached_before:
+                        send_reminder_email(user, course, course_deadline)
 
 
-def has_time_passed_since_activity(first_date, second_date):
+def has_inactivity_threshold_reached(first_date, second_date):
     return True if (second_date - first_date).days == INACTIVITY_REMINDER_DAYS else False
 
 
@@ -120,36 +123,45 @@ def get_suggested_course_deadline(enrollment_date, chapters):
 
 
 def get_graded_ora_count(oras_block):
-    graded_oras = []
+    graded_ora_count = 0
+
     for ora in oras_block:
         if ora['graded']:
-            graded_oras.append(ora)
-    return len(graded_oras)
+            graded_ora_count += 1
+
+    return graded_ora_count
 
 
-def get_all_oras(course_struct):
+def get_all_ora_blocks(course_struct):
     ora_blocks = []
-    for k, v in course_struct['blocks'].iteritems():
-        if v['block_type'] == ORA_ASSESSMENT_BLOCK:
-            ora_blocks.append(course_struct['blocks'][k])
+
+    for block in course_struct['blocks'].itervalues():
+        if block['block_type'] == ORA_ASSESSMENT_BLOCK:
+            ora_blocks.append(block)
+
     return ora_blocks
 
 
 def get_last_module_ora(course_blocks):
     last_module_oras = []
-    for index, block in course_blocks.iteritems():
-        if block['block_type'] == 'course':
-            course_children = block['children']
-            final_chapter_index = len(course_children) - 1
-            final_chapter_block = course_children[final_chapter_index]
-            chapter_children = course_blocks[final_chapter_block]['children']
-            for sequential in chapter_children:
-                if course_blocks[sequential]['graded']:
-                    sequential_children = course_blocks[sequential]['children']
-                    for vertical in sequential_children:
-                        for unit in course_blocks[vertical]['children']:
-                            if course_blocks[unit]['block_type'] == ORA_ASSESSMENT_BLOCK:
-                                last_module_oras.append(unit)
+
+    for block in course_blocks.itervalues():
+        if block['block_type'] != 'course':
+            continue
+        course_children = block['children']
+        final_chapter_block = course_children[-1]
+        chapter_children = course_blocks[final_chapter_block]['children']
+
+        for sequential in chapter_children:
+            if not course_blocks[sequential]['graded']:
+                continue
+            sequential_children = course_blocks[sequential]['children']
+
+            for vertical in sequential_children:
+
+                for unit in course_blocks[vertical]['children']:
+                    if course_blocks[unit]['block_type'] == ORA_ASSESSMENT_BLOCK:
+                        last_module_oras.append(unit)
 
     return last_module_oras
 
