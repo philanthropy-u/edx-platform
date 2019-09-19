@@ -82,8 +82,8 @@ class Command(BaseCommand):
                 # If user's submission gets equal to graded oras count than don't need to continue.
                 if (last_module_oras and check_for_last_module_submission(last_module_oras, anonymous_user)) or \
                         len(response_submissions) == graded_oras_count:
-                    continue
-
+                    # continue
+                    pass
                 latest_submission = response_submissions.first()
 
                 if len(response_submissions) == 0:
@@ -189,7 +189,7 @@ def send_reminder_email(user, course, course_deadline):
 
         """
     template = MandrillClient.ON_DEMAND_REMINDER_EMAIL_TEMPLATE
-    next_chapter_url = get_nth_chapter_link(course, chapter_index=1)
+    next_chapter_url = get_nth_chapter_link(course, chapter_index=0)
     context = {
         'first_name': user.first_name,
         'course_name': course.display_name,
