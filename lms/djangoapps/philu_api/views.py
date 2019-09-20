@@ -11,6 +11,7 @@ from lms.djangoapps.third_party_surveys.tasks import get_third_party_surveys_tas
 from rest_framework import status
 from rest_framework.views import APIView
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
+from openedx.features.badging.models import UserBadge
 
 from mailchimp_pipeline.tasks import update_enrollments_completions_at_mailchimp
 from lms.djangoapps.onboarding.helpers import get_org_metric_update_prompt
@@ -161,6 +162,18 @@ class UpdatePromptClickRecord(APIView):
                 return JsonResponse({'success': True})
         return JsonResponse({'success': False}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
+
+class AssignUserBadge(APIView):
+    def post(self, request):
+        user_id = request.data.get("userid")
+        badge_id = request.data.get("badgeid")
+        community_id = request.data.get("communityid")
+
+        try:
+            UserBadge.assign_badge(user_id, badge_id, community_id)
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': e})
 
 def get_user_chat(request):
     """ Get recent chats of the user from NodeBB """

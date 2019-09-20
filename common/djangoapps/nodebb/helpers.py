@@ -74,6 +74,15 @@ def get_community_id(course_id):
         return discussion_community.community_url.split('/')[0]
 
 
+def get_course_id_by_community_id(community_id):
+    """
+    Get `course_id` based on the given `community_id`
+    using the `community_url` field from the model
+    """
+    discussion_community = DiscussionCommunity.objects.filter(community_url__startswith=community_id)
+    if discussion_community:
+        return discussion_community[0].course_id
+
 def get_room_id(user_info):
     """
     Get room_id for MyTeam of a user
