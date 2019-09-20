@@ -82,8 +82,9 @@ class Command(BaseCommand):
                 # If user's submission gets equal to graded oras count than don't need to continue.
                 if (last_module_oras and check_for_last_module_submission(last_module_oras, anonymous_user)) or \
                         len(response_submissions) == graded_oras_count:
-                    # continue
-                    pass
+                    log.info('Last module Graded ORAs submitted so no further check')
+                    continue
+
                 latest_submission = response_submissions.first()
 
                 if len(response_submissions) == 0:
@@ -97,6 +98,7 @@ class Command(BaseCommand):
                 # "INACTIVITY_REMINDER_DAYS" days or not if yes than send email else means that emails has already
                 #  been sent to user so no need to send it again.
                 if has_inactivity_threshold_reached(latest_submission.created_at.date(), today):
+                    log.info('Inactivity threshold reached so check for previous ORAs')
                     last_response_time = latest_submission.created_at.date()
 
                     # Boolean to keep track if user has shown an inactivity for "INACTIVITY_REMINDER_DAYS"
@@ -105,6 +107,7 @@ class Command(BaseCommand):
                     # We have checked first entry separately so starting from second index.
                     for response in response_submissions[1:]:
                         if has_inactivity_threshold_reached(response.created_at.date(), last_response_time):
+                            log.info('User showed inactivity previously')
                             is_threshold_reached_before = True
                             break
                         last_response_time = response.created_at.date()
