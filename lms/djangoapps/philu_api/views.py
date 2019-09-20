@@ -170,7 +170,9 @@ class AssignUserBadge(APIView):
         community_id = request.data.get("communityid")
 
         try:
-            UserBadge.assign_badge(user_id, badge_id, community_id)
+            UserBadge.assign_badge(user_id=user_id,
+                                   badge_id=badge_id,
+                                   community_id=community_id)
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'message': e})

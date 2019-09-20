@@ -52,7 +52,12 @@ class UserBadge(models.Model):
         badge_id = Badge.objects.get(id=badge_id)
 
         course_id = get_course_id_by_community_id(community_id)
-        UserBadge(user_id=user_id,
-                  badge_id=badge_id,
-                  course_id=course_id,
-                  community_id=community_id).save()
+
+        try:
+            UserBadge(user_id=user_id,
+                      badge_id=badge_id,
+                      course_id=course_id,
+                      community_id=community_id).save()
+        except IntegrityError:
+            pass
+
