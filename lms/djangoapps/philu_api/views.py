@@ -165,9 +165,9 @@ class UpdatePromptClickRecord(APIView):
 
 class AssignUserBadge(APIView):
     def post(self, request):
-        user_id = request.data.get("userid")
-        badge_id = request.data.get("badgeid")
-        community_id = request.data.get("communityid")
+        user_id = request.data.get("user_id")
+        badge_id = request.data.get("badge_id")
+        community_id = request.data.get("community_id")
 
         try:
             UserBadge.assign_badge(user_id=user_id,
@@ -175,7 +175,7 @@ class AssignUserBadge(APIView):
                                    community_id=community_id)
             return JsonResponse({'success': True})
         except Exception as e:
-            return JsonResponse({'success': False, 'message': e})
+            return JsonResponse({'success': False, 'message': str(e)})
 
 def get_user_chat(request):
     """ Get recent chats of the user from NodeBB """
