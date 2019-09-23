@@ -43,8 +43,8 @@ class UserBadge(models.Model):
     class Meta:
         unique_together = ('user_id', 'badge_id', 'course_id', 'community_id')
 
-        def __unicode__(self):
-            return self.user
+    def __unicode__(self):
+            return 'User: ' + str(self.user_id.id) + ', Badge: ' + str(self.badge_id.id)
 
     @classmethod
     def assign_badge(cls, user_id, badge_id, community_id):
