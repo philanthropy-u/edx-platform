@@ -20,12 +20,12 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('course_id', openedx.core.djangoapps.xmodule_django.models.CourseKeyField(max_length=255, db_column=b'course_id', db_index=True)),
                 ('community_id', models.IntegerField(db_column=b'community_id')),
-                ('badge_id', models.ForeignKey(to='badging.Badge', db_column=b'badge_id')),
-                ('user_id', models.ForeignKey(to=settings.AUTH_USER_MODEL, db_column=b'user_id')),
+                ('badge', models.ForeignKey(to='badging.Badge')),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.AlterUniqueTogether(
             name='userbadge',
-            unique_together=set([('user_id', 'badge_id', 'course_id', 'community_id')]),
+            unique_together=set([('user', 'badge', 'course_id', 'community_id')]),
         ),
     ]
