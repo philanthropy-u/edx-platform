@@ -12,9 +12,14 @@ from lms.djangoapps.onboarding.models import Organization, OrganizationMetric,\
         OrganizationMetricUpdatePrompt, MetricUpdatePromptRecord
 from lms.djangoapps.oef.models import OrganizationOefUpdatePrompt
 from lms.djangoapps.onboarding.constants import  REMIND_ME_LATER_KEY, TAKE_ME_THERE_KEY, NOT_INTERESTED_KEY
-from lms.djangoapps.onboarding.helpers import its_been_year, its_been_year_month, \
-    its_been_year_three_month, its_been_year_six_month
-
+from util.model_utils import USER_FIELD_CHANGED
+from lms.djangoapps.onboarding.helpers import (
+    its_been_year,
+    its_been_year_month,
+    its_been_year_three_month,
+    its_been_year_six_month,
+    update_user_email
+)
 
 @receiver(post_save, sender=User)
 def update_user_profile(sender, instance, update_fields, **kwargs):
@@ -117,3 +122,12 @@ def delete_all_user_data(sender, instance, **kwargs):
         'UPDATE onboarding_organization SET alternate_admin_email=NULL WHERE alternate_admin_email="{}"'.format(instance.email))
     cursor.execute(
         'DELETE FROM onboarding_historicalorganization WHERE unclaimed_org_admin_email="{}" OR alternate_admin_email="{}"'.format(instance.email, instance.email))
+
+
+@receiver(USER_FIELD_CHANGED)
+def propagate_email_change(sender, user=None, table=None, setting=None, old_value=None,
+                           new_value=None, **kwargs):
+    """This method listens for change in user model. Once it detects change in email, it propagate
+    change, where required i.e. NodeBB, Mailchimp etc"""
+    if setting == "email" and new_value and new_value != old_value:
+        update_user_email(user, old_value, new_value)
