@@ -251,19 +251,19 @@ def update_course_re_run_details(course_re_run_details):
         course_detail['source_course_key'] = course_key
         source_course = modulestore().get_course(course_key)
 
-        error_message = ''
+        error_messages = []
 
         if not source_course.end:
-            error_message += ' ' + ERROR_MESSAGES['course_end_date_missing']
+            error_messages.append(ERROR_MESSAGES['course_end_date_missing'])
 
         if not source_course.enrollment_start:
-            error_message += ' ' + ERROR_MESSAGES['enrollment_start_date_missing']
+            error_messages.append(ERROR_MESSAGES['enrollment_start_date_missing'])
 
         if not source_course.enrollment_end:
-            error_message += ' ' + ERROR_MESSAGES['enrollment_end_date_missing']
+            error_messages.append(ERROR_MESSAGES['enrollment_end_date_missing'])
 
-        if error_message:
-            raise_rerun_creation_exception(course_detail, error_message, exception_class=Exception)
+        if error_messages:
+            raise_rerun_creation_exception(course_detail, ' '.join(error_messages), exception_class=Exception)
 
         run_number = calculate_next_rerun_number(source_course.id)
 

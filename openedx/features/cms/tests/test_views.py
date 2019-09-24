@@ -276,7 +276,6 @@ class CourseRerunAutomationViewTestCase(ModuleStoreTestCase):
 
         self.assertEqual(expected_error_message, str(error.exception))
         self.assertEqual(expected_error_message, runs_0_data['error'])
-        self.assertEqual(True, runs_0_data['has_errors'])
 
     def test_create_multiple_reruns_from_unknown_course(self):
 
@@ -301,7 +300,6 @@ class CourseRerunAutomationViewTestCase(ModuleStoreTestCase):
 
         self.assertEqual(expected_error_message, str(error.exception))
         self.assertEqual(expected_error_message, course_re_run_details[0]['error'])
-        self.assertEqual(True, course_re_run_details[0]['has_errors'])
 
     @mock.patch('openedx.features.cms.views.helpers.update_course_re_run_details')
     def test_create_multiple_reruns_user_has_no_access_to_course(
@@ -346,7 +344,6 @@ class CourseRerunAutomationViewTestCase(ModuleStoreTestCase):
 
         self.assertEqual(expected_error_message, str(error.exception))
         self.assertEqual(expected_error_message, expected_course_re_run_details[0]['error'])
-        self.assertEqual(True, expected_course_re_run_details[0]['has_errors'])
 
     @mock.patch('openedx.features.cms.views.helpers.update_course_re_run_details')
     def test_create_multiple_reruns_raise_duplicate_course_error(
@@ -391,8 +388,6 @@ class CourseRerunAutomationViewTestCase(ModuleStoreTestCase):
 
         self.assertIn('duplicates', str(error.exception))
         self.assertEqual(expected_error_message, runs_0_data['error'])
-        self.assertEqual(True, runs_0_data['has_errors'])
-        self.assertEqual(True, expected_course_re_run_details[0]['has_errors'])
 
     @mock.patch('openedx.features.cms.views.add_instructor')
     def test_rerun_course(self, mock_add_instructor):
