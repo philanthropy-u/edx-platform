@@ -5,8 +5,6 @@ from pytz import UTC
 from dateutil.parser import parse
 from datetime import datetime
 
-from . import helpers as test_helpers
-from .factories import CourseRerunFactory
 from opaque_keys.edx.locator import CourseLocator
 from custom_settings.models import CustomSettings
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
@@ -15,6 +13,10 @@ from openedx.features.cms import helpers
 from openassessment.xblock.defaults import DEFAULT_START, DEFAULT_DUE
 from xmodule.modulestore.tests.factories import CourseFactory
 from xmodule.course_module import CourseFields
+
+from . import helpers as test_helpers
+from .factories import CourseRerunFactory
+from ..constants import ERROR_MESSAGES
 
 
 class CourseRerunAutomationTestCase(ModuleStoreTestCase):
@@ -583,7 +585,7 @@ class CourseRerunAutomationTestCase(ModuleStoreTestCase):
         with self.assertRaises(Exception) as error:
             helpers.update_course_re_run_details(expected_course_re_run_details)
 
-        expected_error_message = 'This course does not have end date'
+        expected_error_message = ERROR_MESSAGES['course_end_date_missing']
         self.assertEqual(expected_error_message, str(error.exception))
         self.assertEqual(expected_error_message, expected_course_re_run_details[0]['error'])
         self.assertEqual(True, expected_course_re_run_details[0]['has_errors'])
@@ -606,7 +608,7 @@ class CourseRerunAutomationTestCase(ModuleStoreTestCase):
         with self.assertRaises(Exception) as error:
             helpers.update_course_re_run_details(expected_course_re_run_details)
 
-        expected_error_message = 'This course does not have enrollment start date'
+        expected_error_message = ERROR_MESSAGES['enrollment_start_date_missing']
         self.assertEqual(expected_error_message, str(error.exception))
         self.assertEqual(expected_error_message, expected_course_re_run_details[0]['error'])
         self.assertEqual(True, expected_course_re_run_details[0]['has_errors'])
@@ -625,7 +627,7 @@ class CourseRerunAutomationTestCase(ModuleStoreTestCase):
         with self.assertRaises(Exception) as error:
             helpers.update_course_re_run_details(expected_course_re_run_details)
 
-        expected_error_message = 'This course does not have enrollment end date'
+        expected_error_message = ERROR_MESSAGES['enrollment_end_date_missing']
         self.assertEqual(expected_error_message, str(error.exception))
         self.assertEqual(expected_error_message, expected_course_re_run_details[0]['error'])
         self.assertEqual(True, expected_course_re_run_details[0]['has_errors'])
