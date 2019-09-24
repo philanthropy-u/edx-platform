@@ -20,6 +20,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('course_id', openedx.core.djangoapps.xmodule_django.models.CourseKeyField(max_length=255, db_column=b'course_id', db_index=True)),
                 ('community_id', models.IntegerField(db_column=b'community_id')),
+                ('date_earned', models.DateTimeField(auto_now=True)),
                 ('badge', models.ForeignKey(to='badging.Badge')),
                 ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
             ],

@@ -11,7 +11,7 @@ from lms.djangoapps.third_party_surveys.tasks import get_third_party_surveys_tas
 from rest_framework import status
 from rest_framework.views import APIView
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
-from openedx.features.badging.models import UserBadge
+from openedx.features.badging.models import Badge, UserBadge
 
 from mailchimp_pipeline.tasks import update_enrollments_completions_at_mailchimp
 from lms.djangoapps.onboarding.helpers import get_org_metric_update_prompt
@@ -161,6 +161,27 @@ class UpdatePromptClickRecord(APIView):
                 record.save()
                 return JsonResponse({'success': True})
         return JsonResponse({'success': False}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+
+class GetNextBadge(APIView):
+    def get(self, request):
+        user_id = request.user.id
+        community_id = request.data.get("community_id")
+
+        try:
+            print(user_id, community_id)
+            next_badge = Badge.get_next_badge(user_id=user_id,
+                                              community_id=community_id)
+            next_badge_json = {'id': next_badge.id,
+                               'name': next_badge.name,
+                               'description': next_badge.description,
+                               'threshold': next_badge.threshold,
+                               'type': next_badge.type,
+                               'image': next_badge.image}
+
+            return JsonResponse({'success': True, 'badge': next_badge_json})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
 
 
 class AssignUserBadge(APIView):

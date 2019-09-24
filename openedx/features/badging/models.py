@@ -22,6 +22,19 @@ class Badge(models.Model):
     def __unicode__(self):
         return self.name
 
+    @classmethod
+    def get_next_badge(cls, user_id, community_id):
+        badges_in_community = UserBadge.objects.filter(user_id=user_id,
+                                                       community_id=community_id)
+        latest_earned = badges_in_community.latest("date_earned")
+
+        if latest_earned.course_id:
+            badge_type = CONVERSATIONALIST
+        else:
+            badge_type = TEAM_PLAYER
+
+        return Badge.objects.filter(type=badge_type).exclude(pk=latest_earned.pk).order_by("threshold")[0]
+
 
 class UserBadge(models.Model):
     """
@@ -39,6 +52,7 @@ class UserBadge(models.Model):
     badge = models.ForeignKey(Badge, on_delete=models.CASCADE)
     course_id = CourseKeyField(max_length=255, db_index=True, db_column='course_id', null=False)
     community_id = models.IntegerField(blank=False, null=False, db_column='community_id')
+    date_earned = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('user', 'badge', 'course_id', 'community_id')
