@@ -686,6 +686,11 @@ class CourseRerunAutomationTestCase(ModuleStoreTestCase):
         new_run_id = helpers.create_new_run_id(run_dict, course, run_number)
         self.assertEqual(new_run_id, "9_1.33_20191001_20191220")
 
+        run_dict['release_number'] = ""
+
+        with self.assertRaises(Exception) as error:
+            helpers.create_new_run_id(run_dict, course, run_number)
+
     def test_get_course_group_parent_course_without_reruns(self):
         course = CourseFactory.create(
             org='org',
