@@ -24,17 +24,23 @@ class Badge(models.Model):
 
     @classmethod
     def get_next_badge(cls, user_id, community_id):
+        course_id = get_course_id_by_community_id(community_id)
+        if course_id is not CourseKeyField.Empty:
+            badge_type = CONVERSATIONALIST[0]
+        else:
+            badge_type = TEAM_PLAYER[0]
+
         badges_in_community = UserBadge.objects.filter(user_id=user_id,
                                                        community_id=community_id)
-        latest_earned = badges_in_community.latest("date_earned")
 
-        if latest_earned.course_id:
-            badge_type = CONVERSATIONALIST
-        else:
-            badge_type = TEAM_PLAYER
+        if badges_in_community:
+            latest_earned = badges_in_community.latest("date_earned")
+            latest_threshold = Badge.objects.get(pk=latest_earned.badge_id).threshold
+            next_badge = Badge.objects.filter(type=badge_type).exclude(threshold__lte=latest_threshold).order_by("threshold").first()
+            return next_badge
 
-        return Badge.objects.filter(type=badge_type).exclude(pk=latest_earned.pk).order_by("threshold")[0]
-
+        next_badge = Badge.objects.filter(type=badge_type).order_by("threshold").first()
+        return next_badge
 
 class UserBadge(models.Model):
     """

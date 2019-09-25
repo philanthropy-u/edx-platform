@@ -166,20 +166,22 @@ class UpdatePromptClickRecord(APIView):
 class GetNextBadge(APIView):
     def get(self, request):
         user_id = request.user.id
-        community_id = request.data.get("community_id")
+        community_id = request.GET.get("community_id")
 
         try:
-            print(user_id, community_id)
             next_badge = Badge.get_next_badge(user_id=user_id,
                                               community_id=community_id)
-            next_badge_json = {'id': next_badge.id,
-                               'name': next_badge.name,
-                               'description': next_badge.description,
-                               'threshold': next_badge.threshold,
-                               'type': next_badge.type,
-                               'image': next_badge.image}
+            if(next_badge):
+                next_badge_json = {'id': next_badge.id,
+                                   'name': next_badge.name,
+                                   'description': next_badge.description,
+                                   'threshold': next_badge.threshold,
+                                   'type': next_badge.type,
+                                   'image': next_badge.image}
 
-            return JsonResponse({'success': True, 'badge': next_badge_json})
+                return JsonResponse({'success': True, 'badge': next_badge_json})
+            else:
+                return JsonResponse({'success': True, 'badge': "All badges earned"})
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)})
 

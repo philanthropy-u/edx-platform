@@ -21,5 +21,5 @@ urlpatterns = patterns(
     url(r'send_alquity_email/$', send_alquity_fake_confirmation_email, name='send_alquity_fake_confirmation_email'),
     url(r'record_prompt_click/$', UpdatePromptClickRecord.as_view(), name='record_prompt_click'),
     url(r'assign_badge/', AssignUserBadge.as_view(), name='assign_user_badge'),
-    url(r'get_next_badge?', GetNextBadge.as_view(), name='get_next_badge'),
+    url(r'get_next_badge/', GetNextBadge.as_view(), name='get_next_badge'),
 )
