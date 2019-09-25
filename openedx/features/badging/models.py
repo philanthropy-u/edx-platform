@@ -27,20 +27,23 @@ class Badge(models.Model):
         course_id = get_course_id_by_community_id(community_id)
         if course_id is not CourseKeyField.Empty:
             badge_type = CONVERSATIONALIST[0]
+            badges_in_community = UserBadge.objects.filter(user_id=user_id,
+                                                           community_id=community_id).exclude(course_id=CourseKeyField.Empty)
         else:
             badge_type = TEAM_PLAYER[0]
+            badges_in_community = UserBadge.objects.filter(user_id=user_id,
+                                                           community_id=community_id,
+                                                           course_id=CourseKeyField.Empty)
 
-        badges_in_community = UserBadge.objects.filter(user_id=user_id,
-                                                       community_id=community_id)
 
         if badges_in_community:
             latest_earned = badges_in_community.latest("date_earned")
-            latest_threshold = Badge.objects.get(pk=latest_earned.badge_id).threshold
-            next_badge = Badge.objects.filter(type=badge_type).exclude(threshold__lte=latest_threshold).order_by("threshold").first()
-            return next_badge
+            latest_threshold = Badge.objects.get(pk=latest_earned.badge_id, type=badge_type).threshold
+            remaining_badges = Badge.objects.filter(type=badge_type).exclude(threshold__lte=latest_threshold).order_by("threshold")
+            return remaining_badges
 
-        next_badge = Badge.objects.filter(type=badge_type).order_by("threshold").first()
-        return next_badge
+        remaining_badges = Badge.objects.filter(type=badge_type).order_by("threshold")
+        return remaining_badges
 
 class UserBadge(models.Model):
     """
@@ -69,6 +72,11 @@ class UserBadge(models.Model):
     @classmethod
     def assign_badge(cls, user_id, badge_id, community_id):
         course_id = get_course_id_by_community_id(community_id)
+        badge_type = Badge.objects.get(id=badge_id).type
+        
+        if course_id is CourseKeyField.Empty and badge_type == CONVERSATIONALIST[0] or \
+           course_id is not CourseKeyField.Empty and badge_type == TEAM_PLAYER[0]:
+            raise Exception('Badge %d is a %s badge, wrong community' % (int(badge_id), badge_type))
 
         obj, created = UserBadge.objects.get_or_create(
             user_id=user_id,

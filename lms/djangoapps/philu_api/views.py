@@ -163,23 +163,24 @@ class UpdatePromptClickRecord(APIView):
         return JsonResponse({'success': False}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
-class GetNextBadge(APIView):
+class GetRemainingBadge(APIView):
     def get(self, request):
         user_id = request.user.id
         community_id = request.GET.get("community_id")
 
         try:
-            next_badge = Badge.get_next_badge(user_id=user_id,
-                                              community_id=community_id)
-            if(next_badge):
-                next_badge_json = {'id': next_badge.id,
-                                   'name': next_badge.name,
-                                   'description': next_badge.description,
-                                   'threshold': next_badge.threshold,
-                                   'type': next_badge.type,
-                                   'image': next_badge.image}
+            remaining_badges = Badge.get_next_badge(user_id=user_id,
+                                                    community_id=community_id)
+            if(remaining_badges):
+                remaining_badges_json = {}
+                for badge in remaining_badges:
+                    remaining_badges_json[badge.id] = {'name': badge.name,
+                                                       'description': badge.description,
+                                                       'threshold': badge.threshold,
+                                                       'type': badge.type,
+                                                       'image': badge.image}
 
-                return JsonResponse({'success': True, 'badge': next_badge_json})
+                return JsonResponse({'success': True, 'badges': remaining_badges_json})
             else:
                 return JsonResponse({'success': True, 'badge': "All badges earned"})
         except Exception as e:

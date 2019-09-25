@@ -59,7 +59,8 @@ def nodebb_forum_discussion(request, course_id):
         "is_community_topic_link": is_community_topic_link,
         "browse_teams_link": browse_teams_link,
         "course_has_ended": current_course.has_ended(),
-        "courses_page_link": reverse("courses")
+        "courses_page_link": reverse("courses"),
+        "room_id": course_community.community_url.split('/')[0]
     }
 
     return render(request, 'discussion_nodebb/discussion_board.html', context)

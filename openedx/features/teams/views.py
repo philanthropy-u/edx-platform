@@ -167,6 +167,7 @@ def view_team(request, course_id, team_id):
 
     topic_url = request.GET.get('topic_url', None)
     embed_url = make_embed_url(team_group_chat, user, topic_url)
+    room_id = team_group_chat.room_id
     leave_team_url = reverse('team_membership_detail', args=[team_id, user.username])
 
     team_administrator = (has_access(user, 'staff', course.id)
@@ -182,6 +183,7 @@ def view_team(request, course_id, team_id):
         'is_team_full': course.teams_max_size <= len(team.users.all()),
         'is_user_member_of_this_team': is_user_member_of_this_team,
         'room_url': embed_url,
+        'room_id': room_id,
         'join_team_url': reverse('team_membership_list'),
         'team': team,
         'team_administrator': team_administrator,
