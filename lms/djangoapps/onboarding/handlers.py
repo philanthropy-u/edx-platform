@@ -127,7 +127,21 @@ def delete_all_user_data(sender, instance, **kwargs):
 @receiver(USER_FIELD_CHANGED)
 def propagate_email_change(sender, user=None, table=None, setting=None, old_value=None,
                            new_value=None, **kwargs):
-    """This method listens for change in user model. Once it detects change in email, it propagate
-    change, where required i.e. NodeBB, Mailchimp etc"""
-    if setting == "email" and new_value and new_value != old_value:
+    """
+    This method listens for change in user model. Once it detects change in email, it propagate
+    change, where required i.e. NodeBB, Mailchimp etc
+    :param sender: Not used
+    :param user: The user object for the user being changed
+    :param table: The name of the table being updated
+    :param setting: The name of the field (column) being updated
+    :param old_value: Prior value
+    :param new_value: New value
+    :param kwargs: Not used
+    :return: None
+    """
+    # ignore tables except user and fields except email
+    if table != "auth_user" or setting != "email":
+        return
+
+    if new_value and new_value != old_value:
         update_user_email(user, old_value, new_value)

@@ -142,7 +142,6 @@ def send_user_info_to_mailchimp(sender, user, created, kwargs):
 
 
 def update_user_email_in_mailchimp(old_email, new_email):
-    """ Update user email in mailchimp member list """
 
     user_json = {
         "email_address": new_email,

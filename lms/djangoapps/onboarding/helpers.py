@@ -9,15 +9,15 @@ from difflib import SequenceMatcher
 from django.conf import settings
 from django.core import serializers
 
-from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
-from lms.djangoapps.oef.models import OrganizationOefUpdatePrompt
 from common.lib.mandrill_client.client import MandrillClient
-from openedx.features.data_extract.models import CourseDataExtraction
 from common.djangoapps.mailchimp_pipeline.signals.handlers import update_user_email_in_mailchimp
 from common.djangoapps.nodebb.tasks import task_update_user_profile_on_nodebb
+from lms.djangoapps.oef.models import OrganizationOefUpdatePrompt
 from lms.djangoapps.onboarding.models import (
     Organization, OrganizationMetricUpdatePrompt, PartnerNetwork, OrganizationAdminHashKeys
 )
+from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
+from openedx.features.data_extract.models import CourseDataExtraction
 
 utc = pytz.UTC
 log = getLogger(__name__)
