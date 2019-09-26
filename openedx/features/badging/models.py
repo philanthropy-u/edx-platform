@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 from common.djangoapps.nodebb.helpers import get_course_id_by_community_id
+from nodebb.models import TeamGroupChat
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
 
 from .constants import CONVERSATIONALIST, TEAM_PLAYER
@@ -75,7 +76,17 @@ class UserBadge(models.Model):
     @classmethod
     def assign_badge(cls, user_id, badge_id, community_id):
         course_id = get_course_id_by_community_id(community_id)
-        badge_type = Badge.objects.get(id=badge_id).type
+        
+        try:
+            badge_type = Badge.objects.get(id=badge_id).type
+        except:
+            raise Exception('There exists no badge with id %d' % int(badge_id))
+
+        if course_id is CourseKeyField.Empty:
+            try:
+                team_room_id = TeamGroupChat.objects.get(room_id=community_id)
+            except:
+                raise Exception('No discussion community or team with id %d' % int(community_id))
 
         if course_id is CourseKeyField.Empty and badge_type == CONVERSATIONALIST[0] or \
            course_id is not CourseKeyField.Empty and badge_type == TEAM_PLAYER[0]:
