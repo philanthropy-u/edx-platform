@@ -39,14 +39,14 @@ class Badge(models.Model):
                                                            course_id=CourseKeyField.Empty)
 
         if badges_in_community:
-            latest_earned = badges_in_community.latest("date_earned")
+            latest_earned = badges_in_community.latest('date_earned')
             latest_threshold = Badge.objects.get(pk=latest_earned.badge_id, type=badge_type).threshold
             remaining_badges = Badge.objects.filter(type=badge_type) \
                                             .exclude(threshold__lte=latest_threshold) \
-                                            .order_by("threshold")
+                                            .order_by('threshold')
             return remaining_badges
 
-        remaining_badges = Badge.objects.filter(type=badge_type).order_by("threshold")
+        remaining_badges = Badge.objects.filter(type=badge_type).order_by('threshold')
         return remaining_badges
 
 
