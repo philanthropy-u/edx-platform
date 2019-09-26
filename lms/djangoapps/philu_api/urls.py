@@ -3,7 +3,7 @@
 """
 from django.conf.urls import url, patterns
 
-from lms.djangoapps.philu_api.views import PlatformSyncService, \
+Afrom lms.djangoapps.philu_api.views import PlatformSyncService, \
     get_user_chat, mark_user_chat_read, get_user_data, MailChimpDataSyncAPI, \
     ThirdPartyResultDataSyncAPI, download_pdf_file, send_alquity_fake_confirmation_email, \
     UpdatePromptClickRecord, AssignUserBadge, GetRemainingBadges

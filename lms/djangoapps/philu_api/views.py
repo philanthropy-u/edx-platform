@@ -163,7 +163,7 @@ class UpdatePromptClickRecord(APIView):
         return JsonResponse({'success': False}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
-class GetRemainingBadges(APIView):
+class RemainingBadgesAPI(APIView):
     def get(self, request):
         user_id = request.user.id
         community_id = request.GET.get('community_id')
@@ -187,7 +187,7 @@ class GetRemainingBadges(APIView):
             return JsonResponse({'success': False, 'message': str(e)})
 
 
-class AssignUserBadge(APIView):
+class BadgeAssignmentAPI(APIView):
     def post(self, request):
         user_id = request.data.get('user_id')
         badge_id = request.data.get('badge_id')
