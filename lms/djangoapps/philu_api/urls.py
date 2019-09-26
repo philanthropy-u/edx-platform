@@ -3,10 +3,10 @@
 """
 from django.conf.urls import url, patterns
 
-Afrom lms.djangoapps.philu_api.views import PlatformSyncService, \
+from lms.djangoapps.philu_api.views import PlatformSyncService, \
     get_user_chat, mark_user_chat_read, get_user_data, MailChimpDataSyncAPI, \
     ThirdPartyResultDataSyncAPI, download_pdf_file, send_alquity_fake_confirmation_email, \
-    UpdatePromptClickRecord, AssignUserBadge, GetRemainingBadges
+    UpdatePromptClickRecord, BadgeAssignmentAPI, RemainingBadgesAPI
 
 urlpatterns = patterns(
     'philu_api.views',
@@ -20,6 +20,6 @@ urlpatterns = patterns(
     url(r'download_pdf_file/$', download_pdf_file, name='download_pdf_file'),
     url(r'send_alquity_email/$', send_alquity_fake_confirmation_email, name='send_alquity_fake_confirmation_email'),
     url(r'record_prompt_click/$', UpdatePromptClickRecord.as_view(), name='record_prompt_click'),
-    url(r'assign_badge/$', AssignUserBadge.as_view(), name='assign_user_badge'),
-    url(r'get_remaining_badges/', GetRemainingBadges.as_view(), name='get_remaining_badges'),
+    url(r'assign_badge/$', BadgeAssignmentAPI.as_view(), name='assign_user_badge'),
+    url(r'get_remaining_badges/', RemainingBadgesAPI.as_view(), name='get_remaining_badges'),
 )
