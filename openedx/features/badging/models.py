@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.db import models, IntegrityError
+from django.db import models
 from common.djangoapps.nodebb.helpers import get_course_id_by_community_id
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
 
@@ -23,27 +23,30 @@ class Badge(models.Model):
         return self.name
 
     @classmethod
-    def get_next_badge(cls, user_id, community_id):
+    def get_remaining_badges(cls, user_id, community_id):
         course_id = get_course_id_by_community_id(community_id)
+
         if course_id is not CourseKeyField.Empty:
             badge_type = CONVERSATIONALIST[0]
-            badges_in_community = UserBadge.objects.filter(user_id=user_id,
-                                                           community_id=community_id).exclude(course_id=CourseKeyField.Empty)
+            badges_in_community = UserBadge.objects.filter(user_id=user_id, community_id=community_id) \
+                                                   .exclude(course_id=CourseKeyField.Empty)
         else:
             badge_type = TEAM_PLAYER[0]
             badges_in_community = UserBadge.objects.filter(user_id=user_id,
                                                            community_id=community_id,
                                                            course_id=CourseKeyField.Empty)
 
-
         if badges_in_community:
             latest_earned = badges_in_community.latest("date_earned")
             latest_threshold = Badge.objects.get(pk=latest_earned.badge_id, type=badge_type).threshold
-            remaining_badges = Badge.objects.filter(type=badge_type).exclude(threshold__lte=latest_threshold).order_by("threshold")
+            remaining_badges = Badge.objects.filter(type=badge_type) \
+                                            .exclude(threshold__lte=latest_threshold) \
+                                            .order_by("threshold")
             return remaining_badges
 
         remaining_badges = Badge.objects.filter(type=badge_type).order_by("threshold")
         return remaining_badges
+
 
 class UserBadge(models.Model):
     """
@@ -67,13 +70,13 @@ class UserBadge(models.Model):
         unique_together = ('user', 'badge', 'course_id', 'community_id')
 
     def __unicode__(self):
-            return 'User: ' + str(self.user.id) + ', Badge: ' + str(self.badge.id)
+        return 'User: ' + str(self.user.id) + ', Badge: ' + str(self.badge.id)
 
     @classmethod
     def assign_badge(cls, user_id, badge_id, community_id):
         course_id = get_course_id_by_community_id(community_id)
         badge_type = Badge.objects.get(id=badge_id).type
-        
+
         if course_id is CourseKeyField.Empty and badge_type == CONVERSATIONALIST[0] or \
            course_id is not CourseKeyField.Empty and badge_type == TEAM_PLAYER[0]:
             raise Exception('Badge %d is a %s badge, wrong community' % (int(badge_id), badge_type))

@@ -11,7 +11,6 @@ from lms.djangoapps.third_party_surveys.tasks import get_third_party_surveys_tas
 from rest_framework import status
 from rest_framework.views import APIView
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
-from openedx.features.badging.models import Badge, UserBadge
 
 from mailchimp_pipeline.tasks import update_enrollments_completions_at_mailchimp
 from lms.djangoapps.onboarding.helpers import get_org_metric_update_prompt
@@ -23,6 +22,7 @@ from wsgiref.util import FileWrapper
 
 from lms.djangoapps.oef.decorators import eligible_for_oef
 from lms.djangoapps.philu_api.helpers import get_encoded_token
+from openedx.features.badging.models import Badge, UserBadge
 
 
 log = logging.getLogger("edx.philu_api")
@@ -163,15 +163,15 @@ class UpdatePromptClickRecord(APIView):
         return JsonResponse({'success': False}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
-class GetRemainingBadge(APIView):
+class GetRemainingBadges(APIView):
     def get(self, request):
         user_id = request.user.id
         community_id = request.GET.get("community_id")
 
         try:
-            remaining_badges = Badge.get_next_badge(user_id=user_id,
-                                                    community_id=community_id)
-            if(remaining_badges):
+            remaining_badges = Badge.get_remaining_badges(user_id=user_id,
+                                                          community_id=community_id)
+            if remaining_badges:
                 remaining_badges_json = {}
                 for badge in remaining_badges:
                     remaining_badges_json[badge.id] = {'name': badge.name,
@@ -182,7 +182,7 @@ class GetRemainingBadge(APIView):
 
                 return JsonResponse({'success': True, 'badges': remaining_badges_json})
             else:
-                return JsonResponse({'success': True, 'badge': "All badges earned"})
+                return JsonResponse({'success': True, 'badges': {}})
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)})
 
@@ -200,6 +200,7 @@ class AssignUserBadge(APIView):
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)})
+
 
 def get_user_chat(request):
     """ Get recent chats of the user from NodeBB """
