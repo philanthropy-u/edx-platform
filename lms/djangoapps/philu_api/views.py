@@ -192,6 +192,10 @@ class AssignUserBadge(APIView):
         user_id = request.data.get("user_id")
         badge_id = request.data.get("badge_id")
         community_id = request.data.get("community_id")
+        master_token = request.GET.get("token")
+
+        if not master_token == settings.NODEBB_MASTER_TOKEN:
+            return JsonResponse({"message": "Invalid master token"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             UserBadge.assign_badge(user_id=user_id,
