@@ -199,7 +199,8 @@ class AssignUserBadge(APIView):
                                    community_id=community_id)
             return JsonResponse({'success': True})
         except Exception as e:
-            return JsonResponse({'success': False, 'message': str(e)})
+            return JsonResponse({'success': False, 'message': str(e)},
+                                status=status.HTTP_400_BAD_REQUEST)
 
 
 def get_user_chat(request):
