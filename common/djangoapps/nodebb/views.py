@@ -2,6 +2,7 @@
 Views handling read (GET) requests for the Discussion tab and inline discussions.
 """
 
+import json
 import logging
 from w3lib.url import add_or_replace_parameter
 
@@ -15,6 +16,7 @@ from opaque_keys.edx.keys import CourseKey
 
 from common.djangoapps.nodebb.helpers import get_course_related_tabs, get_all_course_progress
 from nodebb.models import DiscussionCommunity, TeamGroupChat
+from openedx.features.badging.models import Badge
 
 log = logging.getLogger("edx.nodebb")
 
@@ -46,6 +48,11 @@ def nodebb_forum_discussion(request, course_id):
     course_link = reverse('about_course', args=[get_related_card_id(course_key)])
     browse_teams_link = reverse('teams_dashboard', args=[course_id])
 
+    room_id = course_community.community_url.split('/')[0]
+    remaining_badges_json = Badge.get_remaining_badges(user_id=request.user.id,
+                                                       community_id=room_id,
+                                                       community_type="conversationalist")
+
     context = {
         "provider": current_course.org,
         "nodebb_endpoint": settings.NODEBB_ENDPOINT,
@@ -60,7 +67,8 @@ def nodebb_forum_discussion(request, course_id):
         "browse_teams_link": browse_teams_link,
         "course_has_ended": current_course.has_ended(),
         "courses_page_link": reverse("courses"),
-        "room_id": course_community.community_url.split('/')[0]
+        "room_id": room_id,
+        "remaining_badges": json.dumps(remaining_badges_json)
     }
 
     return render(request, 'discussion_nodebb/discussion_board.html', context)

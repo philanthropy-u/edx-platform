@@ -1,27 +1,30 @@
-from django.http import Http404
-from django.core.urlresolvers import reverse
-from django.shortcuts import render_to_response, redirect
-from django_countries import countries
-from django.conf import settings
-from django.utils.translation import ugettext as _
-from django.contrib.auth.decorators import login_required
+import json
 from w3lib.url import add_or_replace_parameter
 
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.core.urlresolvers import reverse
+from django.http import Http404
+from django.shortcuts import render_to_response, redirect
+from django.utils.translation import ugettext as _
 from django_comment_client.utils import has_discussion_privileges
+from django_countries import countries
+
 from courseware.courses import has_access
-from lms.djangoapps.teams.models import CourseTeam, CourseTeamMembership
 from lms.djangoapps.teams import is_feature_enabled
-from nodebb.models import TeamGroupChat
-from student.models import CourseEnrollment, CourseAccessRole
+from lms.djangoapps.teams.models import CourseTeam, CourseTeamMembership
 from lms.djangoapps.teams.serializers import (
     BulkTeamCountTopicSerializer,
 )
 from lms.djangoapps.teams.views import get_alphabetical_topics
+from nodebb.models import TeamGroupChat
+from openedx.features.badging.models import Badge
+from student.models import CourseEnrollment
 
+from .decorators import can_view_teams
 from .helpers import serialize, make_embed_url, get_user_recommended_team, \
     get_user_course_with_access, get_team_topic
 from .serializers import CustomCourseTeamSerializer
-from .decorators import can_view_teams
 
 
 @login_required
@@ -177,6 +180,10 @@ def view_team(request, course_id, team_id):
 
     is_user_member_of_this_team = bool(CourseTeamMembership.objects.filter(team=team, user=user).first())
 
+    remaining_badges_json = Badge.get_remaining_badges(user_id=request.user.id,
+                                                       community_id=room_id,
+                                                       community_type="team")
+
     context = {
         'course': course,
         'user_has_team': is_member_of_any_team,
@@ -190,6 +197,7 @@ def view_team(request, course_id, team_id):
         'leave_team_url': leave_team_url,
         'country': str(countries.countries[team.country]),
         'language': dict(settings.ALL_LANGUAGES)[team.language],
+        "remaining_badges": json.dumps(remaining_badges_json)
     }
 
     return render_to_response("teams/view_team.html", context)

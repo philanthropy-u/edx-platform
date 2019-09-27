@@ -26,9 +26,7 @@ class Badge(models.Model):
 
     @classmethod
     def get_remaining_badges(cls, user_id, community_id, community_type):
-        # course_id = get_course_id_by_community_id(community_id)
-
-        badges_in_community = UserBadge.objects.filter(user_id=user_id, 
+        badges_in_community = UserBadge.objects.filter(user_id=user_id,
                                                        community_id=community_id,
                                                        badge_id__type=community_type)
 
@@ -41,7 +39,15 @@ class Badge(models.Model):
             return remaining_badges
 
         remaining_badges = Badge.objects.filter(type=community_type).order_by('threshold')
-        return remaining_badges
+        
+        remaining_badges_json = {}
+        for badge in remaining_badges:
+            remaining_badges_json[badge.id] = {'name': badge.name,
+                                               'description': badge.description,
+                                               'threshold': badge.threshold,
+                                               'type': badge.type,
+                                               'image': badge.image}
+        return remaining_badges_json
 
 
 class UserBadge(models.Model):
@@ -66,28 +72,29 @@ class UserBadge(models.Model):
         unique_together = ('user', 'badge', 'course_id', 'community_id')
 
     def __unicode__(self):
-        return 'User: ' + str(self.user.id) + ', Badge: ' + str(self.badge.id)
+        return 'User: {}, Badge: {}'.format(self.user.id, self.badge.id)
 
     @classmethod
     def assign_badge(cls, user_id, badge_id, community_id):
         course_id = get_course_id_by_community_id(community_id)
-        
+        is_team_badge = True if course_id is CourseKeyField.Empty else False
+
         try:
             badge_type = Badge.objects.get(id=badge_id).type
         except:
-            raise Exception('There exists no badge with id %d' % int(badge_id))
+            raise Exception('There exists no badge with id {}'.format(badge_id))
 
-        if course_id is CourseKeyField.Empty:
+        if is_team_badge:
             try:
-                team_room_id = TeamGroupChat.objects.get(room_id=community_id)
+                team_room_id = TeamGroupChat.objects.get(room_id=community_id).exclude(slug='')
             except:
-                raise Exception('No discussion community or team with id %d' % int(community_id))
+                raise Exception('No discussion community or team with id {}'.format(community_id))
 
-        if course_id is CourseKeyField.Empty and badge_type == CONVERSATIONALIST[0] or \
-           course_id is not CourseKeyField.Empty and badge_type == TEAM_PLAYER[0]:
-            raise Exception('Badge %d is a %s badge, wrong community' % (int(badge_id), badge_type))
+        if badge_type == CONVERSATIONALIST[0] and is_team_badge or \
+           badge_type == TEAM_PLAYER[0] and not is_team_badge:
+            raise Exception('Badge {} is a {} badge, wrong community'.format(badge_id, badge_type))
 
-        obj, created = UserBadge.objects.get_or_create(
+        UserBadge.objects.get_or_create(
             user_id=user_id,
             badge_id=badge_id,
             course_id=course_id,
