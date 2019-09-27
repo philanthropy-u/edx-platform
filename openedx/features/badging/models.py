@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 from common.djangoapps.nodebb.helpers import get_course_id_by_community_id
+from lms.djangoapps.teams.models import CourseTeamMembership
 from nodebb.models import TeamGroupChat
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
 
@@ -83,19 +84,29 @@ class UserBadge(models.Model):
         except:
             raise Exception('There exists no badge with id {}'.format(badge_id))
 
-        if is_team_badge:
-            try:
-                TeamGroupChat.objects.filter(room_id=community_id).exclude(slug='')
-            except:
-                raise Exception('No discussion community or team with id {}'.format(community_id))
-
         if badge_type == CONVERSATIONALIST[0] and is_team_badge or \
            badge_type == TEAM_PLAYER[0] and not is_team_badge:
             raise Exception('Badge {} is a {} badge, wrong community'.format(badge_id, badge_type))
 
-        UserBadge.objects.get_or_create(
-            user_id=user_id,
-            badge_id=badge_id,
-            course_id=course_id,
-            community_id=community_id
-        )
+        if is_team_badge:
+            try:
+                team = TeamGroupChat.objects.filter(room_id=community_id).exclude(slug='')
+            except:
+                raise Exception('No discussion community or team with id {}'.format(community_id))
+
+            all_team_members = CourseTeamMembership.objects.filter(team_id=team[0].team_id)
+
+            for member in all_team_members:
+                UserBadge.objects.get_or_create(
+                    user_id=member.user_id,
+                    badge_id=badge_id,
+                    course_id=course_id,
+                    community_id=community_id
+                )
+        else:
+            UserBadge.objects.get_or_create(
+                user_id=user_id,
+                badge_id=badge_id,
+                course_id=course_id,
+                community_id=community_id
+            )
