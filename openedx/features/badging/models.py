@@ -36,9 +36,8 @@ class Badge(models.Model):
             remaining_badges = Badge.objects.filter(type=community_type) \
                                             .exclude(threshold__lte=latest_threshold) \
                                             .order_by('threshold')
-            return remaining_badges
-
-        remaining_badges = Badge.objects.filter(type=community_type).order_by('threshold')
+        else:
+            remaining_badges = Badge.objects.filter(type=community_type).order_by('threshold')
         
         remaining_badges_json = {}
         for badge in remaining_badges:
@@ -86,7 +85,7 @@ class UserBadge(models.Model):
 
         if is_team_badge:
             try:
-                team_room_id = TeamGroupChat.objects.get(room_id=community_id).exclude(slug='')
+                team_room_id = TeamGroupChat.objects.filter(room_id=community_id).exclude(slug='')
             except:
                 raise Exception('No discussion community or team with id {}'.format(community_id))
 
