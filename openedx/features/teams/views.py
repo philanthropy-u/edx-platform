@@ -19,6 +19,7 @@ from lms.djangoapps.teams.serializers import (
 from lms.djangoapps.teams.views import get_alphabetical_topics
 from nodebb.models import TeamGroupChat
 from openedx.features.badging.models import Badge
+from openedx.features.badging.constants import TEAM_PLAYER
 from student.models import CourseEnrollment
 
 from .decorators import can_view_teams
@@ -182,7 +183,7 @@ def view_team(request, course_id, team_id):
 
     remaining_badges_json = Badge.get_remaining_badges(user_id=request.user.id,
                                                        community_id=room_id,
-                                                       community_type="team")
+                                                       community_type=TEAM_PLAYER[0])
 
     context = {
         'course': course,

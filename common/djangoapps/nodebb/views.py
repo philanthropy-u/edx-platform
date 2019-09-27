@@ -17,6 +17,7 @@ from opaque_keys.edx.keys import CourseKey
 from common.djangoapps.nodebb.helpers import get_course_related_tabs, get_all_course_progress
 from nodebb.models import DiscussionCommunity, TeamGroupChat
 from openedx.features.badging.models import Badge
+from openedx.features.badging.constants import CONVERSATIONALIST
 
 log = logging.getLogger("edx.nodebb")
 
@@ -51,7 +52,7 @@ def nodebb_forum_discussion(request, course_id):
     room_id = course_community.community_url.split('/')[0]
     remaining_badges_json = Badge.get_remaining_badges(user_id=request.user.id,
                                                        community_id=room_id,
-                                                       community_type="conversationalist")
+                                                       community_type=CONVERSATIONALIST[0])
 
     context = {
         "provider": current_course.org,
