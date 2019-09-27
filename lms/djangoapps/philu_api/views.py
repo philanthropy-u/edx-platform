@@ -168,10 +168,12 @@ class RemainingBadgesAPI(APIView):
     def get(self, request):
         user_id = request.user.id
         community_id = request.GET.get('community_id')
+        community_type = request.GET.get('community_type')
 
         try:
             remaining_badges = Badge.get_remaining_badges(user_id=user_id,
-                                                          community_id=community_id)
+                                                          community_id=community_id,
+                                                          community_type=community_type)
             if not remaining_badges:
                 return JsonResponse({'success': True, 'badges': {}},
                                     status=status.HTTP_200_OK)
@@ -188,6 +190,7 @@ class RemainingBadgesAPI(APIView):
                                 status=status.HTTP_200_OK)
                 
         except Exception as e:
+            logging.exception(e)
             return JsonResponse({'success': False, 'message': str(e)},
                                 status=status.HTTP_400_BAD_REQUEST)
 
