@@ -85,7 +85,7 @@ class UserBadge(models.Model):
 
         if is_team_badge:
             try:
-                team_room_id = TeamGroupChat.objects.filter(room_id=community_id).exclude(slug='')
+                TeamGroupChat.objects.filter(room_id=community_id).exclude(slug='')
             except:
                 raise Exception('No discussion community or team with id {}'.format(community_id))
 
