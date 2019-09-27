@@ -175,7 +175,7 @@ def assign_user_badge(request):
     user_id = data.get('user_id')
     badge_id = data.get('badge_id')
     community_id = data.get('community_id')
-    master_token = request.GET.get('token')
+    master_token = data.get('token')
 
     if not master_token == settings.NODEBB_MASTER_TOKEN:
         return JsonResponse({'success': False, 'message': 'Invalid master token'},
