@@ -23,6 +23,7 @@ from wsgiref.util import FileWrapper
 from lms.djangoapps.oef.decorators import eligible_for_oef
 from lms.djangoapps.philu_api.helpers import get_encoded_token
 from openedx.features.badging.models import Badge, UserBadge
+# from util.json_request import expect_json
 
 
 log = logging.getLogger("edx.philu_api")
@@ -171,20 +172,24 @@ class RemainingBadgesAPI(APIView):
         try:
             remaining_badges = Badge.get_remaining_badges(user_id=user_id,
                                                           community_id=community_id)
-            if remaining_badges:
-                remaining_badges_json = {}
-                for badge in remaining_badges:
-                    remaining_badges_json[badge.id] = {'name': badge.name,
-                                                       'description': badge.description,
-                                                       'threshold': badge.threshold,
-                                                       'type': badge.type,
-                                                       'image': badge.image}
+            if not remaining_badges:
+                return JsonResponse({'success': True, 'badges': {}},
+                                    status=status.HTTP_200_OK)
 
-                return JsonResponse({'success': True, 'badges': remaining_badges_json})
-            else:
-                return JsonResponse({'success': True, 'badges': {}})
+            remaining_badges_json = {}
+            for badge in remaining_badges:
+                remaining_badges_json[badge.id] = {'name': badge.name,
+                                                    'description': badge.description,
+                                                    'threshold': badge.threshold,
+                                                    'type': badge.type,
+                                                    'image': badge.image}
+
+            return JsonResponse({'success': True, 'badges': remaining_badges_json},
+                                status=status.HTTP_200_OK)
+                
         except Exception as e:
-            return JsonResponse({'success': False, 'message': str(e)})
+            return JsonResponse({'success': False, 'message': str(e)},
+                                status=status.HTTP_400_BAD_REQUEST)
 
 
 class BadgeAssignmentAPI(APIView):
@@ -195,7 +200,8 @@ class BadgeAssignmentAPI(APIView):
         master_token = request.GET.get('token')
 
         if not master_token == settings.NODEBB_MASTER_TOKEN:
-            return JsonResponse({'message': 'Invalid master token'}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({'success': False, 'message': 'Invalid master token'},
+                                status=status.HTTP_403_FORBIDDEN)
 
         try:
             UserBadge.assign_badge(user_id=user_id,
@@ -203,6 +209,7 @@ class BadgeAssignmentAPI(APIView):
                                    community_id=community_id)
             return JsonResponse({'success': True})
         except Exception as e:
+            logging.exception(e)
             return JsonResponse({'success': False, 'message': str(e)},
                                 status=status.HTTP_400_BAD_REQUEST)
 
