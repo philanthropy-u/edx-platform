@@ -39,7 +39,7 @@ class Badge(models.Model):
                                             .order_by('threshold')
         else:
             remaining_badges = Badge.objects.filter(type=community_type).order_by('threshold')
-        
+
         remaining_badges_json = {}
         for badge in remaining_badges:
             remaining_badges_json[badge.id] = {'name': badge.name,
