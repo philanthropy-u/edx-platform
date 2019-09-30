@@ -6,6 +6,12 @@ from lms.djangoapps.teams.models import CourseTeamMembership
 from nodebb.models import TeamGroupChat
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
 
+from common.djangoapps.nodebb.constants import (
+    COMMUNITY_ID_SPLIT_INDEX,
+    TEAM_PLAYER_ENTRY_INDEX,
+    CONVERSATIONALIST_ENTRY_INDEX
+)
+
 from .constants import CONVERSATIONALIST, TEAM_PLAYER
 
 
@@ -26,28 +32,45 @@ class Badge(models.Model):
         return self.name
 
     @classmethod
-    def get_remaining_badges(cls, user_id, community_id, community_type):
-        badges_in_community = UserBadge.objects.filter(user_id=user_id,
-                                                       community_id=community_id,
-                                                       badge_id__type=community_type)
+    def get_unearned_badges(cls, user_id, community_id, community_type):
+        """ Get dictionary of badges that can still be earned in a
+            community by a user
 
-        if badges_in_community:
-            latest_earned = badges_in_community.latest('date_earned')
+
+            Parameters
+            ----------
+            user_id : long
+                      user id of a user object
+            community_id : str
+                      community ID of a discussion group
+            community_type : str
+                      community type string (team/conversationalist)
+
+            Returns
+            -------
+            Dict
+                nested dictionary object of unattained badge information
+        """
+        latest_earned = UserBadge.objects.filter(user_id=user_id,
+                                                 community_id=community_id,
+                                                 badge_id__type=community_type).order_by('date_earned').last()
+
+        if latest_earned:
             latest_threshold = Badge.objects.get(pk=latest_earned.badge_id, type=community_type).threshold
-            remaining_badges = Badge.objects.filter(type=community_type) \
-                                            .exclude(threshold__lte=latest_threshold) \
-                                            .order_by('threshold')
+            unearned_badges = Badge.objects.filter(type=community_type) \
+                                           .exclude(threshold__lte=latest_threshold) \
+                                           .order_by('threshold')
         else:
-            remaining_badges = Badge.objects.filter(type=community_type).order_by('threshold')
+            unearned_badges = Badge.objects.filter(type=community_type).order_by('threshold')
 
-        remaining_badges_json = {}
-        for badge in remaining_badges:
-            remaining_badges_json[badge.id] = {'name': badge.name,
-                                               'description': badge.description,
-                                               'threshold': badge.threshold,
-                                               'type': badge.type,
-                                               'image': badge.image}
-        return remaining_badges_json
+        unearned_badges_dict = {}
+        for badge in unearned_badges:
+            unearned_badges_dict[badge.id] = {'name': badge.name,
+                                              'description': badge.description,
+                                              'threshold': badge.threshold,
+                                              'type': badge.type,
+                                              'image': badge.image}
+        return unearned_badges_dict
 
 
 class UserBadge(models.Model):
@@ -76,6 +99,23 @@ class UserBadge(models.Model):
 
     @classmethod
     def assign_badge(cls, user_id, badge_id, community_id):
+        """ Save an entry in the UserBadge table specifying a
+            specific badge assignment to a user badge in community
+
+
+            Parameters
+            ----------
+            user_id : long
+                      user id of a user object
+            badge_id : long
+                      badge ID of specifying the object in Badge model
+            community_id : str
+                      community ID of a discussion group
+
+            Returns
+            -------
+            None
+        """
         course_id = get_course_id_by_community_id(community_id)
         is_team_badge = True if course_id is CourseKeyField.Empty else False
 
@@ -84,17 +124,18 @@ class UserBadge(models.Model):
         except:
             raise Exception('There exists no badge with id {}'.format(badge_id))
 
-        if badge_type == CONVERSATIONALIST[0] and is_team_badge or \
-           badge_type == TEAM_PLAYER[0] and not is_team_badge:
+        # Check if the right badge is being awarded in the right community
+        if badge_type == CONVERSATIONALIST[CONVERSATIONALIST_ENTRY_INDEX] and is_team_badge or \
+           badge_type == TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX] and not is_team_badge:
             raise Exception('Badge {} is a {} badge, wrong community'.format(badge_id, badge_type))
 
         if is_team_badge:
-            try:
-                team = TeamGroupChat.objects.filter(room_id=community_id).exclude(slug='')
-            except:
+            team = TeamGroupChat.objects.filter(room_id=community_id).exclude(slug='').first()
+
+            if(not team):
                 raise Exception('No discussion community or team with id {}'.format(community_id))
 
-            all_team_members = CourseTeamMembership.objects.filter(team_id=team[0].team_id)
+            all_team_members = CourseTeamMembership.objects.filter(team_id=team.team_id)
 
             for member in all_team_members:
                 UserBadge.objects.get_or_create(

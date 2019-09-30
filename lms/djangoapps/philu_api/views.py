@@ -183,8 +183,8 @@ def assign_user_badge(request):
 
     try:
         UserBadge.assign_badge(user_id=user_id,
-                                badge_id=badge_id,
-                                community_id=community_id)
+                               badge_id=badge_id,
+                               community_id=community_id)
         return JsonResponse({'success': True})
     except Exception as e:
         logging.exception(e)

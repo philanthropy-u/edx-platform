@@ -80,9 +80,19 @@ def get_course_id_by_community_id(community_id):
     """
         Get `course_id` based on the given `community_id`
         using the `community_url` field from the model
+
+        Parameters
+        ----------
+        community_id : str
+                       community ID of a discussion group
+
+        Returns
+        -------
+        CourseKeyField
+            CourseKey Model object that specifies a course or is empty
     """
     try:
-        discussion_community = DiscussionCommunity.objects.get(community_url__startswith=community_id+'/')
+        discussion_community = DiscussionCommunity.objects.get(community_url__startswith=(community_id + '/'))
         return discussion_community.course_id
     except ObjectDoesNotExist:
         return CourseKeyField.Empty

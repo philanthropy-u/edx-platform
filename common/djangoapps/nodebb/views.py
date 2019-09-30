@@ -18,6 +18,11 @@ from common.djangoapps.nodebb.helpers import get_course_related_tabs, get_all_co
 from nodebb.models import DiscussionCommunity, TeamGroupChat
 from openedx.features.badging.models import Badge
 from openedx.features.badging.constants import CONVERSATIONALIST
+from common.djangoapps.nodebb.constants import (
+    COMMUNITY_ID_SPLIT_INDEX,
+    COMMUNITY_URL_SPLIT_CHAR,
+    CONVERSATIONALIST_ENTRY_INDEX
+)
 
 log = logging.getLogger("edx.nodebb")
 
@@ -49,10 +54,10 @@ def nodebb_forum_discussion(request, course_id):
     course_link = reverse('about_course', args=[get_related_card_id(course_key)])
     browse_teams_link = reverse('teams_dashboard', args=[course_id])
 
-    room_id = course_community.community_url.split('/')[0]
-    remaining_badges_json = Badge.get_remaining_badges(user_id=request.user.id,
-                                                       community_id=room_id,
-                                                       community_type=CONVERSATIONALIST[0])
+    room_id = course_community.community_url.split(COMMUNITY_URL_SPLIT_CHAR)[COMMUNITY_ID_SPLIT_INDEX]
+    unearned_badges_dict = Badge.get_unearned_badges(user_id=request.user.id,
+                                                        community_id=room_id,
+                                                        community_type=CONVERSATIONALIST[CONVERSATIONALIST_ENTRY_INDEX])
 
     context = {
         "provider": current_course.org,
@@ -68,8 +73,7 @@ def nodebb_forum_discussion(request, course_id):
         "browse_teams_link": browse_teams_link,
         "course_has_ended": current_course.has_ended(),
         "courses_page_link": reverse("courses"),
-        "room_id": room_id,
-        "remaining_badges": json.dumps(remaining_badges_json)
+        "unearned_badges": json.dumps(unearned_badges_dict)
     }
 
     return render(request, 'discussion_nodebb/discussion_board.html', context)

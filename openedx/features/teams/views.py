@@ -10,6 +10,7 @@ from django.utils.translation import ugettext as _
 from django_comment_client.utils import has_discussion_privileges
 from django_countries import countries
 
+from common.djangoapps.nodebb.constants import TEAM_PLAYER_ENTRY_INDEX
 from courseware.courses import has_access
 from lms.djangoapps.teams import is_feature_enabled
 from lms.djangoapps.teams.models import CourseTeam, CourseTeamMembership
@@ -21,6 +22,7 @@ from nodebb.models import TeamGroupChat
 from openedx.features.badging.models import Badge
 from openedx.features.badging.constants import TEAM_PLAYER
 from student.models import CourseEnrollment
+
 
 from .decorators import can_view_teams
 from .helpers import serialize, make_embed_url, get_user_recommended_team, \
@@ -181,9 +183,9 @@ def view_team(request, course_id, team_id):
 
     is_user_member_of_this_team = bool(CourseTeamMembership.objects.filter(team=team, user=user).first())
 
-    remaining_badges_json = Badge.get_remaining_badges(user_id=request.user.id,
-                                                       community_id=room_id,
-                                                       community_type=TEAM_PLAYER[0])
+    unearned_badges_dict = Badge.get_unearned_badges(user_id=request.user.id,
+                                                     community_id=room_id,
+                                                     community_type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX])
 
     context = {
         'course': course,
@@ -191,14 +193,13 @@ def view_team(request, course_id, team_id):
         'is_team_full': course.teams_max_size <= len(team.users.all()),
         'is_user_member_of_this_team': is_user_member_of_this_team,
         'room_url': embed_url,
-        'room_id': room_id,
         'join_team_url': reverse('team_membership_list'),
         'team': team,
         'team_administrator': team_administrator,
         'leave_team_url': leave_team_url,
         'country': str(countries.countries[team.country]),
         'language': dict(settings.ALL_LANGUAGES)[team.language],
-        "remaining_badges": json.dumps(remaining_badges_json)
+        "unearned_badges": json.dumps(unearned_badges_dict)
     }
 
     return render_to_response("teams/view_team.html", context)
