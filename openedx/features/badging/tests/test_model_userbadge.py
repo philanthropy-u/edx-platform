@@ -23,21 +23,19 @@ class UserBadgeModelTestCases(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='12345')
-        self.badge_team = Badge(name="Sample Badge",
-                                description="This is a sample badge",
-                                threshold=30,
-                                type="team",
-                                image="path/too/image",
-                                date_created=timezone.now())
-        self.badge_team.save()
+        self.badge_team = Badge.objects.create(name="Sample Badge",
+                                               description="This is a sample badge",
+                                               threshold=30,
+                                               type="team",
+                                               image="path/too/image",
+                                               date_created=timezone.now())
 
-        self.badge_convo = Badge(name="Sample Badge",
-                                 description="This is a sample badge",
-                                 threshold=30,
-                                 type="conversationalist",
-                                 image="path/too/image",
-                                 date_created=timezone.now())
-        self.badge_convo.save()
+        self.badge_convo = Badge.objects.create(name="Sample Badge",
+                                                description="This is a sample badge",
+                                                threshold=30,
+                                                type="conversationalist",
+                                                image="path/too/image",
+                                                date_created=timezone.now())
 
     def test_save_userbadge_normal(self):
         """
@@ -93,21 +91,6 @@ class UserBadgeModelTestCases(TestCase):
                                          course_id="",
                                          community_id=None,
                                          date_earned=timezone.now())
-
-    def test_date_blank_sets_current_date(self):
-        """
-        Trying to save a UserBadge object with no date_earned
-        automatically sets it to current date.
-        """
-        UserBadge.objects.create(user=self.user,
-                                 badge=self.badge_convo,
-                                 course_id=CourseKeyField.Empty,
-                                 community_id=-1,
-                                 date_earned=None)
-
-        time_at_save = timezone.now().replace(microsecond=0)
-        saved_time = UserBadge.objects.get(user=self.user).date_earned.replace(microsecond=0)
-        self.assertEquals(time_at_save, saved_time)
 
     @patch('openedx.features.badging.models.get_course_id_by_community_id')
     def test_assign_badge_wrong_badge_id(self, mock_get_community_id):
