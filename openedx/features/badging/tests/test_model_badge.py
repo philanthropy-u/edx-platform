@@ -12,6 +12,8 @@ from common.djangoapps.nodebb.constants import (
 from openedx.features.badging.constants import CONVERSATIONALIST, TEAM_PLAYER
 from openedx.features.badging.models import Badge, UserBadge
 
+from openedx.features.badging.tests.factories import BadgeFactory, UserBadgeFactory
+
 
 def get_expected_badge_data(badge):
     return {
@@ -56,12 +58,8 @@ class BadgeModelTestCases(TestCase):
         Get unearned badges dictionary after saving badges
         when none of the badges has been earned
         """
-        badge_1 = Badge.objects.create(name="badge_1", description="This is a sample badge",
-                                       threshold=30, type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX],
-                                       image="path/to/image")
-        badge_2 = Badge.objects.create(name="badge_2", description="This is a sample badge",
-                                       threshold=70, type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX],
-                                       image="path/to/image")
+        badge_1 = BadgeFactory(name="badge_1", threshold=30, type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX])
+        badge_2 = BadgeFactory(name="badge_2", threshold=70, type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX])
         expected_result = {}
         expected_result["1"] = get_expected_badge_data(badge_1)
         expected_result["2"] = get_expected_badge_data(badge_2)
@@ -82,18 +80,10 @@ class BadgeModelTestCases(TestCase):
         Get unearned badges dictionary after saving badges
         when user has already earned one of the badges
         """
-        badge_1 = Badge.objects.create(name="badge_1", description="This is a sample badge",
-                                       threshold=30, type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX],
-                                       image="path/to/image")
-        badge_2 = Badge.objects.create(name="badge_2", description="This is a sample badge",
-                                       threshold=70, type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX],
-                                       image="path/to/image")
-        UserBadge.objects.create(
-            user_id=self.user.id,
-            badge_id=badge_1.id,
-            course_id="",
-            community_id=-1
-        )
+        badge_1 = BadgeFactory(name="badge_1", threshold=30, type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX])
+        badge_2 = BadgeFactory(name="badge_2", threshold=70, type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX])
+
+        UserBadgeFactory(user_id=self.user.id, badge_id=badge_1.id)
 
         expected_result = {}
         expected_result["1"] = get_expected_badge_data(badge_2)
@@ -113,25 +103,11 @@ class BadgeModelTestCases(TestCase):
         Get unearned badges dictionary after saving badges
         when user has already earned all of the badges
         """
-        badge_1 = Badge.objects.create(name="badge_1", description="This is a sample badge",
-                                       threshold=30, type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX],
-                                       image="path/to/image")
-        badge_2 = Badge.objects.create(name="badge_2", description="This is a sample badge",
-                                       threshold=70, type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX],
-                                       image="path/to/image")
-        UserBadge.objects.create(
-            user_id=self.user.id,
-            badge_id=badge_1.id,
-            course_id="",
-            community_id=-1
-        )
+        badge_1 = BadgeFactory(name="badge_1", threshold=30, type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX])
+        badge_2 = BadgeFactory(name="badge_2", threshold=70, type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX])
 
-        UserBadge.objects.create(
-            user_id=self.user.id,
-            badge_id=badge_2.id,
-            course_id="",
-            community_id=-1
-        )
+        UserBadgeFactory(user_id=self.user.id, badge_id=badge_1.id)
+        UserBadgeFactory(user_id=self.user.id, badge_id=badge_2.id)
 
         expected_result = {}
         actual_result = Badge.get_unearned_badges(user_id=self.user.id,
