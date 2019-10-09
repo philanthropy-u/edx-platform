@@ -5,17 +5,7 @@ from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.utils import timezone
 
-from lms.djangoapps.teams.models import CourseTeam
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
-
-from common.djangoapps.nodebb.constants import (
-    COMMUNITY_ID_SPLIT_INDEX,
-    TEAM_PLAYER_ENTRY_INDEX,
-    CONVERSATIONALIST_ENTRY_INDEX
-)
-
-from nodebb.models import TeamGroupChat
-from openedx.features.badging.constants import CONVERSATIONALIST, TEAM_PLAYER
 from openedx.features.badging.models import Badge, UserBadge
 
 

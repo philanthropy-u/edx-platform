@@ -1,16 +1,13 @@
 from django.contrib.auth.models import User
-from django.db import IntegrityError, transaction
 from django.test import TestCase
-from django.utils import timezone
 
 from common.djangoapps.nodebb.constants import (
-    COMMUNITY_ID_SPLIT_INDEX,
     TEAM_PLAYER_ENTRY_INDEX,
     CONVERSATIONALIST_ENTRY_INDEX
 )
 
 from openedx.features.badging.constants import CONVERSATIONALIST, TEAM_PLAYER
-from openedx.features.badging.models import Badge, UserBadge
+from openedx.features.badging.models import Badge
 
 from openedx.features.badging.tests.factories import BadgeFactory, UserBadgeFactory
 
