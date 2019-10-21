@@ -23,7 +23,9 @@ def handle_response(caller, task_name, status_code, response, username=None):
     Logs the response of the specific NodeBB API call
     """
     user_message = ''
-
+    LOGGER.error('status: {}, task_name: {}, response: {}, caller: {}, username: {}'.format(
+        status_code, task_name, status_code, response, username
+    ))
     if username:
         user_message = ' task for user: {}'
 
@@ -81,7 +83,7 @@ def task_delete_badge_info_from_nodebb(badge_data):
     """
     Celery task to delete badge info in NodeBB
     """
-    
+
     status_code, response = NodeBBClient().badges.delete(badge_id=badge_data['id'])
     handle_response(task_delete_badge_info_from_nodebb, 'Delete badge information', status_code, response)
 
