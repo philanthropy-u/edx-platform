@@ -10,6 +10,7 @@ source =
     lms
     openedx
     pavelib
+    openedx/features/courseware
     openedx/features/course_card
     openedx/features/teams
     openedx/features/student_certificates
