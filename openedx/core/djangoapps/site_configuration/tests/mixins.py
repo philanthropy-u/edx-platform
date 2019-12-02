@@ -9,7 +9,7 @@ class SiteMixin(object):
     Mixin for setting up Site framework models
     """
     def setUp(self):
-        super(SiteMixin, self).setUp()
+        # super(SiteMixin, self).setUp()
 
         self.site = SiteFactory.create()
         self.site_configuration = SiteConfigurationFactory.create(

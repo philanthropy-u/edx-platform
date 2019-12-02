@@ -35,6 +35,7 @@ from openedx.core.djangoapps.user_api.preferences.api import get_user_preference
 from student.models import UserAttribute
 from student.tests.factories import UserFactory
 from third_party_auth.tests import factories as third_party_auth_factory
+from openedx.core.lib.custom_types import Disposable
 
 TEST_CS_URL = 'https://comments.service.test:123/'
 
@@ -100,9 +101,12 @@ class TestCreateAccount(SiteMixin, TestCase):
         self.request_factory = RequestFactory()
         self.params = {
             "username": self.username,
+            'name':'Test User',
             "email": "test@example.org",
-            "password": u"testpass",
-            "name": "Test User",
+            "password": u"Testpass1",
+            "confirm_password": u"Testpass1",
+            "last_name": "User",
+            "first_name": "Test",
             "honor_code": "true",
             "terms_of_service": "true",
         }
@@ -110,14 +114,16 @@ class TestCreateAccount(SiteMixin, TestCase):
     @ddt.data("en", "eo")
     def test_default_lang_pref_saved(self, lang):
         with mock.patch("django.conf.settings.LANGUAGE_CODE", lang):
-            response = self.client.post(self.url, self.params)
+            with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(), create=True):
+                response = self.client.post(self.url, self.params)
             self.assertEqual(response.status_code, 200)
             user = User.objects.get(username=self.username)
             self.assertEqual(get_user_preference(user, LANGUAGE_KEY), lang)
 
     @ddt.data("en", "eo")
     def test_header_lang_pref_saved(self, lang):
-        response = self.client.post(self.url, self.params, HTTP_ACCEPT_LANGUAGE=lang)
+        with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(), create=True):
+            response = self.client.post(self.url, self.params, HTTP_ACCEPT_LANGUAGE=lang)
         user = User.objects.get(username=self.username)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(get_user_preference(user, LANGUAGE_KEY), lang)
@@ -127,7 +133,8 @@ class TestCreateAccount(SiteMixin, TestCase):
         Create an account with self.params, assert that the response indicates
         success, and return the UserProfile object for the newly created user
         """
-        response = self.client.post(self.url, self.params, HTTP_HOST=host)
+        with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(), create=True):
+            response = self.client.post(self.url, self.params, HTTP_HOST=host)
         self.assertEqual(response.status_code, 200)
         user = User.objects.get(username=self.username)
         return user.profile
@@ -138,18 +145,20 @@ class TestCreateAccount(SiteMixin, TestCase):
         """
         # Set user password to NFKD format so that we can test that it is normalized to
         # NFKC format upon account creation.
-        self.params['password'] = unicodedata.normalize('NFKD', u'Ṗŕệṿïệẅ Ṯệẍt')
-        response = self.client.post(self.url, self.params)
+        self.params['password'] = unicodedata.normalize('NFKD', u'Ṗŕệṿïệẅ Ṯệẍt1')
+        with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(), create=True):
+            response = self.client.post(self.url, self.params)
         self.assertEqual(response.status_code, 200)
 
         user = User.objects.get(username=self.username)
         salt_val = user.password.split('$')[1]
 
-        expected_user_password = make_password(unicodedata.normalize('NFKC', u'Ṗŕệṿïệẅ Ṯệẍt'), salt_val)
+        expected_user_password = make_password(unicodedata.normalize('NFKC', u'Ṗŕệṿïệẅ Ṯệẍt1'), salt_val)
         self.assertEqual(expected_user_password, user.password)
 
     def test_marketing_cookie(self):
-        response = self.client.post(self.url, self.params)
+        with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(), create=True):
+            response = self.client.post(self.url, self.params)
         self.assertEqual(response.status_code, 200)
         self.assertIn(settings.EDXMKTG_LOGGED_IN_COOKIE_NAME, self.client.cookies)
         self.assertIn(settings.EDXMKTG_USER_INFO_COOKIE_NAME, self.client.cookies)
@@ -315,7 +324,8 @@ class TestCreateAccount(SiteMixin, TestCase):
         Tests user creation without sending activation email when
         settings.FEATURES['BYPASS_ACTIVATION_EMAIL_FOR_EXTAUTH']=True and doing external auth
         """
-        self.base_extauth_bypass_sending_activation_email(True)
+        with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(), create=True):
+            self.base_extauth_bypass_sending_activation_email(True)
 
     @unittest.skipUnless(settings.FEATURES.get('AUTH_USE_SHIB'), "AUTH_USE_SHIB not set")
     @mock.patch.dict(settings.FEATURES,
@@ -325,7 +335,8 @@ class TestCreateAccount(SiteMixin, TestCase):
         Tests user creation without sending activation email when
         settings.FEATURES['BYPASS_ACTIVATION_EMAIL_FOR_EXTAUTH']=False and doing external auth
         """
-        self.base_extauth_bypass_sending_activation_email(False)
+        with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(), create=True):
+            self.base_extauth_bypass_sending_activation_email(False)
 
     @unittest.skipUnless(settings.FEATURES.get('AUTH_USE_SHIB'), "AUTH_USE_SHIB not set")
     @mock.patch.dict(settings.FEATURES, {'BYPASS_ACTIVATION_EMAIL_FOR_EXTAUTH': False,
@@ -335,12 +346,14 @@ class TestCreateAccount(SiteMixin, TestCase):
         Tests user creation without sending activation email when
         settings.FEATURES['BYPASS_ACTIVATION_EMAIL_FOR_EXTAUTH']=False and doing external auth
         """
-        self.base_extauth_bypass_sending_activation_email(True)
+        with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(), create=True):
+            self.base_extauth_bypass_sending_activation_email(True)
 
     @ddt.data(True, False)
     def test_discussions_email_digest_pref(self, digest_enabled):
         with mock.patch.dict("student.models.settings.FEATURES", {"ENABLE_DISCUSSION_EMAIL_DIGEST": digest_enabled}):
-            response = self.client.post(self.url, self.params)
+            with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(), create=True):
+                response = self.client.post(self.url, self.params)
             self.assertEqual(response.status_code, 200)
             user = User.objects.get(username=self.username)
             preference = get_user_preference(user, NOTIFICATION_PREF_KEY)
@@ -914,7 +927,8 @@ class TestUnicodeUsername(TestCase):
             'username': self.username,
             'email': 'unicode_user@example.com',
             "password": "testpass",
-            'name': 'unicode_user',
+            'first_name': 'unicode',
+            'last_name': '_user',
             'terms_of_service': 'true',
             'honor_code': 'true',
         }
