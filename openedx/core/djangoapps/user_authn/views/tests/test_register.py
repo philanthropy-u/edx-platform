@@ -596,8 +596,11 @@ class TestCreateAccountValidation(TestCase):
         self.minimal_params = {
             "username": "test_username",
             "email": "test_email@example.com",
-            "password": "test_password",
+            "password": "Test_password2",
+            "confirm_password": "Test_password2",
             "name": "Test Name",
+            "first_name": "Test",
+            "last_name": "Name",
             "honor_code": "true",
             "terms_of_service": "true",
         }
@@ -607,17 +610,29 @@ class TestCreateAccountValidation(TestCase):
         Request account creation with the given params and assert that the
         response properly indicates success
         """
-        response = self.client.post(self.url, params)
+        with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(), create=True):
+            response = self.client.post(self.url, params)
         self.assertEqual(response.status_code, 200)
         response_data = json.loads(response.content)
         self.assertTrue(response_data["success"])
+
+    def assert_success_redirect(self, params):
+        """
+        Request account creation with the given params and assert that the
+        response properly indicates success
+        """
+        with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(),
+                        create=True):
+            response = self.client.post(self.url, params)
+        self.assertRedirects(response, '/onboarding/user_info/', status_code=302, target_status_code=200, fetch_redirect_response=False)
 
     def assert_error(self, params, expected_field, expected_value):
         """
         Request account creation with the given params and assert that the
         response properly indicates an error with the given field and value
         """
-        response = self.client.post(self.url, params)
+        with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(), create=True):
+            response = self.client.post(self.url, params)
         self.assertEqual(response.status_code, 400)
         response_data = json.loads(response.content)
         self.assertFalse(response_data["success"])
@@ -686,15 +701,15 @@ class TestCreateAccountValidation(TestCase):
         self.assertGreater(len(params['email']), 254)
         assert_email_error("Email cannot be more than 254 characters long")
 
+        # Invalid
+        params["email"] = "not_an_email_address"
+        assert_email_error("A properly formatted e-mail is required")
+
         # Valid Email
         params["email"] = "student@edx.com"
         # Assert success on valid email
         self.assertLess(len(params["email"]), 254)
         self.assert_success(params)
-
-        # Invalid
-        params["email"] = "not_an_email_address"
-        assert_email_error("A properly formatted e-mail is required")
 
     @override_settings(
         REGISTRATION_EMAIL_PATTERNS_ALLOWED=[
@@ -746,12 +761,13 @@ class TestCreateAccountValidation(TestCase):
 
         # Too short
         params["password"] = "a"
-        assert_password_error("This password is too short. It must contain at least 2 characters.")
+        assert_password_error(
+            "This password is too short. It must contain at least 6 characters. This password must contain at least 1 uppercase letter. This password must contain at least 1 number.")
 
         # Password policy is tested elsewhere
 
         # Matching username
-        params["username"] = params["password"] = "test_username_and_password"
+        params["username"] = params["password"] = "Test_username_and_password1"
         assert_password_error("The password is too similar to the username.")
 
     def test_name(self):
@@ -762,16 +778,11 @@ class TestCreateAccountValidation(TestCase):
             Assert that requesting account creation results in the expected
             error
             """
-            self.assert_error(params, "name", expected_error)
+            self.assert_error(params, "first_name", expected_error)
 
         # Missing
-        del params["name"]
-        assert_name_error("Your legal name must be a minimum of two characters long")
-
-        # Empty, too short
-        for name in ["", "a"]:
-            params["name"] = name
-            assert_name_error("Your legal name must be a minimum of two characters long")
+        del params["first_name"]
+        assert_name_error("Please enter your First Name.")
 
     def test_honor_code(self):
         params = dict(self.minimal_params)
@@ -803,7 +814,7 @@ class TestCreateAccountValidation(TestCase):
             # Need to change username/email because user was created above
             params["username"] = "another_test_username"
             params["email"] = "another_test_email@example.com"
-            self.assert_success(params)
+            self.assert_success_redirect(params)
 
     def test_terms_of_service(self):
         params = dict(self.minimal_params)
