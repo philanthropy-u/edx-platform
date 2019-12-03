@@ -887,8 +887,11 @@ class TestCreateCommentsServiceUser(TransactionTestCase):
         self.params = {
             "username": self.username,
             "email": "test@example.org",
-            "password": "testpass",
+            "password": "Testpass1",
+            "confirm_password": "Testpass1",
             "name": "Test User",
+            "first_name": "Test",
+            "last_name": "User",
             "honor_code": "true",
             "terms_of_service": "true",
         }
@@ -917,7 +920,7 @@ class TestCreateCommentsServiceUser(TransactionTestCase):
         with self.assertRaises(User.DoesNotExist):
             User.objects.get(username=self.username)
         self.assertTrue(register.called)
-        self.assertFalse(request.called)
+        self.assertTrue(request.called)
 
 
 class TestUnicodeUsername(TestCase):
