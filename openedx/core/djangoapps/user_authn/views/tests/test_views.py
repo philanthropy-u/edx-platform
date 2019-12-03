@@ -62,8 +62,8 @@ class UserAccountUpdateTest(CacheIsolationTestCase, UrlResetMixin):
 
     USERNAME = u"heisenberg"
     ALTERNATE_USERNAME = u"walt"
-    OLD_PASSWORD = u"ḅḷüëṡḳÿ"
-    NEW_PASSWORD = u"B🄸🄶B🄻🅄🄴"
+    OLD_PASSWORD = u"Bḷüëṡḳÿ1"
+    NEW_PASSWORD = u"B🄸🄶B🄻🅄🄴1"
     OLD_EMAIL = u"walter@graymattertech.com"
     NEW_EMAIL = u"walt@savewalterwhite.com"
 
@@ -402,7 +402,7 @@ class LoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMixin, ModuleSto
     shard = 7
     USERNAME = "bob"
     EMAIL = "bob@example.com"
-    PASSWORD = u"password"
+    PASSWORD = u"Password1"
 
     URLCONF_MODULES = ['openedx.core.djangoapps.embargo']
 

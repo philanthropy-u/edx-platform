@@ -11,6 +11,7 @@ from third_party_auth.tests.testutil import ThirdPartyAuthTestMixin
 from util.testing import UrlResetMixin
 from xmodule.modulestore.tests.django_utils import SharedModuleStoreTestCase
 from xmodule.modulestore.tests.factories import CourseFactory
+from django.test.utils import override_settings
 
 # This relies on third party auth being enabled in the test
 # settings with the feature flag `ENABLE_THIRD_PARTY_AUTH`
@@ -157,6 +158,19 @@ class LoginFormTest(ThirdPartyAuthTestMixin, UrlResetMixin, SharedModuleStoreTes
 
 @ddt.ddt
 @unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
+@override_settings(
+    REGISTRATION_EXTRA_FIELDS={
+        "level_of_education": "optional",
+        "gender": "optional",
+        "year_of_birth": "optional",
+        "mailing_address": "optional",
+        "goals": "optional",
+        "city": "optional",
+        "state": "optional",
+        "country": "required",
+        "honor_code": "required",
+    }
+)
 class RegisterFormTest(ThirdPartyAuthTestMixin, UrlResetMixin, SharedModuleStoreTestCase):
     """Test rendering of the registration form. """
 
