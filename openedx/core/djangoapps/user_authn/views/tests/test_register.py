@@ -940,7 +940,8 @@ class TestUnicodeUsername(TestCase):
         self.url_params = {
             'username': self.username,
             'email': 'unicode_user@example.com',
-            "password": "testpass",
+            "password": "Testpass1",
+            "confirm_password": "Testpass1",
             'first_name': 'unicode',
             'last_name': '_user',
             'terms_of_service': 'true',
@@ -952,7 +953,8 @@ class TestUnicodeUsername(TestCase):
         """
         Ensures backward-compatible defaults.
         """
-        response = self.client.post(self.url, self.url_params)
+        with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(), create=True):
+            response = self.client.post(self.url, self.url_params)
 
         self.assertEquals(response.status_code, 400)
         obj = json.loads(response.content)
@@ -963,7 +965,8 @@ class TestUnicodeUsername(TestCase):
 
     @mock.patch.dict(settings.FEATURES, {'ENABLE_UNICODE_USERNAME': True})
     def test_with_feature_enabled(self):
-        response = self.client.post(self.url, self.url_params)
+        with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(), create=True):
+            response = self.client.post(self.url, self.url_params)
         self.assertEquals(response.status_code, 200)
 
         self.assertTrue(User.objects.get(email=self.url_params['email']))
@@ -976,8 +979,8 @@ class TestUnicodeUsername(TestCase):
 
         invalid_params = self.url_params.copy()
         invalid_params['username'] = '**john**'
-
-        response = self.client.post(self.url, invalid_params)
+        with mock.patch('openedx.core.djangoapps.user_authn.views.register.outer_atomic', return_value=Disposable(), create=True):
+            response = self.client.post(self.url, invalid_params)
         self.assertEquals(response.status_code, 400)
 
         obj = json.loads(response.content)
