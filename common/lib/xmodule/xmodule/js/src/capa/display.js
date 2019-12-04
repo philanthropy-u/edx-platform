@@ -659,6 +659,7 @@
                         that.custom_alert("Answer submitted successfully");
                     }
 
+                    fetchCompetencyAssessmentsScore()
                     break;
                 default:
                     that.saveNotification.hide();
