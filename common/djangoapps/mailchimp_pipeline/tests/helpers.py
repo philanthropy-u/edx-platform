@@ -18,7 +18,7 @@ def create_organization(user):
         admin=user,
         alternate_admin_email=user.email,
         label='test_org',
-        org_type='test_org_type'
+        org_type='org_type'
     )
     organization.save()
     return organization
