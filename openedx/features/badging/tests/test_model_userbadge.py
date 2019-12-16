@@ -136,7 +136,7 @@ class UserBadgeModelTestCases(TestCase):
         Trying to save a UserBadge object assigning a team badge successfully
         """
         user = UserFactory()
-        course_key = CourseKey.from_string('abc/xyz/123')
+        course_key = CourseKey.from_string('test/course/123')
 
         course_team = CourseTeamFactory(course_id=course_key, team_id='team1')
 
@@ -144,7 +144,7 @@ class UserBadgeModelTestCases(TestCase):
         CourseTeamMembershipFactory(user=user, team=course_team)
         CourseTeamMembershipFactory(user=UserFactory(), team=course_team)
 
-        team_group_chat = TeamGroupChatFactory(team=course_team, room_id=100)
+        team_group_chat = TeamGroupChatFactory(team=course_team, room_id=200)
 
         UserBadge.assign_badge(user_id=user.id, badge_id=self.team_badge.id, community_id=team_group_chat.room_id)
 
