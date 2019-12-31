@@ -12,6 +12,7 @@ from openedx.core.djangoapps.site_configuration import helpers as configuration_
 from xmodule.modulestore.django import modulestore
 
 from lms.djangoapps.grades.course_grade_factory import CourseGradeFactory
+from lms.djangoapps.grades.models import PersistentCourseGrade
 
 from . import constants
 
@@ -60,6 +61,7 @@ def get_competency_assessments_score(user, course_id, chapter_id):
     course_key = CourseKey.from_string(course_id)
     course = get_course_with_access(user, 'load', course_key,
                                     check_if_enrolled=True)
+    PersistentCourseGrade.clear_prefetched_data(course_key)
     course_grade = CourseGradeFactory().read(user, course)
     chapter_grade = course_grade.chapter_grades.values()
     try:
@@ -95,7 +97,7 @@ def is_all_attempted(section):
     attempted_problem_scores = [score for score in section.problem_scores.values()
                                     if score.first_attempted] \
                                     if section and section.problem_scores else []
-    problems_count = configuration_helpers.get_value("COMPETENCY_ASSESSMENT_PROBLEMS_COUNT", 
+    problems_count = configuration_helpers.get_value("COMPETENCY_ASSESSMENT_PROBLEMS_COUNT",
                         constants.COMPETENCY_ASSESSMENT_DEFAULT_PROBLEMS_COUNT)
     return len(attempted_problem_scores) == problems_count
 
