@@ -7,8 +7,6 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 
 from openedx.features.partners.tests.factories import PartnerUserFactory, PartnerFactory
-from openedx.core.lib.api.test_utils import ApiTestCase
-
 from student.tests.factories import UserFactory
 
 class ResetPasswordTestCases(APITestCase):
@@ -59,11 +57,5 @@ class ResetPasswordTestCases(APITestCase):
             data=self.invalid_data
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-
-class ResetPasswordMethodsTestCases(ApiTestCase):
-    def setUp(self):
-        self.end_point = reverse('partner_reset_password')
-        self.assertAllowedMethods(self.end_point, ["POST"])
 
 

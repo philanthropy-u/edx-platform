@@ -102,6 +102,3 @@ class ResetPasswordTestCases(APITestCase):
             data=self.valid_data
         )
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
-
-    def test_allowed_methods(self):
-        self.assertAllowedMethods(self.end_point, ["GET", "POST", "HEAD", "OPTIONS"])
