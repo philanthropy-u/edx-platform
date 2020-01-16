@@ -14,7 +14,7 @@ class ResetPasswordTestCases(APITestCase):
     def setUp(self):
         self.end_point = reverse('partner_login',args=['give2asia'])
 
-    def test_login_with_correct_credntials(self):
+    def test_login_with_correct_credentials(self):
         self.valid_data = {
             'email': 'abc@test.com',
             'password': 'Abc12345'
@@ -102,3 +102,6 @@ class ResetPasswordTestCases(APITestCase):
             data=self.valid_data
         )
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+
+    def test_allowed_methods(self):
+        self.assertAllowedMethods(self.end_point, ["GET", "POST", "HEAD", "OPTIONS"])
