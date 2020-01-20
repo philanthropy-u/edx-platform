@@ -92,18 +92,9 @@ def get_competency_assessments_score(user, chapter_id):
         'pre_assessment_score': pre_assessment_score,
         'post_assessment_score': post_assessment_score,
         'pre_assessment_attempted': pre_assessment_attempted,
-        'all_pre_assessment_attempted': True if attempted_pre_assessments == constants.COMPETENCY_ASSESSMENT_DEFAULT_PROBLEMS_COUNT else False,
-        'all_post_assessment_attempted': True if attempted_post_assessments == constants.COMPETENCY_ASSESSMENT_DEFAULT_PROBLEMS_COUNT else False,
+        'all_pre_assessment_attempted': attempted_pre_assessments == constants.COMPETENCY_ASSESSMENT_DEFAULT_PROBLEMS_COUNT,
+        'all_post_assessment_attempted': attempted_post_assessments == constants.COMPETENCY_ASSESSMENT_DEFAULT_PROBLEMS_COUNT,
     }
-
-
-def is_all_attempted(section):
-    attempted_problem_scores = [score for score in section.problem_scores.values()
-                                    if score.first_attempted] \
-                                    if section and section.problem_scores else []
-    problems_count = configuration_helpers.get_value('COMPETENCY_ASSESSMENT_PROBLEMS_COUNT',
-                        constants.COMPETENCY_ASSESSMENT_DEFAULT_PROBLEMS_COUNT)
-    return len(attempted_problem_scores) == problems_count
 
 
 def is_pre_assessment(section):
