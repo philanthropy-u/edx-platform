@@ -10,7 +10,9 @@ from lms.djangoapps.onboarding.models import Organization
 
 @ddt
 class RegistrationViewTest(ApiTestCase):
-    """Tests for the registration"""
+    """
+    Includes test cases for openedx partner feature
+    """
 
     NAME = "bob james"
     COUNTRY = "Pakistan"
@@ -20,24 +22,35 @@ class RegistrationViewTest(ApiTestCase):
     PASSWORD = "Test@12345"
     TERMS_OF_SERVICE = True
 
+    PARTNER = 'give2asia'
+
     def setUp(self):
         super(RegistrationViewTest, self).setUp()
-        self.organization = OrganizationFactory(
-            label='arbisoft'
-        )
-        self.partner = PartnerFactory.create(slug="give2asia", label="arbisoft")
-        self.url = reverse("partner_register", args=["give2asia"])
+        self.organization = OrganizationFactory(label='arbisoft')
+        self.partner = PartnerFactory.create(slug='give2asia', label='arbisoft')
+        self.url = reverse("partner_register", args=[self.PARTNER])
 
     def test_put_not_allowed(self):
+        """
+        API should not accept http put method
+        :return : None
+        """
         response = self.client.put(self.url)
         self.assertHttpMethodNotAllowed(response)
 
     def test_delete_not_allowed(self):
+        """
+        API should not accept http delete method
+        :return : None
+        """
         response = self.client.delete(self.url)
         self.assertHttpMethodNotAllowed(response)
 
-    def test_register(self):
-        # Create a new partner user
+    def test_create_new_partner_user(self):
+        """
+        Test if user is successfully registered upon valid data is provided
+        :return : None
+        """
         response = self.client.post(self.url, {
             "name": self.NAME,
             "organization_name": self.organization.label,
@@ -48,9 +61,13 @@ class RegistrationViewTest(ApiTestCase):
             'terms_of_service': self.TERMS_OF_SERVICE
         })
         self.assertHttpOK(response)
-        user = User.objects.get(username=self.USERNAME)
+
+        # get inserted data from the database
+        user = User.objects.filter(username=self.USERNAME).first()
         organization = Organization.objects.filter(label__iexact=self.organization.label).first()
 
+        # verify if user is registered and data is stored int he database
+        self.assertNotEqual(user, None)
         self.assertEqual(self.USERNAME, user.username)
         self.assertEqual(self.EMAIL, user.email)
         self.assertEqual(self.NAME.split(" ", 1)[0], user.first_name)
@@ -69,6 +86,11 @@ class RegistrationViewTest(ApiTestCase):
         {"terms_of_service": ""}
     )
     def test_register_invalid_input(self, invalid_fields):
+        """
+        Test registration is failed if invalid user data is provided
+        :param invalid_fields: field to be override with invalid data
+        :return: None
+        """
         # Initially, the field values are all valid
         data = {
             "name": self.NAME,
@@ -88,6 +110,11 @@ class RegistrationViewTest(ApiTestCase):
 
     @data("username", "country", "password", "email", "terms_of_service")
     def test_register_missing_required_field(self, missing_field):
+        """
+        Test registration is failed if one of required field is missing
+        :param missing_field: field to be deleted from input data
+        :return: None
+        """
         data = {
             "username": self.USERNAME,
             "password": self.PASSWORD,
