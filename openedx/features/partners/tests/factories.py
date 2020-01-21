@@ -1,3 +1,4 @@
+
 from factory.django import DjangoModelFactory
 
 from openedx.features.partners.models import Partner, PartnerUser
