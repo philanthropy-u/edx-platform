@@ -7,6 +7,9 @@ class PartnerFactory(DjangoModelFactory):
     class Meta(object):
         model = Partner
 
+    label = 'temp'
+    main_logo = 'dummy'
+    small_logo = 'dummy'
 class PartnerUserFactory(DjangoModelFactory):
     class Meta(object):
         model = PartnerUser

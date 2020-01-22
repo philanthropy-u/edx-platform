@@ -1,96 +1,113 @@
 from django.urls import reverse
-from openedx.features.partners.tests.factories import PartnerUserFactory, PartnerFactory
 from rest_framework.test import APITestCase
 from rest_framework import status
+
+from openedx.features.partners.tests.factories import PartnerUserFactory, PartnerFactory
 from student.tests.factories import UserFactory
 
 
 class ResetPasswordTestCases(APITestCase):
 
     def setUp(self):
-        self.end_point = reverse('partner_login',args=['give2asia'])
+        self.partner_login_end_point = reverse('partner_login', args=['give2asia'])
+        self.user = UserFactory(username='testuser', password='Abc12345',email='abc@test.com')
 
     def test_login_with_correct_credentials(self):
+        """
+                Testing login with valid credentials
+        """
         valid_data = {
             'email': 'abc@test.com',
             'password': 'Abc12345'
         }
-        user = UserFactory(username='testuser', password='Abc12345',email='abc@test.com')
-        partner_1 = PartnerFactory(label="partner_1", main_logo='abc', small_logo='xyz', slug='give2asia')
 
-        PartnerUserFactory(user_id=user.id, partner_id=partner_1.id)
+        partner_1 = PartnerFactory(slug='give2asia')
+
+        PartnerUserFactory(user_id=self.user.id, partner_id=partner_1.id)
 
         response = self.client.post(
-            self.end_point,
+            self.partner_login_end_point,
             data=valid_data
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_login_with_incorrect_password(self):
+        """
+                Providing incorrect password
+        """
         invalid_data = {
             'email': 'abc@test.com',
             'password': 'incorrectpassword'
         }
-        user = UserFactory(username='testuser', password='Abc12345',email='abc@test.com')
-        partner_1 = PartnerFactory(label="partner_1", main_logo='abc', small_logo='xyz', slug='give2asia')
+        partner_1 = PartnerFactory(slug='give2asia')
 
-        PartnerUserFactory(user_id=user.id, partner_id=partner_1.id)
+        PartnerUserFactory(user_id=self.user.id, partner_id=partner_1.id)
 
         response = self.client.post(
-            self.end_point,
+            self.partner_login_end_point,
             data=invalid_data
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_login_with_not_registered_username(self):
+        """
+                Providing username which isn't registered yet
+        """
         invalid_data = {
-            'email': 'abc@test.com',
+            'email': 'efg@test.com',
             'password': 'qwertyQ123'
         }
-        partner_1 = PartnerFactory(label="partner_1", main_logo='abc', small_logo='xyz', slug='give2asia')
+        partner_1 = PartnerFactory(slug='give2asia')
         response = self.client.post(
-            self.end_point,
+            self.partner_login_end_point,
             data=invalid_data
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_login_with_username_not_affiliated_with_partner(self):
+        """
+                Providing username which isn't affiliated to any partner
+        """
         invalid_data = {
             'email': 'abc@test.com',
             'password': 'Abc12345'
         }
-        user = UserFactory(username='testuser', password='Abc12345',email='abc@test.com')
-        partner_1 = PartnerFactory(label="partner_1", main_logo='abc', small_logo='xyz', slug='give2asia')
+        partner_1 = PartnerFactory(slug='give2asia')
         response = self.client.post(
-            self.end_point,
+            self.partner_login_end_point,
             data=invalid_data
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_login_with_username_with_nonexistant_partner(self):
+        """
+                Not even a single partner exists
+        """
         invalid_data = {
             'email': 'abc@test.com',
             'password': 'Abc12345'
         }
-        user = UserFactory(username='testuser', password='Abc12345',email='abc@test.com')
         response = self.client.post(
-            self.end_point,
+            self.partner_login_end_point,
             data=invalid_data
         )
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
 
     def test_login_with_affiliated_partner_but_non_existing_directory(self):
+        """
+                The directory of partner does not exist at
+                openedx/features/partners/
+        """
         valid_data = {
             'email': 'abc@test.com',
             'password': 'Abc12345'
         }
-        user = UserFactory(username='testuser', password='Abc12345', email='abc@test.com')
-        partner_1 = PartnerFactory(label="partner_1", main_logo='abc', small_logo='xyz', slug='slug')
+        partner_1 = PartnerFactory(slug='slug')
 
-        PartnerUserFactory(user_id=user.id, partner_id=partner_1.id)
+        PartnerUserFactory(user_id=self.user.id, partner_id=partner_1.id)
 
         response = self.client.post(
-            reverse('partner_login',args=['slug']),
+            reverse('partner_login', args=['slug']),
             data=valid_data
         )
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
