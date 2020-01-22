@@ -25,7 +25,6 @@ class RegistrationViewTest(ApiTestCase):
     PARTNER = 'give2asia'
 
     def setUp(self):
-        super(RegistrationViewTest, self).setUp()
         self.organization = OrganizationFactory(label='arbisoft')
         self.partner = PartnerFactory.create(slug='give2asia', label='arbisoft')
         self.url = reverse("partner_register", args=[self.PARTNER])
