@@ -244,13 +244,13 @@ def validate_name(name):
 
 
 def validate_org_size(org_size):
-    possible_org_sizes = [os.code for os in TotalEmployee.objects.all()]
+    possible_org_sizes = [total_employee.code for total_employee in TotalEmployee.objects.all()]
     if org_size not in possible_org_sizes:
         raise forms.ValidationError(_('Invalid org size option provided'))
 
 
 def validate_org_type(org_type):
-    possible_org_types = [ot.code for ot in OrgSector.objects.all()]
+    possible_org_types = [org_sector.code for org_sector in OrgSector.objects.all()]
     if org_type not in possible_org_types:
         raise forms.ValidationError(_('Invalid org type option provided'))
 
@@ -298,7 +298,7 @@ class AccountCreationForm(forms.Form):
 
     _EMAIL_INVALID_MSG = _("A properly formatted e-mail is required")
     _NAME_TOO_SHORT_MSG = _("Your legal name must be a minimum of two characters long")
-    _OPT_IN_REQUIRED = _("Email opt in is a required field, and can only be set to true or false")
+    _OPT_IN_REQUIRED_MSG = _("Email opt in is a required field, and can only be set to true or false")
 
     # TODO: Resolve repetition
 
@@ -350,7 +350,7 @@ class AccountCreationForm(forms.Form):
 
     opt_in = forms.CharField(
         error_messages={
-            "required": _OPT_IN_REQUIRED,
+            "required": _OPT_IN_REQUIRED_MSG,
         },
         validators=[validate_opt_in_choice]
     )
