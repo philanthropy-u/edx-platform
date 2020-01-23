@@ -244,13 +244,13 @@ def validate_name(name):
 
 
 def validate_org_size(org_size):
-    possible_org_sizes = [total_employee.code for total_employee in TotalEmployee.objects.all()]
+    possible_org_sizes = TotalEmployee.objects.values_list('code', flat=True)
     if org_size not in possible_org_sizes:
         raise forms.ValidationError(_('Invalid org size option provided'))
 
 
 def validate_org_type(org_type):
-    possible_org_types = [org_sector.code for org_sector in OrgSector.objects.all()]
+    possible_org_types = OrgSector.objects.values_list('code', flat=True)
     if org_type not in possible_org_types:
         raise forms.ValidationError(_('Invalid org type option provided'))
 
