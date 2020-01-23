@@ -1,10 +1,12 @@
 from django.http import Http404
+from organizations.tests.factories import UserFactory
 
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from xmodule.modulestore.tests.factories import CourseFactory
 
 from openedx.features.partners import helpers
 from openedx.core.djangoapps.models.course_details import CourseDetails
+from openedx.features.partners.tests.factories import CustomSettingsFactory, CourseCardFactory, CourseOverviewFactory
 
 
 class PartnerHelpersTest(ModuleStoreTestCase):
@@ -15,6 +17,7 @@ class PartnerHelpersTest(ModuleStoreTestCase):
 
     def setUp(self):
         super(PartnerHelpersTest, self).setUp()
+        self.user = UserFactory()
         self.course = CourseFactory.create()
 
     def test_import_module_using_slug_with_valid_slug(self):
@@ -54,4 +57,50 @@ class PartnerHelpersTest(ModuleStoreTestCase):
         """
         self.assertEqual(helpers.get_course_description(None), '')
 
+    def test_get_partner_recommended_courses_with_valid_partner(self):
+        """
+        Create Custom settings , Course overview and Course Card
+        :return : list of recommended courses
+        """
+        CustomSettingsFactory(id=self.course.id, tags=self.PARTNER_SLUG)
+        CourseOverviewFactory(id=self.course.id)
+        CourseCardFactory(course_id=self.course.id, course_name=self.course.name)
 
+        recommended_courses = helpers.get_partner_recommended_courses(self.PARTNER_SLUG, self.user)
+
+        self.assertNotEqual(len(recommended_courses), 0)
+
+    def test_get_partner_recommended_courses_with_invalid_custom_settings(self):
+        """
+        Create Custom settings with invalid partner slug
+        Create Course overview and and Course Card
+        :return : list of recommended courses
+        """
+        CustomSettingsFactory(id=self.course.id, tags="invalid")
+        CourseOverviewFactory(id=self.course.id)
+        CourseCardFactory(course_id=self.course.id, course_name=self.course.name)
+
+        recommended_courses = helpers.get_partner_recommended_courses(self.PARTNER_SLUG, self.user)
+
+        self.assertEqual(len(recommended_courses), 0)
+
+    def test_get_partner_recommended_courses_without_course_card(self):
+        """
+        Create Custom settings for partner
+        Create Course overview
+        :return : list of recommended courses
+        """
+        CustomSettingsFactory(id=self.course.id, tags=self.PARTNER_SLUG)
+        CourseOverviewFactory(id=self.course.id)
+
+        recommended_courses = helpers.get_partner_recommended_courses(self.PARTNER_SLUG, self.user)
+
+        self.assertEqual(len(recommended_courses), 0)
+
+    def test_get_partner_recommended_courses_with_invalid_partner(self):
+        """
+        Test empty list of recommendation is returned for in valid partner
+        :return : list of recommended courses
+        """
+        recommended_courses = helpers.get_partner_recommended_courses("invalid", self.user)
+        self.assertEqual(len(recommended_courses), 0)
