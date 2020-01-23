@@ -668,8 +668,7 @@ def course_about(request, course_id):
             'course_image_urls': overview.image_urls,
             'meta_tags': meta_tags,
             'is_alquity': is_alquity,
-            'social_sharing_urls': social_sharing_urls,
-            # 'org_survey_status': user_org_survey_completion_status(request.user)
+            'social_sharing_urls': social_sharing_urls
         }
 
         return render_to_response('courseware/course_about.html', context)
