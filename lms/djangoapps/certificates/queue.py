@@ -180,7 +180,7 @@ class XQueueCertInterface(object):
         raise NotImplementedError
 
     # pylint: disable=too-many-statements
-    def add_cert(self, student, course_id, course=None, forced_grade=None, template_file=None, generate_pdf=True):
+    def add_cert(self, student, course_id, course=None, forced_grade=None, template_file=None, generate_pdf=True,send_email=False):
         """
         Request a new certificate for a student.
 
@@ -417,9 +417,9 @@ class XQueueCertInterface(object):
             return cert
 
         # Finally, generate the certificate and send it off.
-        return self._generate_cert(cert, course, student, grade_contents, template_pdf, generate_pdf)
+        return self._generate_cert(cert, course, student, grade_contents, template_pdf, generate_pdf,send_email=send_email)
 
-    def _generate_cert(self, cert, course, student, grade_contents, template_pdf, generate_pdf):
+    def _generate_cert(self, cert, course, student, grade_contents, template_pdf, generate_pdf,send_email=False):
         """
         Generate a certificate for the student. If `generate_pdf` is True,
         sends a request to XQueue.
@@ -449,7 +449,7 @@ class XQueueCertInterface(object):
 
         if generate_pdf:
             try:
-                self._send_to_xqueue(contents, key)
+                self._send_to_xqueue(contents, key,send_email=send_email)
             except XQueueAddToQueueError as exc:
                 cert.status = ExampleCertificate.STATUS_ERROR
                 cert.error_reason = unicode(exc)
@@ -536,7 +536,7 @@ class XQueueCertInterface(object):
                 ), example_cert.uuid, unicode(exc)
             )
 
-    def _send_to_xqueue(self, contents, key, task_identifier=None, callback_url_path='/update_certificate'):
+    def _send_to_xqueue(self, contents, key, task_identifier=None, callback_url_path='/update_certificate',send_email=False):
         """Create a new task on the XQueue.
 
         Arguments:
@@ -569,12 +569,13 @@ class XQueueCertInterface(object):
         # XQueue also truncates the callback URL to 128 characters,
         # but since our key lengths are shorter than that, this should
         # not affect us.
-        callback_url += "?key={key}".format(
+        callback_url += "?key={key}&send_email={send_email}".format(
             key=(
                 task_identifier
                 if task_identifier is not None
                 else key
-            )
+            ),
+            send_email=send_email
         )
 
         xheader = make_xheader(callback_url, key, settings.CERT_QUEUE)

@@ -22,6 +22,9 @@ from lms.djangoapps.certificates.models import (
 from util.request_rate_limiter import BadRequestRateLimiter
 from util.json_request import JsonResponse, JsonResponseBadRequest
 from xmodule.modulestore.django import modulestore
+from lms.djangoapps.certificates import api as certs_api
+
+from openedx.core.djangoapps.user_api.accounts.signals import USER_CERTIFICATE_DOWNLOADABLE
 
 log = logging.getLogger(__name__)
 
@@ -69,7 +72,7 @@ def update_certificate(request):
 
         xqueue_body = json.loads(request.POST.get('xqueue_body'))
         xqueue_header = json.loads(request.POST.get('xqueue_header'))
-
+        xqueue_send_email = json.loads(request.GET.get('send_email', 'false').lower())
         try:
             course_key = CourseKey.from_string(xqueue_body['course_id'])
 
@@ -113,6 +116,15 @@ def update_certificate(request):
                 cert.verify_uuid = xqueue_body['verify_uuid']
                 cert.download_url = xqueue_body['url']
                 cert.status = status.downloadable
+                if xqueue_send_email:
+                    course = modulestore().get_course(course_key)
+                    certificate_reverse_url = certs_api.get_certificate_url(user_id=cert.user.id, course_id=course.id,
+                                                                            uuid=cert.verify_uuid)
+                    certificate_url = request.build_absolute_uri(certificate_reverse_url)
+                    USER_CERTIFICATE_DOWNLOADABLE.send(sender=GeneratedCertificate, first_name=cert.name,
+                                                       display_name=course.display_name,
+                                                       certificate_reverse_url=certificate_url,
+                                                       user_email=cert.user.email)
             elif cert.status in [status.deleting]:
                 cert.status = status.deleted
             else:
