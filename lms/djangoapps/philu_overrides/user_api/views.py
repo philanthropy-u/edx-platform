@@ -1,21 +1,18 @@
 import datetime
-import json
 import logging
 
 import analytics
 import third_party_auth
-from celery.task import task
-from lms.djangoapps.onboarding.constants import ORG_PARTNERSHIP_END_DATE_PLACEHOLDER
 
 from openedx.core.lib.request_utils import safe_get_host
 from django.conf import settings
-from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.core.exceptions import NON_FIELD_ERRORS, ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.core.validators import validate_email, ValidationError, validate_slug
 from django.db import IntegrityError, transaction
+from django.db.models.signals import post_save
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, get_language
 from django.views.decorators.csrf import csrf_exempt, csrf_protect, ensure_csrf_cookie
@@ -27,18 +24,16 @@ from social_core.exceptions import AuthException, AuthAlreadyAssociated
 from mailchimp_pipeline.signals.handlers import task_send_account_activation_email
 from openedx.core.djangoapps.user_authn.cookies import set_logged_in_cookies
 
-from lms.djangoapps.philu_overrides.helpers import save_user_partner_network_consent
 from openedx.core.djangoapps.user_api.helpers import shim_student_view, require_post_params
 from student.forms import AccountCreationForm, get_registration_extension_form
 from student.models import Registration, create_comments_service_user, UserProfile
 from third_party_auth import pipeline, provider
 from util.json_request import JsonResponse
-from lms.djangoapps.onboarding.models import RegistrationType, GranteeOptIn
+from lms.djangoapps.onboarding.models import EmailPreference, Organization, RegistrationType, UserExtendedProfile
 
 from social_django import utils as social_utils
 from openedx.core.djangoapps.user_authn.views.register import REGISTER_USER, record_registration_attributions
 from openedx.core.djangoapps.lang_pref import LANGUAGE_KEY
-from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from openedx.core.djangoapps.user_api.accounts.api import check_account_exists
 from openedx.core.djangoapps.user_api.preferences import api as preferences_api
 from openedx.core.djangoapps.user_api.views import RegistrationView, LoginSessionView
@@ -51,7 +46,7 @@ log = logging.getLogger("edx.student")
 AUDIT_LOG = logging.getLogger("audit")
 
 
-def _do_create_account_custom(form, custom_form=None, is_alquity_user=False):
+def _do_create_account_custom(form, is_alquity_user=False):
     """
     Given cleaned post variables, create the User and UserProfile objects, as well as the
     registration for this user.
@@ -65,16 +60,16 @@ def _do_create_account_custom(form, custom_form=None, is_alquity_user=False):
 
     errors = {}
     errors.update(form.errors)
-    if custom_form:
-        errors.update(custom_form.errors)
 
     if errors:
         raise ValidationError(errors)
 
     user = User(
-        username=form.cleaned_data["username"],
-        email=form.cleaned_data["email"],
-        is_active=False
+        username=form.cleaned_data.get("username"),
+        email=form.cleaned_data.get("email"),
+        is_active=False,
+        first_name=form.cleaned_data.get("first_name"),
+        last_name=form.cleaned_data.get("last_name")
     )
     user.set_password(form.cleaned_data["password"])
     registration = Registration()
@@ -84,15 +79,6 @@ def _do_create_account_custom(form, custom_form=None, is_alquity_user=False):
     try:
         with transaction.atomic():
             user.save()
-            custom_model = custom_form.save(user=user, commit=True, is_alquity_user=is_alquity_user)
-
-        # Fix: recall user.save to avoid transaction management related exception,
-        # if we call user.save under atomic block
-        # (in custom_from.save )a random transaction exception generated
-        if custom_model.organization:
-            custom_model.organization.save()
-
-        user.save()
     except IntegrityError:
         # Figure out the cause of the integrity error
         if len(User.objects.filter(username=user.username)) > 0:
@@ -110,22 +96,41 @@ def _do_create_account_custom(form, custom_form=None, is_alquity_user=False):
 
     registration.register(user)
 
-    profile_fields = [
-        "name", "level_of_education", "gender", "mailing_address", "city", "country", "goals",
-        "year_of_birth"
-    ]
-    profile = UserProfile(
-        user=user,
-        **{key: form.cleaned_data.get(key) for key in profile_fields}
-    )
-    extended_profile = form.cleaned_extended_profile
-    if extended_profile:
-        profile.meta = json.dumps(extended_profile)
+    profile = UserProfile(user=user)
     try:
         profile.save()
     except Exception:  # pylint: disable=broad-except
         log.exception("UserProfile creation failed for user {id}.".format(id=user.id))
         raise
+
+    org_name = form.cleaned_data.get("org_name")
+    user_extended_profile_data = {}
+
+    if org_name:
+        user_organization, org_created = Organization.objects.get_or_create(label=org_name)
+        org_size = form.cleaned_data.get('org_size')
+        if org_created:
+            user_organization.total_employees = org_size
+            user_organization.org_type = form.cleaned_data.get('org_type')
+            user_organization.save()
+            user_extended_profile_data = {
+                'is_first_learner': True,
+                "organization_id": user_organization.id
+            }
+        else:
+            if org_size:
+                user_organization.total_employees = form.cleaned_data.get('org_size')
+                user_organization.save()
+            user_extended_profile_data = {
+                "organization_id": user_organization.id
+            }
+
+    # create User Extended Profile
+    user_extended_profile = UserExtendedProfile.objects.create(user=user, **user_extended_profile_data)
+    post_save.send(UserExtendedProfile, instance=user_extended_profile, created=False)
+
+    # create user email preferences object
+    EmailPreference.objects.create(user=user, opt_in=form.cleaned_data.get('opt_in'))
 
     return (user, profile, registration)
 
@@ -161,12 +166,6 @@ def create_account_with_params_custom(request, params, is_alquity_user):
     # params is request.POST, that results in a dict containing lists of values
     params = dict(params.items())
 
-    # allow to define custom set of required/optional/hidden fields via configuration
-    extra_fields = configuration_helpers.get_value(
-        'REGISTRATION_EXTRA_FIELDS',
-        getattr(settings, 'REGISTRATION_EXTRA_FIELDS', {})
-    )
-
     if third_party_auth.is_enabled() and pipeline.running(request):
         running_pipeline = pipeline.get(request)
 
@@ -199,37 +198,18 @@ def create_account_with_params_custom(request, params, is_alquity_user):
         params["password"] = eamap.internal_password
         log.debug(u'In create_account with external_auth: user = %s, email=%s', params["name"], params["email"])
 
-    extended_profile_fields = configuration_helpers.get_value('extended_profile_fields', [])
-    # Can't have terms of service for certain SHIB users, like at Stanford
     registration_fields = getattr(settings, 'REGISTRATION_EXTRA_FIELDS', {})
-    tos_required = (
-        registration_fields.get('terms_of_service') != 'hidden' or
-        registration_fields.get('honor_code') != 'hidden'
-    ) and (
-        not settings.FEATURES.get("AUTH_USE_SHIB") or
-        not settings.FEATURES.get("SHIB_DISABLE_TOS") or
-        not do_external_auth or
-        not eamap.external_domain.startswith(openedx.core.djangoapps.external_auth.views.SHIBBOLETH_DOMAIN_PREFIX)
-    )
 
     params['name'] = "{} {}".format(
         params.get('first_name', '').encode('utf-8'), params.get('last_name', '').encode('utf-8')
     )
 
-    form = AccountCreationForm(
-        data=params,
-        extra_fields=extra_fields,
-        extended_profile_fields=extended_profile_fields,
-        do_third_party_auth=do_external_auth,
-        tos_required=tos_required,
-    )
-    custom_form = get_registration_extension_form(data=params)
+    form = AccountCreationForm(data=params, do_third_party_auth=do_external_auth)
 
     # Perform operations within a transaction that are critical to account creation
     with transaction.atomic():
         # first, create the account
-        (user, profile, registration) = _do_create_account_custom(form, custom_form, is_alquity_user=is_alquity_user)
-
+        (user, profile, registration) = _do_create_account_custom(form, is_alquity_user=is_alquity_user)
         # next, link the account with social auth, if provided via the API.
         # (If the user is using the normal register page, the social auth pipeline does the linking, not this code)
         if should_link_with_social_auth:
@@ -325,8 +305,6 @@ def create_account_with_params_custom(request, params, is_alquity_user):
 
     # Announce registration
     REGISTER_USER.send(sender=None, user=user, registration=registration)
-
-    create_comments_service_user(user)
 
     # Don't send email if we are:
     #
@@ -455,20 +433,9 @@ class RegistrationViewCustom(RegistrationView):
             }
             return JsonResponse(errors, status=409)
 
-        # Backwards compatibility: the student view expects both
-        # terms of service and honor code values.  Since we're combining
-        # these into a single checkbox, the only value we may get
-        # from the new view is "honor_code".
-        # Longer term, we will need to make this more flexible to support
-        # open source installations that may have separate checkboxes
-        # for TOS, privacy policy, etc.
-        if data.get("honor_code") and "terms_of_service" not in data:
-            data["terms_of_service"] = data["honor_code"]
-
         try:
             user = create_account_with_params_custom(request, data, is_alquity_user)
             self.save_user_utm_info(user)
-            save_user_partner_network_consent(user, data['partners_opt_in'])
         except ValidationError as err:
             # Should only get non-field errors from this function
             assert NON_FIELD_ERRORS not in err.message_dict
