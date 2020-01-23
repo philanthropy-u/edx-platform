@@ -26,7 +26,7 @@ class RegistrationViewTest(ApiTestCase):
 
     def setUp(self):
         self.organization = OrganizationFactory(label='arbisoft')
-        self.partner = PartnerFactory.create(slug='give2asia', label='arbisoft')
+        self.partner = PartnerFactory.create(slug=self.PARTNER, label='arbisoft')
         self.url = reverse("partner_register", args=[self.PARTNER])
 
     def test_put_not_allowed(self):

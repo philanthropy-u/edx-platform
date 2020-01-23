@@ -1,3 +1,4 @@
+from mock import patch
 from django.http import Http404
 from organizations.tests.factories import UserFactory
 
@@ -6,7 +7,8 @@ from xmodule.modulestore.tests.factories import CourseFactory
 
 from openedx.features.partners import helpers
 from openedx.core.djangoapps.models.course_details import CourseDetails
-from openedx.features.partners.tests.factories import CustomSettingsFactory, CourseCardFactory, CourseOverviewFactory
+from openedx.features.partners.tests.factories import CustomSettingsFactory, CourseCardFactory, CourseOverviewFactory, \
+    PartnerFactory
 
 
 class PartnerHelpersTest(ModuleStoreTestCase):
@@ -18,6 +20,7 @@ class PartnerHelpersTest(ModuleStoreTestCase):
     def setUp(self):
         super(PartnerHelpersTest, self).setUp()
         self.user = UserFactory()
+        self.partner = PartnerFactory.create(slug=self.PARTNER_SLUG, label='arbisoft')
         self.course = CourseFactory.create()
 
     def test_import_module_using_slug_with_valid_slug(self):
@@ -104,3 +107,11 @@ class PartnerHelpersTest(ModuleStoreTestCase):
         """
         recommended_courses = helpers.get_partner_recommended_courses("invalid", self.user)
         self.assertEqual(len(recommended_courses), 0)
+
+    @patch('openedx.features.partners.helpers.auto_join_partner_community')
+    def test_auto_join_partner_community(self, mock_calculate_date_by_delta):
+        """
+        Test auto_join_partner_community task with valid data
+        """
+        helpers.auto_join_partner_community(self.partner, self.user)
+        assert mock_calculate_date_by_delta.called
