@@ -5,7 +5,7 @@ from custom_settings.models import CustomSettings
 
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from openedx.features.course_card.models import CourseCard
-from openedx.features.partners.models import Partner, PartnerUser
+from openedx.features.partners.models import Partner, PartnerUser, PartnerCommunity
 from lms.djangoapps.onboarding.models import Organization
 
 
@@ -50,7 +50,7 @@ class CourseOverviewFactory(DjangoModelFactory):
     # enrollment start date is less than current date
     enrollment_start = factory.Faker('date_time_between', start_date='-10d', end_date='now')
     # enrollment end date greater than current date
-    enrollment_end = factory.Faker('date_time_between', start_date='+1d', end_date='-10d')
+    enrollment_end = factory.Faker('date_time_between', start_date='+1d', end_date='+10d')
 
 
 class CourseCardFactory(DjangoModelFactory):
@@ -60,4 +60,13 @@ class CourseCardFactory(DjangoModelFactory):
         model = CourseCard
 
     is_enabled = True
+
+
+class PartnerCommunityFactory(DjangoModelFactory):
+    """ Partner Community factory. """
+
+    class Meta:
+        model = PartnerCommunity
+
+    community_id = factory.Sequence(lambda n: n)
 
