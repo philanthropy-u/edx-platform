@@ -69,8 +69,8 @@ class Command(BaseCommand):
                 if ((total_modules - 1) * 7) >= delta_days and is_certificate_generated and not is_lastmodule_visitied:
                     continue
 
-                # if not cert_data or cert_data.cert_status != CertificateStatuses.requesting:
-                #     continue
+                if not cert_data or cert_data.cert_status != CertificateStatuses.requesting:
+                    continue
                 '''
                     generate_user_certificates will add a request to xqueue to generate a new certificate for the user.
                     send_email=True parameter will let the callback url know to send email notification to the user as well.

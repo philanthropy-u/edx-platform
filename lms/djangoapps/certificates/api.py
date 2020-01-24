@@ -159,7 +159,7 @@ def generate_user_certificates(student, course_key, course=None, insecure=False,
 
     if not course:
         course = modulestore().get_course(course_key, depth=0)
-
+    # email will sent on completion of certificate generation to the student only if generate_pdf = True
     generate_pdf = not has_html_certificates_enabled(course)
 
     cert = xqueue.add_cert(
