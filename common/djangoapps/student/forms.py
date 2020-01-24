@@ -282,17 +282,6 @@ class AccountCreationForm(forms.Form):
         if contains_html(name):
             raise forms.ValidationError(_('Name field cannot contain the following characters: < >'))
 
-    def validate_opt_in_choice(opt_in):
-        """
-        Verifies a opt_in is valid only either "yes", or "no",
-        raises a ValidationError otherwise.
-        Args:
-            opt_in (unicode): The opt_in value to validate.
-        """
-        possible_opt_in_options = ["yes", "no"]
-        if opt_in not in possible_opt_in_options:
-            raise forms.ValidationError(_('Invalid email opt in option provided'))
-
     # TODO: Resolve repetition
 
     username = UsernameField()
@@ -343,8 +332,7 @@ class AccountCreationForm(forms.Form):
     opt_in = forms.CharField(
         error_messages={
             "required": _OPT_IN_REQUIRED_MSG,
-        },
-        validators=[validate_opt_in_choice]
+        }
     )
 
     def __init__(self, data=None, do_third_party_auth=True):
@@ -385,48 +373,58 @@ class AccountCreationForm(forms.Form):
             )
         return email
 
-    def clean_org_name(self):
+    def clean_opt_in(self):
+        """
+        Verifies a opt_in is valid only either "yes", or "no",
+        raises a ValidationError otherwise.
+        Args:
+            opt_in (unicode): The opt_in value to validate.
+        """
+        cleaned_opt_in = self.cleaned_data.get("opt_in")
+        if cleaned_opt_in not in ["yes", "no"]:
+            raise ValidationError({'opt_in': [_('Invalid email opt in option provided'), ]})
+        return cleaned_opt_in
+
+    def clean(self):
         """ Enforce organization related field conditions"""
-        clean_org_name = self.cleaned_data.get("org_name")
-        clean_org_size = self.cleaned_data.get("org_size")
-        clean_org_type = self.cleaned_data.get("org_type")
+        cleaned_org_name = self.cleaned_data.get("org_name")
+        cleaned_org_size = self.cleaned_data.get("org_size")
+        cleaned_org_type = self.cleaned_data.get("org_type")
 
-        possible_org_types = OrgSector.objects.values_list('code', flat=True)
-        possible_org_sizes = TotalEmployee.objects.values_list('code', flat=True)
+        valid_org_type = OrgSector.objects.filter(code=cleaned_org_type).exists()
+        valid_org_size = TotalEmployee.objects.filter(code=cleaned_org_size).exists()
 
-        if clean_org_type and clean_org_type not in possible_org_types:
-            raise forms.ValidationError(_('Invalid org type option provided'))
-            return clean_org_name
+        if not valid_org_type:
+            raise ValidationError({'org_type': [_('Invalid organization type option provided'), ]})
 
-        if clean_org_size and clean_org_size not in possible_org_sizes:
-            raise forms.ValidationError(_('Invalid org size option provided'))
-            return clean_org_name
+        if not valid_org_size:
+            raise ValidationError({'org_size': [_('Invalid organization size option provided'), ]})
 
         # User is affiliated with some organization
-        if clean_org_name:
+        if cleaned_org_name:
             # Check if organization already exists and does have a size populated
-            existing_org = Organization.objects.filter(label=clean_org_name).first()
+            existing_org = Organization.objects.filter(label=cleaned_org_name).first()
 
             if existing_org:
                 existing_org_size = existing_org.total_employees
                 existing_org_type = existing_org.org_type
-                if not existing_org_size and not clean_org_size:
-                    raise forms.ValidationError(_("Organization size not provided."))
-                elif existing_org_size and clean_org_size:
-                    raise forms.ValidationError(_("Organization size provided for existing organization"))
+                if not existing_org_size and not cleaned_org_size:
+                    raise ValidationError({'org_size': [_("Organization size not provided."), ]})
+                elif existing_org_size and cleaned_org_size:
+                    raise ValidationError({'org_size': [_("Organization size provided for existing organization"), ]})
 
-                if not existing_org_type and not clean_org_type:
-                    raise forms.ValidationError(_("Organization type not provided."))
-                elif existing_org_type and clean_org_type:
-                    raise forms.ValidationError(_("Organization type provided for existing organization"))
+                if not existing_org_type and not cleaned_org_type:
+                    raise ValidationError({'org_type': [_("Organization type not provided."), ]})
+                elif existing_org_type and cleaned_org_type:
+                    raise ValidationError({'org_type': [_("Organization type provided for existing organization"), ]})
 
             else:
-                if not clean_org_size:
-                    raise forms.ValidationError(_("Organization size not provided for a new organization"))
-                if not clean_org_type:
-                    raise forms.ValidationError(_("Organization type not provided for a new organization"))
+                if not cleaned_org_size:
+                    raise ValidationError({'org_size': [_("Organization size not provided for new organization"), ]})
+                if not cleaned_org_type:
+                    raise ValidationError({'org_type': [_("Organization type not provided for new organization"), ]})
 
-        return clean_org_name
+        return self.cleaned_data
 
 
 def get_registration_extension_form(*args, **kwargs):
