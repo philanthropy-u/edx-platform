@@ -23,8 +23,7 @@ from util.request_rate_limiter import BadRequestRateLimiter
 from util.json_request import JsonResponse, JsonResponseBadRequest
 from xmodule.modulestore.django import modulestore
 from lms.djangoapps.certificates import api as certs_api
-
-from openedx.core.djangoapps.user_api.accounts.signals import USER_CERTIFICATE_DOWNLOADABLE
+from openedx.core.djangoapps.signals.signals import USER_CERTIFICATE_DOWNLOADABLE
 
 log = logging.getLogger(__name__)
 

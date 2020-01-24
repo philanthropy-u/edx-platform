@@ -6,6 +6,7 @@ import logging
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from common.lib.mandrill_client.client import MandrillClient
 from lms.djangoapps.certificates.models import (
     CertificateGenerationCourseSetting,
     CertificateWhitelist,
@@ -17,7 +18,8 @@ from lms.djangoapps.verify_student.services import IDVerificationService
 from openedx.core.djangoapps.certificates.api import auto_certificate_generation_enabled
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from openedx.core.djangoapps.content.course_overviews.signals import COURSE_PACING_CHANGED
-from openedx.core.djangoapps.signals.signals import COURSE_GRADE_NOW_PASSED, LEARNER_NOW_VERIFIED
+from openedx.core.djangoapps.signals.signals import COURSE_GRADE_NOW_PASSED, LEARNER_NOW_VERIFIED, \
+    USER_CERTIFICATE_DOWNLOADABLE
 from course_modes.models import CourseMode
 from student.models import CourseEnrollment
 
@@ -142,3 +144,16 @@ def fire_ungenerated_certificate_task(user, course_key, expected_verification_st
             kwargs['expected_verification_status'] = unicode(expected_verification_status)
         generate_certificate.apply_async(countdown=CERTIFICATE_DELAY_SECONDS, kwargs=kwargs)
         return True
+
+@receiver(USER_CERTIFICATE_DOWNLOADABLE)
+def send_email_user_certificate_downloadable(sender, first_name, display_name, certificate_reverse_url, user_email,
+                                             *args, **kwargs):
+    template = MandrillClient.DOWNLOAD_CERTIFICATE
+
+    context = dict(first_name=first_name, course_name=display_name,
+                   certificate_url=certificate_reverse_url)
+    try:
+        MandrillClient().send_mail(template, user_email, context)
+    except Exception as e:
+        # Mandrill errors are thrown as exceptions
+        log.error('Unable to send email for USER_CERTIFICATE_DOWNLOADABLE signal: %s - %s' % (e.__class__, e))

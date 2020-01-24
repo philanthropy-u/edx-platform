@@ -12,7 +12,3 @@ USER_RETIRE_LMS_CRITICAL = Signal(providing_args=["user"])
 
 # Signal to retire LMS misc information
 USER_RETIRE_LMS_MISC = Signal(providing_args=["user"])
-
-# Signal to send email to user when certificate is downloadable
-USER_CERTIFICATE_DOWNLOADABLE = Signal(
-    providing_args=['first_name', 'display_name', 'certificate_reverse_url', 'user_email'])
