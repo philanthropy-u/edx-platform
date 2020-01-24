@@ -25,7 +25,6 @@ CERT_GENERATION_RESPONSE_MESSAGE = 'Certificate generation {} for user with ' \
                                    'username: {} and user_id: {} with ' \
                                    'generation status: {}'
 
-GeneratedCertificate = apps.get_model('certificates', 'GeneratedCertificate')
 StudentModule = apps.get_model('courseware', 'StudentModule')
 GeneratedCertificate = apps.get_model('certificates', 'GeneratedCertificate')
 
@@ -53,7 +52,8 @@ class Command(BaseCommand):
             for user_course_enrollment in CourseEnrollment.objects.filter(course=course.id, is_active=True).all():
                 user = user_course_enrollment.user
                 cert_data = _get_cert_data(user, course, user_course_enrollment.mode)
-
+                if not cert_data or cert_data.cert_status != CertificateStatuses.requesting:
+                    continue
                 course_chapters = modulestore().get_items(
                     course.id,
                     qualifiers={'category': 'course'}
@@ -69,8 +69,6 @@ class Command(BaseCommand):
                 if ((total_modules - 1) * 7) >= delta_days and is_certificate_generated and not is_lastmodule_visitied:
                     continue
 
-                if not cert_data or cert_data.cert_status != CertificateStatuses.requesting:
-                    continue
                 '''
                     generate_user_certificates will add a request to xqueue to generate a new certificate for the user.
                     send_email=True parameter will let the callback url know to send email notification to the user as well.
