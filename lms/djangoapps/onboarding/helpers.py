@@ -7880,7 +7880,8 @@ def get_close_matching_orgs_with_suggestions(request, query):
                 'is_matched': is_matched,
                 'is_suggestion': is_suggestion,
                 'has_affiliated_partner': organization.has_affiliated_partner,
-                'total_employees': organization.total_employees
+                'total_employees': organization.total_employees,
+                'org_type': organization.org_type
             }
 
     return data

@@ -233,34 +233,6 @@ def contains_html(value):
     return bool(regex.search(value))
 
 
-def validate_name(name):
-    """
-    Verifies a Full_Name is valid, raises a ValidationError otherwise.
-    Args:
-        name (unicode): The name to validate.
-    """
-    if contains_html(name):
-        raise forms.ValidationError(_('Full Name cannot contain the following characters: < >'))
-
-
-def validate_org_size(org_size):
-    possible_org_sizes = TotalEmployee.objects.values_list('code', flat=True)
-    if org_size not in possible_org_sizes:
-        raise forms.ValidationError(_('Invalid org size option provided'))
-
-
-def validate_org_type(org_type):
-    possible_org_types = OrgSector.objects.values_list('code', flat=True)
-    if org_type not in possible_org_types:
-        raise forms.ValidationError(_('Invalid org type option provided'))
-
-
-def validate_opt_in_choice(opt_in):
-    possible_opt_in_options = ["yes", "no"]
-    if opt_in not in possible_opt_in_options:
-        raise forms.ValidationError(_('Invalid email opt in option provided'))
-
-
 class UsernameField(forms.CharField):
     """
     A CharField that validates usernames based on the `ENABLE_UNICODE_USERNAME` feature.
@@ -297,8 +269,29 @@ class AccountCreationForm(forms.Form):
     """
 
     _EMAIL_INVALID_MSG = _("A properly formatted e-mail is required")
-    _NAME_TOO_SHORT_MSG = _("Your legal name must be a minimum of two characters long")
+    _FIRST_NAME_TOO_SHORT_MSG = _("Your first name must be a minimum of two characters long")
+    _LAST_NAME_TOO_SHORT_MSG = _("Your last name must be a minimum of two characters long")
     _OPT_IN_REQUIRED_MSG = _("Email opt in is a required field, and can only be set to true or false")
+
+    def validate_name(name):
+        """
+        Verifies a Full_Name is valid, raises a ValidationError otherwise.
+        Args:
+            name (unicode): The name to validate.
+        """
+        if contains_html(name):
+            raise forms.ValidationError(_('Name field cannot contain the following characters: < >'))
+
+    def validate_opt_in_choice(opt_in):
+        """
+        Verifies a opt_in is valid only either "yes", or "no",
+        raises a ValidationError otherwise.
+        Args:
+            opt_in (unicode): The opt_in value to validate.
+        """
+        possible_opt_in_options = ["yes", "no"]
+        if opt_in not in possible_opt_in_options:
+            raise forms.ValidationError(_('Invalid email opt in option provided'))
 
     # TODO: Resolve repetition
 
@@ -317,34 +310,33 @@ class AccountCreationForm(forms.Form):
     password = forms.CharField()
 
     first_name = forms.CharField(
-        min_length=accounts_settings.NAME_MIN_LENGTH,
+        min_length=1,
         error_messages={
-            "required": _NAME_TOO_SHORT_MSG,
-            "min_length": _NAME_TOO_SHORT_MSG,
+            "required": _FIRST_NAME_TOO_SHORT_MSG,
+            "min_length": _FIRST_NAME_TOO_SHORT_MSG,
         },
         validators=[validate_name]
     )
 
     last_name = forms.CharField(
-        min_length=accounts_settings.NAME_MIN_LENGTH,
+        min_length=1,
         error_messages={
-            "required": _NAME_TOO_SHORT_MSG,
-            "min_length": _NAME_TOO_SHORT_MSG,
+            "required": _LAST_NAME_TOO_SHORT_MSG,
+            "min_length": _LAST_NAME_TOO_SHORT_MSG,
         },
         validators=[validate_name]
     )
 
     org_size = forms.CharField(
-        required=False,
-        validators=[validate_org_size]
+        required=False
     )
 
     org_type = forms.CharField(
-        required=False,
-        validators=[validate_org_type]
+        required=False
     )
 
     org_name = forms.CharField(
+        max_length=255,
         required=False
     )
 
@@ -357,7 +349,6 @@ class AccountCreationForm(forms.Form):
 
     def __init__(self, data=None, do_third_party_auth=True):
         super(AccountCreationForm, self).__init__(data)
-        self.extended_profile_fields = {}
         self.do_third_party_auth = do_third_party_auth
 
     def clean_password(self):
@@ -400,6 +391,17 @@ class AccountCreationForm(forms.Form):
         clean_org_size = self.cleaned_data.get("org_size")
         clean_org_type = self.cleaned_data.get("org_type")
 
+        possible_org_types = OrgSector.objects.values_list('code', flat=True)
+        possible_org_sizes = TotalEmployee.objects.values_list('code', flat=True)
+
+        if clean_org_type and clean_org_type not in possible_org_types:
+            raise forms.ValidationError(_('Invalid org type option provided'))
+            return clean_org_name
+
+        if clean_org_size and clean_org_size not in possible_org_sizes:
+            raise forms.ValidationError(_('Invalid org size option provided'))
+            return clean_org_name
+
         # User is affiliated with some organization
         if clean_org_name:
             # Check if organization already exists and does have a size populated
@@ -407,27 +409,25 @@ class AccountCreationForm(forms.Form):
 
             if existing_org:
                 existing_org_size = existing_org.total_employees
+                existing_org_type = existing_org.org_type
                 if not existing_org_size and not clean_org_size:
-                    raise forms.ValidationError(_("Organization size not provided for org with unpopulated size"))
+                    raise forms.ValidationError(_("Organization size not provided."))
                 elif existing_org_size and clean_org_size:
-                    raise forms.ValidationError(_("Organization size provided for existing org with populated size"))
+                    raise forms.ValidationError(_("Organization size provided for existing organization"))
+
+                if not existing_org_type and not clean_org_type:
+                    raise forms.ValidationError(_("Organization type not provided."))
+                elif existing_org_type and clean_org_type:
+                    raise forms.ValidationError(_("Organization type provided for existing organization"))
+
             else:
-                if not clean_org_size or not clean_org_type:
-                    raise forms.ValidationError(_("Organization type/size not provided for a new org"))
+                if not clean_org_size:
+                    raise forms.ValidationError(_("Organization size not provided for a new organization"))
+                if not clean_org_type:
+                    raise forms.ValidationError(_("Organization type not provided for a new organization"))
 
         return clean_org_name
 
-
-    @property
-    def cleaned_extended_profile(self):
-        """
-        Return a dictionary containing the extended_profile_fields and values
-        """
-        return {
-            key: value
-            for key, value in self.cleaned_data.items()
-            if key in self.extended_profile_fields and value is not None
-        }
 
 def get_registration_extension_form(*args, **kwargs):
     """

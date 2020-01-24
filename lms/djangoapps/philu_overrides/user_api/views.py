@@ -104,6 +104,7 @@ def _do_create_account_custom(form, is_alquity_user=False):
         raise
 
     org_name = form.cleaned_data.get("org_name")
+    org_type = form.cleaned_data.get('org_type')
     user_extended_profile_data = {}
 
     if org_name:
@@ -111,7 +112,7 @@ def _do_create_account_custom(form, is_alquity_user=False):
         org_size = form.cleaned_data.get('org_size')
         if org_created:
             user_organization.total_employees = org_size
-            user_organization.org_type = form.cleaned_data.get('org_type')
+            user_organization.org_type = org_type
             user_organization.save()
             user_extended_profile_data = {
                 'is_first_learner': True,
@@ -119,8 +120,13 @@ def _do_create_account_custom(form, is_alquity_user=False):
             }
         else:
             if org_size:
-                user_organization.total_employees = form.cleaned_data.get('org_size')
-                user_organization.save()
+                user_organization.total_employees = org_size
+
+            if org_type:
+                user_organization.org_type = org_type
+
+            user_organization.save()
+
             user_extended_profile_data = {
                 "organization_id": user_organization.id
             }
