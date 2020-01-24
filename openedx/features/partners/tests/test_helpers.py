@@ -1,4 +1,3 @@
-from mock import patch
 from django.http import Http404
 from organizations.tests.factories import UserFactory
 
@@ -108,10 +107,3 @@ class PartnerHelpersTest(ModuleStoreTestCase):
         recommended_courses = helpers.get_partner_recommended_courses("invalid", self.user)
         self.assertEqual(len(recommended_courses), 0)
 
-    @patch('openedx.features.partners.helpers.auto_join_partner_community')
-    def test_auto_join_partner_community(self, mock_calculate_date_by_delta):
-        """
-        Test auto_join_partner_community task with valid data
-        """
-        helpers.auto_join_partner_community(self.partner, self.user)
-        assert mock_calculate_date_by_delta.called
