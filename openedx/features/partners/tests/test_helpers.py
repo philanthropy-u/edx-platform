@@ -1,3 +1,4 @@
+from mock import patch
 from django.http import Http404
 from organizations.tests.factories import UserFactory
 
@@ -7,7 +8,7 @@ from xmodule.modulestore.tests.factories import CourseFactory
 from openedx.features.partners import helpers
 from openedx.core.djangoapps.models.course_details import CourseDetails
 from openedx.features.partners.tests.factories import CustomSettingsFactory, CourseCardFactory, CourseOverviewFactory, \
-    PartnerFactory
+    PartnerFactory, PartnerCommunityFactory
 
 
 class PartnerHelpersTest(ModuleStoreTestCase):
@@ -101,9 +102,46 @@ class PartnerHelpersTest(ModuleStoreTestCase):
 
     def test_get_partner_recommended_courses_with_invalid_partner(self):
         """
-        Test empty list of recommendation is returned for in valid partner
+        Test empty list of recommendation is returned for invalid partner
         :return : list of recommended courses
         """
         recommended_courses = helpers.get_partner_recommended_courses("invalid", self.user)
         self.assertEqual(len(recommended_courses), 0)
 
+    @patch('openedx.features.partners.helpers.log.info')
+    def test_auto_join_partner_community_with_valid_partner_community(self, mock_log_info):
+        """
+        log.info method gets called when our task is successfully
+        added to celery so making sure that log.info method gets
+        called will cover our test case for this helper function.
+        Create a partner and partner community
+         :return : None
+        """
+        PartnerCommunityFactory(partner=self.partner)
+        helpers.auto_join_partner_community(self.partner, self.user)
+        assert mock_log_info.called_once
+
+    @patch('openedx.features.partners.helpers.log.info')
+    def test_auto_join_partner_community_with_multiple_partner_community(self, mock_log_info):
+        """
+        Test that log.info method gets called for all added
+        communities for a partner
+        Create 2 partner communities
+         :return : None
+        """
+        PartnerCommunityFactory(partner=self.partner)
+        PartnerCommunityFactory(partner=self.partner)
+        helpers.auto_join_partner_community(self.partner, self.user)
+        self.assertEqual(mock_log_info.call_count, 2)
+
+    @patch('openedx.features.partners.helpers.log.info')
+    def test_auto_join_partner_community_without_partner_community(self, mock_log_info):
+        """
+        log.info method gets called when our task is successfully
+        added to celery so making sure that log.info method does
+        not get called for a partner without community will cover
+        our test case for this helper function.
+        :return : None
+        """
+        helpers.auto_join_partner_community(self.partner, self.user)
+        assert mock_log_info.not_called
