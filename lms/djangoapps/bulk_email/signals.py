@@ -7,7 +7,7 @@ from django.dispatch import receiver
 from student.models import CourseEnrollment
 import logging
 from common.lib.mandrill_client.client import MandrillClient
-from openedx.core.djangoapps.user_api.accounts.signals import USER_RETIRE_MAILINGS, USER_CERTIFICATE_DOWNLOADABLE
+from openedx.core.djangoapps.user_api.accounts.signals import USER_RETIRE_MAILINGS
 
 from .models import Optout
 
