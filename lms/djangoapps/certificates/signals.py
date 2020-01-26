@@ -18,18 +18,18 @@ from lms.djangoapps.verify_student.services import IDVerificationService
 from openedx.core.djangoapps.certificates.api import auto_certificate_generation_enabled
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from openedx.core.djangoapps.content.course_overviews.signals import COURSE_PACING_CHANGED
-from openedx.core.djangoapps.signals.signals import COURSE_GRADE_NOW_PASSED, LEARNER_NOW_VERIFIED, \
-    USER_CERTIFICATE_DOWNLOADABLE
+from openedx.core.djangoapps.signals.signals import (COURSE_GRADE_NOW_PASSED, LEARNER_NOW_VERIFIED,
+                                                     USER_CERTIFICATE_DOWNLOADABLE)
 from course_modes.models import CourseMode
 from student.models import CourseEnrollment
-
 
 log = logging.getLogger(__name__)
 CERTIFICATE_DELAY_SECONDS = 2
 
 
 @receiver(COURSE_PACING_CHANGED, dispatch_uid="update_cert_settings_on_pacing_change")
-def _update_cert_settings_on_pacing_change(sender, updated_course_overview, **kwargs):  # pylint: disable=unused-argument
+def _update_cert_settings_on_pacing_change(sender, updated_course_overview,
+                                           **kwargs):  # pylint: disable=unused-argument
     """
     Catches the signal that course pacing has changed and enable/disable
     the self-generated certificates according to course-pacing.
@@ -144,6 +144,7 @@ def fire_ungenerated_certificate_task(user, course_key, expected_verification_st
             kwargs['expected_verification_status'] = unicode(expected_verification_status)
         generate_certificate.apply_async(countdown=CERTIFICATE_DELAY_SECONDS, kwargs=kwargs)
         return True
+
 
 @receiver(USER_CERTIFICATE_DOWNLOADABLE)
 def send_email_user_certificate_downloadable(sender, first_name, display_name, certificate_reverse_url, user_email,
