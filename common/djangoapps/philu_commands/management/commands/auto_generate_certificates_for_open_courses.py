@@ -59,14 +59,13 @@ class Command(BaseCommand):
                     qualifiers={'category': 'course'}
                 )
                 COURSE_STRUCTURE_INDEX = 0
-                today = datetime.now(utc).date()
+                today = datetime.utcnow()
                 delta_days = (today - user_course_enrollment.created.date()).days
                 total_modules = len(course_chapters[COURSE_STRUCTURE_INDEX].children)
-                is_certificate_generated = GeneratedCertificate.objects.filter(course_id=course.id, user=user).exists()
                 last_module_id = str(course_chapters[COURSE_STRUCTURE_INDEX].children[-1])
                 usage_key = UsageKey.from_string(last_module_id)
                 is_lastmodule_visitied = StudentModule.objects.filter(student=user, module_state_key=usage_key).exists()
-                if ((total_modules - 1) * 7) >= delta_days and is_certificate_generated and not is_lastmodule_visitied:
+                if ((total_modules - 1) * 7) >= delta_days  and not is_lastmodule_visitied:
                     continue
 
                 '''

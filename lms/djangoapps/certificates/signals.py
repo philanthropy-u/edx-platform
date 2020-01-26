@@ -157,4 +157,6 @@ def send_email_user_certificate_downloadable(sender, first_name, display_name, c
         MandrillClient().send_mail(template, user_email, context)
     except Exception as e:
         # Mandrill errors are thrown as exceptions
-        log.error('Unable to send email for USER_CERTIFICATE_DOWNLOADABLE signal: %s - %s' % (e.__class__, e))
+        log.error(
+            'Unable to send email for USER_CERTIFICATE_DOWNLOADABLE signal: {class_name} - {exception_object}'.format(
+                class_name=e.__class__, exception_object=e))
