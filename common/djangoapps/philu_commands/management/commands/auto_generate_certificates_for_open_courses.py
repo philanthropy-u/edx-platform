@@ -8,16 +8,15 @@ from logging import getLogger
 
 from django.core.management.base import BaseCommand
 
-from pytz import utc
+from datetime import datetime
+from django.apps import apps
+from opaque_keys.edx.keys import UsageKey
 
 from courseware.views.views import _get_cert_data
 from lms.djangoapps.certificates.models import CertificateStatuses
 from lms.djangoapps.certificates.api import generate_user_certificates
 from student.models import CourseEnrollment
 from xmodule.modulestore.django import modulestore
-from datetime import datetime
-from django.apps import apps
-from opaque_keys.edx.keys import UsageKey
 
 log = getLogger(__name__)
 

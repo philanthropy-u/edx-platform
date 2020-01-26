@@ -5,13 +5,9 @@ Signal handlers for the bulk_email app
 from django.dispatch import receiver
 
 from student.models import CourseEnrollment
-import logging
-from common.lib.mandrill_client.client import MandrillClient
 from openedx.core.djangoapps.user_api.accounts.signals import USER_RETIRE_MAILINGS
 
 from .models import Optout
-
-log = logging.getLogger(__name__)
 
 @receiver(USER_RETIRE_MAILINGS)
 def force_optout_all(sender, **kwargs):  # pylint: disable=unused-argument
