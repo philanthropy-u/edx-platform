@@ -6,12 +6,13 @@ in the certificate_display_behavior setting in course advanced settings
 
 from datetime import datetime
 from logging import getLogger
+from pytz import UTC
 
 from courseware.views.views import _get_cert_data
 from django.apps import apps
 from django.core.management.base import BaseCommand
 from opaque_keys.edx.keys import UsageKey
-from pytz import UTC
+
 from student.models import CourseEnrollment
 from xmodule.modulestore.django import modulestore
 
