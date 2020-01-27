@@ -1,4 +1,3 @@
-from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
@@ -42,7 +41,7 @@ class ResetPasswordTestCases(APITestCase):
             self.partner_reset_password_end_point,
             data=valid_data
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_invalid_partner_email(self):
         """

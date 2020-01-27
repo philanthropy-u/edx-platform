@@ -14,7 +14,7 @@ class ResetPasswordTestCases(APITestCase):
 
     def test_login_with_correct_credentials(self):
         """
-                Testing login with valid credentials
+                Testing login with valid credentials, i.e, The emaile is registered and correnct password is provided
         """
         valid_data = {
             'email': 'abc@test.com',
@@ -81,7 +81,7 @@ class ResetPasswordTestCases(APITestCase):
 
     def test_login_with_username_with_nonexistant_partner(self):
         """
-                Not even a single partner exists
+                The url does not exist
         """
         invalid_data = {
             'email': 'abc@test.com',
