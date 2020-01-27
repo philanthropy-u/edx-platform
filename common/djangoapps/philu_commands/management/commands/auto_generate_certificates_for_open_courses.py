@@ -20,7 +20,7 @@ from xmodule.modulestore.django import modulestore
 
 log = getLogger(__name__)
 
-CERT_GENERATION_RESPONSE_MESSAGE = 'Certificate generation {} for user with ' \
+CERT_GENERATION_RESPONSE_MESSAGE = 'Generating certificate for user with ' \
                                    'username: {} and user_id: {} with ' \
                                    'generation status: {}'
 
@@ -78,4 +78,5 @@ class Command(BaseCommand):
                     generate_user_certificates will add a request to xqueue to generate a new certificate for the user.
                     send_email=True parameter will let the callback url know to send email notification to the user as well.
                 '''
-                generate_user_certificates(user, course.id, course=course, send_email=True)
+                status = generate_user_certificates(user, course.id, course=course, send_email=True)
+                log.info(CERT_GENERATION_RESPONSE_MESSAGE.format(user.username, user.id, status))
