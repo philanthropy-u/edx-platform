@@ -4,19 +4,18 @@ enrolled in currently running courses with early_no_info or early_with_info set
 in the certificate_display_behavior setting in course advanced settings
 """
 
+from datetime import datetime
 from logging import getLogger
 
-from django.core.management.base import BaseCommand
-
-from datetime import datetime
-from django.apps import apps
-from opaque_keys.edx.keys import UsageKey
-
 from courseware.views.views import _get_cert_data
-from lms.djangoapps.certificates.models import CertificateStatuses
-from lms.djangoapps.certificates.api import generate_user_certificates
+from django.apps import apps
+from django.core.management.base import BaseCommand
+from opaque_keys.edx.keys import UsageKey
 from student.models import CourseEnrollment
 from xmodule.modulestore.django import modulestore
+
+from lms.djangoapps.certificates.api import generate_user_certificates
+from lms.djangoapps.certificates.models import CertificateStatuses
 
 log = getLogger(__name__)
 
@@ -34,6 +33,14 @@ def is_course_valid_for_certificate_auto_generation(course):
 
 def is_eligible_for_certificate(user_course_enrollment,
                                 course_chapters, user):
+    """
+    This is checking if the user enrollment if eligible for the certificate generation.
+    :param user_course_enrollment:
+    :param course_chapters:
+    :param user:
+    :return:
+        bool: True if the current enrollment is eligible for the certificate generation.
+    """
     COURSE_STRUCTURE_INDEX = 0
     ESTIMATED_MODULE_COMPLETION_DAYS = 7
     today = datetime.utcnow()
@@ -74,9 +81,8 @@ class Command(BaseCommand):
                 if is_eligible_for_certificate(user_course_enrollment, course_chapters, user):
                     continue
 
-                '''
-                    generate_user_certificates will add a request to xqueue to generate a new certificate for the user.
-                    send_email=True parameter will let the callback url know to send email notification to the user as well.
-                '''
+                # generate_user_certificates will add a request to xqueue to generate a new certificate for the user.
+                # send_email=True parameter will let the callback url know to send email notification to the user.
+
                 status = generate_user_certificates(user, course.id, course=course, send_email=True)
                 log.info(CERT_GENERATION_RESPONSE_MESSAGE.format(user.username, user.id, status))
