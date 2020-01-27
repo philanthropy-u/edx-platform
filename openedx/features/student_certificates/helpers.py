@@ -1,15 +1,15 @@
+import json
+import shutil
+
 import base64
 import boto
 import requests
-import shutil
-
+from PIL import Image
 from boto.s3.key import Key
 from django.conf import settings
 from django.urls import reverse
-from PIL import Image
 from tempfile import TemporaryFile
 
-from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls
 from constants import (
     PAGE_HEIGHT,
     PAGE_WIDTH,
@@ -22,6 +22,10 @@ from constants import (
     TWITTER_META_TITLE_FMT,
     TWITTER_TWEET_TEXT_FMT
 )
+from lms.djangoapps.certificates import api as certs_api
+from lms.djangoapps.certificates.models import GeneratedCertificate
+from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls
+from openedx.features.student_certificates.signals import USER_CERTIFICATE_DOWNLOADABLE
 
 CERTIFICATE_IMG_PREFIX = 'certificates_images'
 
@@ -187,3 +191,16 @@ def get_verification_url(user_certificate):
         )
     return verification_url
 
+
+def fire_send_email_signal(modulestore, course_key, request, cert):
+    xqueue_send_email = json.loads(request.GET.get('send_email', 'false').lower())
+    if not xqueue_send_email:
+        return
+    course = modulestore().get_course(course_key)
+    certificate_reverse_url = certs_api.get_certificate_url(user_id=cert.user.id, course_id=course.id,
+                                                            uuid=cert.verify_uuid)
+    certificate_url = request.build_absolute_uri(certificate_reverse_url)
+    USER_CERTIFICATE_DOWNLOADABLE.send(sender=GeneratedCertificate, first_name=cert.name,
+                                       display_name=course.display_name,
+                                       certificate_reverse_url=certificate_url,
+                                       user_email=cert.user.email)
