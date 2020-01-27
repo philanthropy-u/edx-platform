@@ -10,7 +10,7 @@ class ResetPasswordTestCases(APITestCase):
 
     def setUp(self):
         self.partner_login_end_point = reverse('partner_login', args=['give2asia'])
-        self.user = UserFactory(username='testuser', password='Abc12345',email='abc@test.com')
+        self.user = UserFactory(username='testuser', password='Abc12345', email='abc@test.com')
 
     def test_login_with_correct_credentials(self):
         """
