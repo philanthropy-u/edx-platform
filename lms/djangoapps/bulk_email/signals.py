@@ -9,6 +9,7 @@ from openedx.core.djangoapps.user_api.accounts.signals import USER_RETIRE_MAILIN
 
 from .models import Optout
 
+
 @receiver(USER_RETIRE_MAILINGS)
 def force_optout_all(sender, **kwargs):  # pylint: disable=unused-argument
     """

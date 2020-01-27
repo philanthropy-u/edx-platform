@@ -23,8 +23,3 @@ COURSE_GRADE_NOW_PASSED = Signal(
 
 # Signal that indicates that a user has become verified
 LEARNER_NOW_VERIFIED = Signal(providing_args=['user'])
-
-# Signal to send email to user when certificate is downloadable
-USER_CERTIFICATE_DOWNLOADABLE = Signal(
-    providing_args=['first_name', 'display_name', 'certificate_reverse_url', 'user_email'])
-
