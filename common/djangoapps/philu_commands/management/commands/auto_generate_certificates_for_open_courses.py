@@ -32,6 +32,19 @@ def is_course_valid_for_certificate_auto_generation(course):
     return bool(course.has_started() and not course.has_ended() and course.may_certify())
 
 
+def is_eligible_for_certificate(user_course_enrollment,
+                                course_chapters, user):
+    COURSE_STRUCTURE_INDEX = 0
+    ESTIMATED_MODULE_COMPLETION_DAYS = 7
+    today = datetime.utcnow()
+    delta_days = (today - user_course_enrollment.created.date()).days
+    total_modules = len(course_chapters[COURSE_STRUCTURE_INDEX].children)
+    last_module_id = str(course_chapters[COURSE_STRUCTURE_INDEX].children[-1])
+    usage_key = UsageKey.from_string(last_module_id)
+    is_lastmodule_visitied = StudentModule.objects.filter(student=user, module_state_key=usage_key).exists()
+    return ((total_modules - 1) * ESTIMATED_MODULE_COMPLETION_DAYS) >= delta_days and not is_lastmodule_visitied
+
+
 class Command(BaseCommand):
     help = """
     The purpose of this command is to automatically generate certificates for
@@ -57,14 +70,8 @@ class Command(BaseCommand):
                     course.id,
                     qualifiers={'category': 'course'}
                 )
-                COURSE_STRUCTURE_INDEX = 0
-                today = datetime.utcnow()
-                delta_days = (today - user_course_enrollment.created.date()).days
-                total_modules = len(course_chapters[COURSE_STRUCTURE_INDEX].children)
-                last_module_id = str(course_chapters[COURSE_STRUCTURE_INDEX].children[-1])
-                usage_key = UsageKey.from_string(last_module_id)
-                is_lastmodule_visitied = StudentModule.objects.filter(student=user, module_state_key=usage_key).exists()
-                if ((total_modules - 1) * 7) >= delta_days  and not is_lastmodule_visitied:
+
+                if is_eligible_for_certificate(user_course_enrollment, course_chapters, user):
                     continue
 
                 '''

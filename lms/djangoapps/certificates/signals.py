@@ -6,7 +6,6 @@ import logging
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from common.lib.mandrill_client.client import MandrillClient
 from lms.djangoapps.certificates.models import (
     CertificateGenerationCourseSetting,
     CertificateWhitelist,
@@ -22,13 +21,13 @@ from openedx.core.djangoapps.signals.signals import COURSE_GRADE_NOW_PASSED, LEA
 from course_modes.models import CourseMode
 from student.models import CourseEnrollment
 
+
 log = logging.getLogger(__name__)
 CERTIFICATE_DELAY_SECONDS = 2
 
 
 @receiver(COURSE_PACING_CHANGED, dispatch_uid="update_cert_settings_on_pacing_change")
-def _update_cert_settings_on_pacing_change(sender, updated_course_overview,
-                                           **kwargs):  # pylint: disable=unused-argument
+def _update_cert_settings_on_pacing_change(sender, updated_course_overview, **kwargs):  # pylint: disable=unused-argument
     """
     Catches the signal that course pacing has changed and enable/disable
     the self-generated certificates according to course-pacing.
