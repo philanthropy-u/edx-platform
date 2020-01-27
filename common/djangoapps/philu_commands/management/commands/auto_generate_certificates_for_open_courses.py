@@ -11,6 +11,7 @@ from courseware.views.views import _get_cert_data
 from django.apps import apps
 from django.core.management.base import BaseCommand
 from opaque_keys.edx.keys import UsageKey
+from pytz import UTC
 from student.models import CourseEnrollment
 from xmodule.modulestore.django import modulestore
 
@@ -43,7 +44,7 @@ def is_eligible_for_certificate(user_course_enrollment,
     """
     COURSE_STRUCTURE_INDEX = 0
     ESTIMATED_MODULE_COMPLETION_DAYS = 7
-    today = datetime.utcnow()
+    today = datetime.now(UTC)
     delta_days = (today - user_course_enrollment.created.date()).days
     total_modules = len(course_chapters[COURSE_STRUCTURE_INDEX].children)
     last_module_id = str(course_chapters[COURSE_STRUCTURE_INDEX].children[-1])
