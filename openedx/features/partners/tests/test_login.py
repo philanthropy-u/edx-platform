@@ -14,7 +14,7 @@ class ResetPasswordTestCases(APITestCase):
 
     def test_login_with_correct_credentials(self):
         """
-                Testing login with valid credentials, i.e, The emaile is registered and correnct password is provided
+                Testing login with valid credentials, i.e, The email is registered and correct password is provided
         """
         valid_data = {
             'email': 'abc@test.com',
