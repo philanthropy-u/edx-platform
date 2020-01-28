@@ -236,12 +236,6 @@ def create_account_with_params_custom(request, params):
         params["password"] = eamap.internal_password
         log.debug(u'In create_account with external_auth: user = %s, email=%s', params["name"], params["email"])
 
-    registration_fields = getattr(settings, 'REGISTRATION_EXTRA_FIELDS', {})
-
-    params['name'] = "{} {}".format(
-        params.get('first_name', '').encode('utf-8'), params.get('last_name', '').encode('utf-8')
-    )
-
     form = AccountCreationForm(data=params, do_third_party_auth=do_external_auth)
 
     # Perform operations within a transaction that are critical to account creation
