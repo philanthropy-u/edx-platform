@@ -25,7 +25,7 @@ from openedx.core.djangoapps.user_authn.views.register import REGISTER_USER, rec
 from openedx.features.partners.helpers import auto_join_partner_community, get_partner_recommended_courses
 from openedx.features.partners.models import PartnerUser
 
-from lms.djangoapps.philu_overrides.user_api.views import RegistrationViewCustom
+from openedx.features.student_account.views import RegistrationViewCustom
 from lms.djangoapps.onboarding.models import EmailPreference, Organization, PartnerNetwork, UserExtendedProfile
 from philu_overrides.user_api.views import LoginSessionViewCustom
 from nodebb.helpers import update_nodebb_for_user_status, set_user_activation_status_on_nodebb
