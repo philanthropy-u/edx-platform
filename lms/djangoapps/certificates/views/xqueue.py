@@ -23,8 +23,6 @@ from util.request_rate_limiter import BadRequestRateLimiter
 from util.json_request import JsonResponse, JsonResponseBadRequest
 from xmodule.modulestore.django import modulestore
 
-from openedx.features.student_certificates.helpers import fire_send_email_signal
-
 log = logging.getLogger(__name__)
 
 
@@ -113,7 +111,6 @@ def update_certificate(request):
                 cert.verify_uuid = xqueue_body['verify_uuid']
                 cert.download_url = xqueue_body['url']
                 cert.status = status.downloadable
-                fire_send_email_signal(modulestore, course_key, request, cert)
             elif cert.status in [status.deleting]:
                 cert.status = status.deleted
             else:
