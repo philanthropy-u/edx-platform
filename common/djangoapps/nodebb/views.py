@@ -75,6 +75,7 @@ def nodebb_forum_discussion(request, course_id):
         "course_has_ended": current_course.has_ended(),
         "courses_page_link": reverse("courses"),
         "courseware_link": courseware_link,
+        "community_id": room_id,
         "unearned_badges": json.dumps(unearned_badges_dict)
     }
 

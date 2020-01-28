@@ -56,11 +56,12 @@ class Badge(models.Model):
         latest_earned = UserBadge.objects.filter(user_id=user_id,
                                                  community_id=community_id,
                                                  badge_id__type=community_type).order_by('date_earned').last()
+        previous_threshold = 0
 
         if latest_earned:
-            latest_threshold = Badge.objects.get(pk=latest_earned.badge_id, type=community_type).threshold
+            previous_threshold = Badge.objects.get(pk=latest_earned.badge_id, type=community_type).threshold
             unearned_badges = Badge.objects.filter(type=community_type) \
-                                           .exclude(threshold__lte=latest_threshold) \
+                                           .exclude(threshold__lte=previous_threshold) \
                                            .order_by('threshold')
         else:
             unearned_badges = Badge.objects.filter(type=community_type).order_by('threshold')
@@ -69,9 +70,11 @@ class Badge(models.Model):
         for badge in unearned_badges:
             unearned_badges_dict[badge.id] = {'name': badge.name,
                                               'description': badge.description,
+                                              'previous_threshold': previous_threshold,
                                               'threshold': badge.threshold,
                                               'type': badge.type,
                                               'image': badge.image}
+            previous_threshold = badge.threshold
         return unearned_badges_dict
 
 

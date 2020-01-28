@@ -199,6 +199,7 @@ def view_team(request, course_id, team_id):
         'leave_team_url': leave_team_url,
         'country': str(countries.countries[team.country]),
         'language': dict(settings.ALL_LANGUAGES)[team.language],
+        'community_id': room_id,
         'unearned_badges': json.dumps(unearned_badges_dict),
     }
 
