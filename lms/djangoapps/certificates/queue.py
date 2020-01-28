@@ -453,7 +453,7 @@ class XQueueCertInterface(object):
 
         if generate_pdf:
             try:
-                self._send_to_xqueue(contents, key, send_email=send_email)
+                self._send_to_xqueue(contents, key)
             except XQueueAddToQueueError as exc:
                 cert.status = ExampleCertificate.STATUS_ERROR
                 cert.error_reason = unicode(exc)
@@ -542,8 +542,7 @@ class XQueueCertInterface(object):
                 ), example_cert.uuid, unicode(exc)
             )
 
-    def _send_to_xqueue(self, contents, key, task_identifier=None, callback_url_path='/update_certificate',
-                        send_email=False):
+    def _send_to_xqueue(self, contents, key, task_identifier=None, callback_url_path='/update_certificate'):
         """Create a new task on the XQueue.
 
         Arguments:
@@ -576,13 +575,12 @@ class XQueueCertInterface(object):
         # XQueue also truncates the callback URL to 128 characters,
         # but since our key lengths are shorter than that, this should
         # not affect us.
-        callback_url += "?key={key}&send_email={send_email}".format(
+        callback_url += "?key={key}".format(
             key=(
                 task_identifier
                 if task_identifier is not None
                 else key
-            ),
-            send_email=send_email
+            )
         )
 
         xheader = make_xheader(callback_url, key, settings.CERT_QUEUE)
