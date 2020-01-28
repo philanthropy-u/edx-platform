@@ -1,6 +1,6 @@
 import base64
-from importlib import import_module
 import shutil
+from importlib import import_module
 from tempfile import TemporaryFile
 
 import boto
@@ -8,7 +8,6 @@ import requests
 from PIL import Image
 from boto.s3.key import Key
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.urls import reverse
 
 from constants import (
@@ -135,7 +134,7 @@ def get_image_and_size_from_url(url):
         with TemporaryFile(dir=TMPDIR) as certificate_image_file:
             # copy the contents of image request to our temporary file
             shutil.copyfileobj(response.raw, certificate_image_file)
-            certificate_image_file.seek(0) # file will be read from beginning
+            certificate_image_file.seek(0)  # file will be read from beginning
             image_base64 = base64.b64encode(certificate_image_file.read())
             image_file = Image.open(certificate_image_file)
             page_width, page_height = image_file.size
@@ -196,8 +195,7 @@ def get_verification_url(user_certificate):
 def fire_send_email_signal(course, cert):
     certificate_reverse_url = certs_api.get_certificate_url(user_id=cert.user.id, course_id=course.id,
                                                             uuid=cert.verify_uuid)
-    domain = Site.objects.get_current().domain
-    certificate_url = ''.join([domain, certificate_reverse_url])
+    certificate_url = settings.LMS_ROOT_URL + certificate_reverse_url
     USER_CERTIFICATE_DOWNLOADABLE.send(sender=GeneratedCertificate, first_name=cert.name,
                                        display_name=course.display_name,
                                        certificate_reverse_url=certificate_url,
