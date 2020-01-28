@@ -33,7 +33,7 @@ def is_course_valid_for_certificate_auto_generation(course):
     return bool(course.has_started() and not course.has_ended() and course.may_certify())
 
 
-def is_eligible_for_certificate(user_course_enrollment,
+def _is_eligible_for_certificate(user_course_enrollment,
                                 course_chapters, user):
     """
     This is checking if the user enrollment if eligible for the certificate generation.
@@ -80,7 +80,7 @@ class Command(BaseCommand):
                     qualifiers={'category': 'course'}
                 )
 
-                if is_eligible_for_certificate(user_course_enrollment, course_chapters, user):
+                if _is_eligible_for_certificate(user_course_enrollment, course_chapters, user):
                     continue
 
                 # generate_user_certificates will add a request to xqueue to generate a new certificate for the user.
