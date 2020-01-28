@@ -476,7 +476,7 @@ class XQueueCertInterface(object):
                     cert.status,
                     key
                 )
-        elif send_email:
+        if send_email:
             fire_send_email_signal(course, cert)
         return cert
 
