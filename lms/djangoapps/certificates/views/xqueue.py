@@ -66,8 +66,10 @@ def update_certificate(request):
 
     status = CertificateStatuses
     if request.method == "POST":
+
         xqueue_body = json.loads(request.POST.get('xqueue_body'))
         xqueue_header = json.loads(request.POST.get('xqueue_header'))
+
         try:
             course_key = CourseKey.from_string(xqueue_body['course_id'])
 
