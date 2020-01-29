@@ -901,3 +901,35 @@ class RegistrationType(models.Model):
         related_name='registration_type'
     )
     choice = models.SmallIntegerField(default=1, null=False)
+
+class LinkedInEducation(models.Model):
+    """
+    Model to store user education information from linkedin
+    """
+    user = models.ForeignKey(User, related_name='linkedin_education')
+    school_name = models.CharField(max_length=100, null=True, blank=True)
+    degree_name = models.CharField(max_length=100, null=True, blank=True)
+    start_month_year = models.DateField(null=True, blank=True)
+    end_month_year = models.DateField(null=True, blank=True)
+    description = models.CharField(max_length=500, blank=True, null=True)
+
+
+class LinkedInExperience(models.Model):
+    """
+    Model to store user experience from linkedin
+    """
+    user = models.ForeignKey(User, related_name='linkedin_experience')
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    is_current = models.BooleanField(default=False)
+    title = models.CharField(max_length=50, null=True, blank=True)
+    company = models.CharField(max_length=100, null=True, blank=True)
+    summary = models.CharField(max_length=500, null=True, blank=True)
+
+
+class LinkedInSkills(models.Model):
+    """
+    Model to store user skills from linkedin
+    """
+    user = models.ForeignKey(User, related_name='linkedin_skills')
+    name = models.CharField(max_length=50, null=True, blank=True)
