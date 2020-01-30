@@ -902,11 +902,14 @@ class RegistrationType(models.Model):
     )
     choice = models.SmallIntegerField(default=1, null=False)
 
-class LinkedInEducation(models.Model):
+
+class Education(models.Model):
     """
     Model to store user education information from linkedin
     """
-    user = models.ForeignKey(User, related_name='linkedin_education')
+    linkedin_id = models.IntegerField(null=True, blank=True)
+    user = models.ForeignKey(User, related_name='linkedin_education',
+                             on_delete=models.CASCADE)
     school_name = models.CharField(max_length=100, null=True, blank=True)
     degree_name = models.CharField(max_length=100, null=True, blank=True)
     start_month_year = models.DateField(null=True, blank=True)
@@ -914,11 +917,13 @@ class LinkedInEducation(models.Model):
     description = models.CharField(max_length=500, blank=True, null=True)
 
 
-class LinkedInExperience(models.Model):
+class Experience(models.Model):
     """
     Model to store user experience from linkedin
     """
-    user = models.ForeignKey(User, related_name='linkedin_experience')
+    linkedin_id = models.IntegerField(null=True, blank=True)
+    user = models.ForeignKey(User, related_name='linkedin_experience',
+                             on_delete=models.CASCADE)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     is_current = models.BooleanField(default=False)
@@ -927,9 +932,11 @@ class LinkedInExperience(models.Model):
     summary = models.CharField(max_length=500, null=True, blank=True)
 
 
-class LinkedInSkills(models.Model):
+class Skills(models.Model):
     """
     Model to store user skills from linkedin
     """
-    user = models.ForeignKey(User, related_name='linkedin_skills')
+    linkedin_id = models.IntegerField(null=True, blank=True)
+    user = models.ForeignKey(User, related_name='linkedin_skills',
+                             on_delete=models.CASCADE)
     name = models.CharField(max_length=50, null=True, blank=True)

@@ -24,9 +24,9 @@ from lms.djangoapps.onboarding.models import (
     OrganizationMetricUpdatePrompt,
     MetricUpdatePromptRecord,
     GranteeOptIn,
-    LinkedInEducation,
-    LinkedInExperience,
-    LinkedInSkills
+    Education,
+    Experience,
+    Skills
 )
 
 
@@ -115,18 +115,18 @@ class GranteeOptInAdmin(admin.ModelAdmin):
     list_display = ('id', 'organization_partner', 'user', 'agreed', 'created_at')
 
 
-class LinkedInEducationAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'school_name', 'degree_name', 'start_month_year',
+class EducationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'linkedin_id', 'user', 'school_name', 'degree_name', 'start_month_year',
                     'end_month_year', 'description')
 
 
-class LinkedInExperienceAdmin(admin.ModelAdmin):
-    list_display = ('id', 'start_date', 'end_date', 'is_current', 'title',
+class ExperienceAdmin(admin.ModelAdmin):
+    list_display = ('id', 'linkedin_id', 'start_date', 'end_date', 'is_current', 'title',
                     'company', 'summary')
 
 
-class LinkedInSkillsAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')
+class SkillsAdmin(admin.ModelAdmin):
+    list_display = ('id', 'linkedin_id', 'name')
 
 
 admin.site.register(Currency, CurrencyAdmin)
@@ -147,6 +147,6 @@ admin.site.register(OrganizationMetric, OrganizationMetricAdmin)
 admin.site.register(OrganizationMetricUpdatePrompt, OrganizationMetricUpdatePromptAdmin)
 admin.site.register(MetricUpdatePromptRecord, MetricUpdatePromptRecordAdmin)
 admin.site.register(GranteeOptIn, GranteeOptInAdmin)
-admin.site.register(LinkedInEducation, LinkedInEducationAdmin)
-admin.site.register(LinkedInExperience, LinkedInExperienceAdmin)
-admin.site.register(LinkedInSkills, LinkedInSkillsAdmin)
+admin.site.register(Education, EducationAdmin)
+admin.site.register(Experience, ExperienceAdmin)
+admin.site.register(Skills, SkillsAdmin)
