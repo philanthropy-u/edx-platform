@@ -26,7 +26,7 @@ from lms.djangoapps.onboarding.models import (
     GranteeOptIn,
     Education,
     Experience,
-    Skills
+    Skill,
 )
 
 
@@ -125,7 +125,7 @@ class ExperienceAdmin(admin.ModelAdmin):
                     'company', 'summary')
 
 
-class SkillsAdmin(admin.ModelAdmin):
+class SkillAdmin(admin.ModelAdmin):
     list_display = ('id', 'linkedin_id', 'name')
 
 
@@ -149,4 +149,4 @@ admin.site.register(MetricUpdatePromptRecord, MetricUpdatePromptRecordAdmin)
 admin.site.register(GranteeOptIn, GranteeOptInAdmin)
 admin.site.register(Education, EducationAdmin)
 admin.site.register(Experience, ExperienceAdmin)
-admin.site.register(Skills, SkillsAdmin)
+admin.site.register(Skill, SkillAdmin)
