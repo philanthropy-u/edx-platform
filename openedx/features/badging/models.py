@@ -34,48 +34,34 @@ class Badge(models.Model):
         return self.name
 
     @classmethod
-    def get_unearned_badges(cls, user_id, community_id, community_type):
-        """ Get dictionary of badges that can still be earned in a
-            community by a user
-
-
-            Parameters
-            ----------
-            user_id : long
-                      user id of a user object
-            community_id : str
-                      community ID of a discussion group
-            community_type : str
-                      community type string (team/conversationalist)
-
-            Returns
-            -------
-            Dict
-                nested dictionary object of unattained badge information
+    def get_badges(cls, community_type):
         """
-        latest_earned = UserBadge.objects.filter(user_id=user_id,
-                                                 community_id=community_id,
-                                                 badge_id__type=community_type).order_by('date_earned').last()
+        Get dictionary of all badges of provided community type
+
+        Parameters
+        ----------
+        community_type: str
+                        community type string (team/conversationalist)
+
+        Returns
+        -------
+        Dict
+            dictionary of all badges
+        """
         previous_threshold = 0
-
-        if latest_earned:
-            previous_threshold = Badge.objects.get(pk=latest_earned.badge_id, type=community_type).threshold
-            unearned_badges = Badge.objects.filter(type=community_type) \
-                                           .exclude(threshold__lte=previous_threshold) \
-                                           .order_by('threshold')
-        else:
-            unearned_badges = Badge.objects.filter(type=community_type).order_by('threshold')
-
-        unearned_badges_dict = {}
-        for badge in unearned_badges:
-            unearned_badges_dict[badge.id] = {'name': badge.name,
-                                              'description': badge.description,
-                                              'previous_threshold': previous_threshold,
-                                              'threshold': badge.threshold,
-                                              'type': badge.type,
-                                              'image': badge.image}
+        badges = Badge.objects.filter(type=community_type).order_by('threshold')
+        badges_dict = {}
+        for badge in badges:
+            badges_dict[badge.id] = {
+                'name': badge.name,
+                'description': badge.description,
+                'previous_threshold': previous_threshold,
+                'threshold': badge.threshold,
+                'type': badge.type,
+                'image': badge.image,
+            }
             previous_threshold = badge.threshold
-        return unearned_badges_dict
+        return badges_dict
 
 
 class UserBadge(models.Model):
