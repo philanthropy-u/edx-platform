@@ -903,7 +903,7 @@ class RegistrationType(models.Model):
     choice = models.SmallIntegerField(default=1, null=False)
 
 
-class Education(models.Model):
+class Education(TimeStampedModel):
     """
     Model to store user education information
     """
@@ -919,7 +919,7 @@ class Education(models.Model):
         return '{} {}'.format(self.school_name, self.degree_name)
 
 
-class Experience(models.Model):
+class Experience(TimeStampedModel):
     """
     Model to store user experience information
     """
@@ -936,7 +936,7 @@ class Experience(models.Model):
         return self.title
 
 
-class Skill(models.Model):
+class Skill(TimeStampedModel):
     """
     Model to store user skill information
     """
