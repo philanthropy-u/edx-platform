@@ -908,16 +908,15 @@ class Education(models.Model):
     Model to store user education information
     """
     linkedin_id = models.IntegerField(null=True, blank=True, unique=True)
-    user = models.ForeignKey(User, related_name='education',
-                             on_delete=models.CASCADE)
-    school_name = models.CharField(max_length=100, null=True, blank=True)
-    degree_name = models.CharField(max_length=100, null=True, blank=True)
+    user = models.ForeignKey(User, related_name='education', on_delete=models.CASCADE)
+    school_name = models.CharField(max_length=255, null=True, blank=True)
+    degree_name = models.CharField(max_length=255, null=True, blank=True)
     start_month_year = models.DateField(null=True, blank=True)
     end_month_year = models.DateField(null=True, blank=True)
-    description = models.CharField(max_length=500, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
 
     def __unicode__(self):
-        return '%s %s' % (self.school_name, self.degree_name)
+        return '{} {}'.format(self.school_name, self.degree_name)
 
 
 class Experience(models.Model):
@@ -925,14 +924,13 @@ class Experience(models.Model):
     Model to store user experience information
     """
     linkedin_id = models.IntegerField(null=True, blank=True, unique=True)
-    user = models.ForeignKey(User, related_name='experience',
-                             on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='experience', on_delete=models.CASCADE)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     is_current = models.BooleanField(default=False)
-    title = models.CharField(max_length=50, null=True, blank=True)
-    company = models.CharField(max_length=100, null=True, blank=True)
-    summary = models.CharField(max_length=500, null=True, blank=True)
+    title = models.CharField(max_length=255, null=True, blank=True)
+    company = models.CharField(max_length=255, null=True, blank=True)
+    summary = models.TextField(blank=True, null=True)
 
     def __unicode__(self):
         return self.title
@@ -943,9 +941,8 @@ class Skill(models.Model):
     Model to store user skill information
     """
     linkedin_id = models.IntegerField(null=True, blank=True, unique=True)
-    user = models.ForeignKey(User, related_name='skill',
-                             on_delete=models.CASCADE)
-    name = models.CharField(max_length=50, null=True, blank=True)
+    user = models.ForeignKey(User, related_name='skill', on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, null=True, blank=True)
 
     def __unicode__(self):
         return self.name
