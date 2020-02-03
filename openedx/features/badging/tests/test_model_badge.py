@@ -31,7 +31,7 @@ class BadgeModelTestCases(TestCase):
 
     def test_get_badges_json(self):
         """
-        Test get badges json method
+        Check if get_badges_json returns correct json
         """
         expected_result = '[]'
         returned_result = Badge.get_badges_json(badge_type="no_match_")
