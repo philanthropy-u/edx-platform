@@ -56,7 +56,6 @@ def nodebb_forum_discussion(request, course_id):
     courseware_link = reverse('courseware', args=[course_id])
 
     room_id = course_community.community_url.split(COMMUNITY_URL_SPLIT_CHAR)[COMMUNITY_ID_SPLIT_INDEX]
-    badges_dict = Badge.get_badges(community_type=CONVERSATIONALIST[CONVERSATIONALIST_ENTRY_INDEX])
 
     context = {
         "provider": current_course.org,
@@ -74,7 +73,7 @@ def nodebb_forum_discussion(request, course_id):
         "courses_page_link": reverse("courses"),
         "courseware_link": courseware_link,
         "community_id": room_id,
-        "badges": json.dumps(badges_dict)
+        "badges": Badge.get_badges_json(badge_type=CONVERSATIONALIST[CONVERSATIONALIST_ENTRY_INDEX]),
     }
 
     return render(request, 'discussion_nodebb/discussion_board.html', context)

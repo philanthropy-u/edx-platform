@@ -183,8 +183,6 @@ def view_team(request, course_id, team_id):
 
     is_user_member_of_this_team = bool(CourseTeamMembership.objects.filter(team=team, user=user).first())
 
-    badges_dict = Badge.get_badges(community_type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX])
-
     context = {
         'course': course,
         'user_has_team': is_member_of_any_team,
@@ -198,7 +196,7 @@ def view_team(request, course_id, team_id):
         'country': str(countries.countries[team.country]),
         'language': dict(settings.ALL_LANGUAGES)[team.language],
         'community_id': room_id,
-        'badges': json.dumps(badges_dict),
+        'badges': Badge.get_badges_json(badge_type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX]),
     }
 
     return render_to_response("teams/view_team.html", context)

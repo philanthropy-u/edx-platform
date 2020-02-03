@@ -3,6 +3,8 @@ import logging
 from django.contrib.auth.models import User
 from django.db import models
 
+from rest_framework.renderers import JSONRenderer
+
 from lms.djangoapps.teams.models import CourseTeamMembership, CourseTeam
 from nodebb.constants import (
     TEAM_PLAYER_ENTRY_INDEX,
@@ -34,34 +36,22 @@ class Badge(models.Model):
         return self.name
 
     @classmethod
-    def get_badges(cls, community_type):
+    def get_badges_json(cls, badge_type):
         """
-        Get dictionary of all badges of provided community type
+        Get json of all badges of provided badge type
 
         Parameters
         ----------
-        community_type: str
-                        community type string (team/conversationalist)
+        badge_type: str
+                        badge type string (team/conversationalist)
 
         Returns
         -------
-        Dict
-            dictionary of all badges
+        JSON
+            json of all badges
         """
-        previous_threshold = 0
-        badges = Badge.objects.filter(type=community_type).order_by('threshold')
-        badges_dict = {}
-        for badge in badges:
-            badges_dict[badge.id] = {
-                'name': badge.name,
-                'description': badge.description,
-                'previous_threshold': previous_threshold,
-                'threshold': badge.threshold,
-                'type': badge.type,
-                'image': badge.image,
-            }
-            previous_threshold = badge.threshold
-        return badges_dict
+        badges = Badge.objects.filter(type=badge_type).order_by('threshold').values()
+        return JSONRenderer().render(badges)
 
 
 class UserBadge(models.Model):
