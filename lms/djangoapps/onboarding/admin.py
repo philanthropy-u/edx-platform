@@ -6,27 +6,27 @@ import onboarding.handlers
 
 
 from lms.djangoapps.onboarding.models import (
-    RoleInsideOrg,
     Currency,
-    OrgSector,
-    OperationLevel,
-    FocusArea,
-    TotalEmployee,
-    PartnerNetwork,
+    Education,
     EducationLevel,
-    EnglishProficiency,
-    Organization,
-    UserExtendedProfile,
     EmailPreference,
+    EnglishProficiency,
+    Experience,
+    FocusArea,
     FunctionArea,
-    OrganizationPartner,
+    GranteeOptIn,
+    MetricUpdatePromptRecord,
+    OperationLevel,
+    OrgSector,
+    Organization,
     OrganizationMetric,
     OrganizationMetricUpdatePrompt,
-    MetricUpdatePromptRecord,
-    GranteeOptIn,
-    Education,
-    Experience,
+    OrganizationPartner,
+    PartnerNetwork,
+    RoleInsideOrg,
     Skill,
+    TotalEmployee,
+    UserExtendedProfile
 )
 
 
