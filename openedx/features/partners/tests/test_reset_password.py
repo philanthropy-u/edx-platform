@@ -20,9 +20,9 @@ class ResetPasswordTestCases(APITestCase):
         valid_data = {
             'email': 'abc@test.com'
         }
-        partner_1 = PartnerFactory(slug='partner_1')
+        partner = PartnerFactory(slug='partner')
 
-        PartnerUserFactory(user_id=self.user.id, partner_id=partner_1.id)
+        PartnerUserFactory(user_id=self.user.id, partner_id=partner.id)
 
         response = self.client.post(
             self.partner_reset_password_end_point,

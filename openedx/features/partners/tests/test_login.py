@@ -21,9 +21,9 @@ class ResetPasswordTestCases(APITestCase):
             'password': 'Abc12345'
         }
 
-        partner_1 = PartnerFactory(slug='give2asia')
+        partner = PartnerFactory(slug='give2asia')
 
-        PartnerUserFactory(user_id=self.user.id, partner_id=partner_1.id)
+        PartnerUserFactory(user_id=self.user.id, partner_id=partner.id)
 
         response = self.client.post(
             self.partner_login_end_point,
@@ -39,9 +39,9 @@ class ResetPasswordTestCases(APITestCase):
             'email': 'abc@test.com',
             'password': 'incorrectpassword'
         }
-        partner_1 = PartnerFactory(slug='give2asia')
+        partner = PartnerFactory(slug='give2asia')
 
-        PartnerUserFactory(user_id=self.user.id, partner_id=partner_1.id)
+        PartnerUserFactory(user_id=self.user.id, partner_id=partner.id)
 
         response = self.client.post(
             self.partner_login_end_point,
@@ -57,7 +57,7 @@ class ResetPasswordTestCases(APITestCase):
             'email': 'efg@test.com',
             'password': 'qwertyQ123'
         }
-        partner_1 = PartnerFactory(slug='give2asia')
+        partner = PartnerFactory(slug='give2asia')
         response = self.client.post(
             self.partner_login_end_point,
             data=invalid_data
@@ -72,7 +72,7 @@ class ResetPasswordTestCases(APITestCase):
             'email': 'abc@test.com',
             'password': 'Abc12345'
         }
-        partner_1 = PartnerFactory(slug='give2asia')
+        partner = PartnerFactory(slug='give2asia')
         response = self.client.post(
             self.partner_login_end_point,
             data=invalid_data
@@ -102,12 +102,12 @@ class ResetPasswordTestCases(APITestCase):
             'email': 'abc@test.com',
             'password': 'Abc12345'
         }
-        partner_1 = PartnerFactory(slug='slug')
+        partner = PartnerFactory(slug='invalid_slug')
 
-        PartnerUserFactory(user_id=self.user.id, partner_id=partner_1.id)
+        PartnerUserFactory(user_id=self.user.id, partner_id=partner.id)
 
         response = self.client.post(
-            reverse('partner_login', args=['slug']),
+            reverse('partner_login', args=['invalid_slug']),
             data=valid_data
         )
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
