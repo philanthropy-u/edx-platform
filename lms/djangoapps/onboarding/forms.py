@@ -404,6 +404,12 @@ class UserInfoModelForm(BaseOnboardingModelForm):
                     log.info(ex.args)
                     pass
 
+            # If user wants to remove h/er-self as admin from any organization.
+            if not is_poc == '1':
+                if organization_to_assign.admin == user:
+                    organization_to_assign.admin = None
+                    user_info_survey.organization = organization_to_assign
+
         elif is_currently_unemployed:
             if user_info_survey.organization and user_info_survey.organization.admin == user:
                 user_info_survey.organization.admin = None
