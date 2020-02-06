@@ -643,7 +643,7 @@ def admin_activation(request, activation_key):
         new_admin = user_extended_profile.user
 
         context['key'] = hash_key.activation_hash
-        context['is_org_admin'] = True if hash_key.suggested_by == hash_key.organization.admin else False
+        context['is_org_admin'] = True if hash_key.suggested_by == current_admin else False
 
         if hash_key.is_hash_consumed:
             activation_status = 2
