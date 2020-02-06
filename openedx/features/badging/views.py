@@ -42,7 +42,7 @@ def my_badges(request, course_id):
     user = request.user
 
     course_key = CourseKey.from_string(unicode(course_id))
-    course = get_course_with_access(user, "load", course_key)
+    course = get_course_with_access(user, 'load', course_key)
     if not CourseEnrollment.is_enrolled(user, course_key):
         raise Http404
 
@@ -54,7 +54,7 @@ def my_badges(request, course_id):
     badges = get_course_badges(user, course_key, earned_user_badges)
 
     return render_to_response(
-        "features/badging/my_badges.html",
+        'features/badging/my_badges.html',
         {
             'course': course,
             'badges': badges
