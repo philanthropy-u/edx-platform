@@ -638,9 +638,7 @@ def admin_activation(request, activation_key):
     try:
         hash_key = OrganizationAdminHashKeys.objects.get(activation_hash=activation_key)
         admin_change_confirmation = True if request.GET.get('confirm') == 'True' else False
-        current_admin = request.user
-        if current_admin.is_anonymous:
-            current_admin = hash_key.organization.admin
+        current_admin = hash_key.organization.admin
         user_extended_profile = UserExtendedProfile.objects.get(user__email=hash_key.suggested_admin_email)
         new_admin = user_extended_profile.user
 
