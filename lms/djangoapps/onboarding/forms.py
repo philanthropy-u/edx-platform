@@ -401,7 +401,6 @@ class UserInfoModelForm(BaseOnboardingModelForm):
                                                 claimed_by_email, org_admin_email, hash_key)
                     user_info_survey.organization = organization_to_assign
                 except Exception as ex:
-
                     log.info(ex.args)
                     pass
 
