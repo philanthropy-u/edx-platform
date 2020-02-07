@@ -4,9 +4,9 @@ from django.test import RequestFactory, TestCase
 
 from student.tests.factories import UserFactory
 
+from lms.djangoapps.onboarding.models import Organization
 from openedx.features.student_account.forms import AccountCreationFormCustom
 from openedx.features.student_account.helpers import set_opt_in_and_affiliate_user_organization
-from lms.djangoapps.onboarding.models import Organization
 
 
 class SetOptInAndAffiliateOrganizationTests(TestCase):
