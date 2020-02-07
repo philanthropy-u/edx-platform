@@ -24,12 +24,8 @@ class SaveUserUTMInfoTests(TestCase):
         )
 
         save_user_utm_info(request, self.user)
-        saved_utm = UserLeads.objects.filter(user=self.user).first()
-        self.assertEqual(saved_utm.utm_source, utm_data_to_save['utm_source'])
-        self.assertEqual(saved_utm.utm_medium, utm_data_to_save['utm_medium'])
-        self.assertEqual(saved_utm.utm_campaign, utm_data_to_save['utm_campaign'])
-        self.assertEqual(saved_utm.utm_content, utm_data_to_save['utm_content'])
-        self.assertEqual(saved_utm.utm_term, utm_data_to_save['utm_term'])
+        saved_utm = UserLeads.objects.filter(user=self.user).values(*utm_data_to_save.keys()).first()
+        self.assertDictEqual(saved_utm, utm_data_to_save)
 
     def test_save_utm_empty(self):
         request = RequestFactory().post(
