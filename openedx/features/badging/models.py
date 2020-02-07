@@ -153,20 +153,25 @@ class UserBadge(models.Model):
         such that he has same number of badges as any other member
         of same team
         """
-        if user_id is None or team_id is None:
+        if not (user_id and team_id):
             error = badge_constants.TEAM_BADGE_ERROR.format(user_id=user_id, team_id=team_id)
             log.exception(error)
-            return Exception(error)
+            raise Exception(error)
 
         team_group_chat = TeamGroupChat.objects.filter(team_id=team_id).values(badge_constants.ROOM_ID_KEY).first()
+
+        # The query gathers the badges earned by the team in a specific course while making sure that duplicate data is
+        # not returned, as one badge can be earned by multiple members of the team, hence the distinct keyword.
         earned_team_badges = UserBadge.objects.filter(community_id=team_group_chat[badge_constants.ROOM_ID_KEY]).values(
-            badge_constants.BADGE_ID_KEY, badge_constants.COURSE_ID_KEY, badge_constants.COMMUNITY_ID_KEY,
+            badge_constants.BADGE_ID_KEY,
+            badge_constants.COURSE_ID_KEY,
             badge_constants.THRESHOLD_KEY).distinct()
+
         # assign team's earned badges to current user which are not already earned
         for user_badge in earned_team_badges:
             UserBadge.objects.get_or_create(
                 user_id=user_id,
                 badge_id=user_badge[badge_constants.BADGE_ID_KEY],
                 course_id=user_badge[badge_constants.COURSE_ID_KEY],
-                community_id=user_badge[badge_constants.COMMUNITY_ID_KEY]
+                community_id=team_group_chat[badge_constants.ROOM_ID_KEY]
             )

@@ -4,7 +4,6 @@ TEAM_PLAYER = ('team', 'Team player')
 BADGE_ID_KEY = 'badge_id'
 BADGES_KEY = 'badges'
 COURSE_ID_KEY = 'course_id'
-COMMUNITY_ID_KEY = 'community_id'
 ROOM_ID_KEY = 'room_id'
 TEAM_ID_KEY = 'team_id'
 TEAM_ROOM_ID_KEY = 'team__room_id'
