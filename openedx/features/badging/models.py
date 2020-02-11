@@ -2,12 +2,10 @@ import logging
 
 from django.contrib.auth.models import User
 from django.db import models
+from rest_framework.renderers import JSONRenderer
 
-from lms.djangoapps.teams.models import CourseTeamMembership, CourseTeam
-from nodebb.constants import (
-    TEAM_PLAYER_ENTRY_INDEX,
-    CONVERSATIONALIST_ENTRY_INDEX
-)
+from lms.djangoapps.teams.models import CourseTeamMembership
+from nodebb.constants import CONVERSATIONALIST_ENTRY_INDEX, TEAM_PLAYER_ENTRY_INDEX
 from nodebb.helpers import get_course_id_by_community_id
 from nodebb.models import TeamGroupChat
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
@@ -30,49 +28,29 @@ class Badge(models.Model):
     image = models.CharField(max_length=255, blank=False, null=False)
     date_created = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        app_label = 'badging'
+
     def __unicode__(self):
         return self.name
 
     @classmethod
-    def get_unearned_badges(cls, user_id, community_id, community_type):
-        """ Get dictionary of badges that can still be earned in a
-            community by a user
-
-
-            Parameters
-            ----------
-            user_id : long
-                      user id of a user object
-            community_id : str
-                      community ID of a discussion group
-            community_type : str
-                      community type string (team/conversationalist)
-
-            Returns
-            -------
-            Dict
-                nested dictionary object of unattained badge information
+    def get_badges_json(cls, badge_type):
         """
-        latest_earned = UserBadge.objects.filter(user_id=user_id,
-                                                 community_id=community_id,
-                                                 badge_id__type=community_type).order_by('date_earned').last()
+        Get json of all badges of provided badge type
 
-        if latest_earned:
-            latest_threshold = Badge.objects.get(pk=latest_earned.badge_id, type=community_type).threshold
-            unearned_badges = Badge.objects.filter(type=community_type) \
-                                           .exclude(threshold__lte=latest_threshold) \
-                                           .order_by('threshold')
-        else:
-            unearned_badges = Badge.objects.filter(type=community_type).order_by('threshold')
+        Parameters
+        ----------
+        badge_type: str
+                        badge type string (team/conversationalist)
 
-        unearned_badges_dict = {}
-        for badge in unearned_badges:
-            unearned_badges_dict[badge.id] = {'name': badge.name,
-                                              'description': badge.description,
-                                              'threshold': badge.threshold,
-                                              'type': badge.type,
-                                              'image': badge.image}
-        return unearned_badges_dict
+        Returns
+        -------
+        JSON
+            json of all badges
+        """
+        badges = Badge.objects.filter(type=badge_type).order_by('threshold').values()
+        return JSONRenderer().render(badges)
 
 
 class UserBadge(models.Model):
@@ -94,6 +72,7 @@ class UserBadge(models.Model):
     date_earned = models.DateTimeField(auto_now=True)
 
     class Meta:
+        app_label = 'badging'
         unique_together = ('user', 'badge', 'course_id', 'community_id')
 
     def __unicode__(self):
@@ -166,3 +145,33 @@ class UserBadge(models.Model):
             error = badge_constants.BADGE_TYPE_ERROR.format(badge_id=badge_id, badge_type=badge_type)
             log.exception(error)
             raise Exception(error)
+
+    @classmethod
+    def assign_missing_team_badges(cls, user_id, team_id):
+        """
+        Assign all previous (missing) badges when user joins a team,
+        such that he has same number of badges as any other member
+        of same team
+        """
+        if not (user_id and team_id):
+            error = badge_constants.TEAM_BADGE_ERROR.format(user_id=user_id, team_id=team_id)
+            log.exception(error)
+            raise Exception(error)
+
+        team_group_chat = TeamGroupChat.objects.filter(team_id=team_id).values(badge_constants.ROOM_ID_KEY).first()
+
+        # The query gathers the badges earned by the team in a specific course while making sure that duplicate data is
+        # not returned, as one badge can be earned by multiple members of the team, hence the distinct keyword.
+        earned_team_badges = UserBadge.objects.filter(community_id=team_group_chat[badge_constants.ROOM_ID_KEY]).values(
+            badge_constants.BADGE_ID_KEY,
+            badge_constants.COURSE_ID_KEY,
+            badge_constants.THRESHOLD_KEY).distinct()
+
+        # assign team's earned badges to current user which are not already earned
+        for user_badge in earned_team_badges:
+            UserBadge.objects.get_or_create(
+                user_id=user_id,
+                badge_id=user_badge[badge_constants.BADGE_ID_KEY],
+                course_id=user_badge[badge_constants.COURSE_ID_KEY],
+                community_id=team_group_chat[badge_constants.ROOM_ID_KEY]
+            )
