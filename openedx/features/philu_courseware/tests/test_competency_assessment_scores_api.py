@@ -48,7 +48,6 @@ class PrePostAssessmentMixin(ModuleStoreTestCase):
                 'chapter_id': chapter_id,
             }
         )
-
         return self.client.get(url)
 
     def add_competency_assessment_grading_policy(self):
