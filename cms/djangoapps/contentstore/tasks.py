@@ -36,7 +36,7 @@ from six import iteritems, text_type
 from user_tasks.models import UserTaskArtifact, UserTaskStatus
 from user_tasks.tasks import UserTask
 
-from cms.djangoapps.contentstore.courseware_index import CoursewareSearchIndexer, LibrarySearchIndexer, SearchIndexingError
+from contentstore.courseware_index import CoursewareSearchIndexer, LibrarySearchIndexer, SearchIndexingError
 from contentstore.storage import course_import_export_storage
 from contentstore.utils import initialize_permissions, reverse_usage_url
 from contentstore.video_utils import scrape_youtube_thumbnail
@@ -141,7 +141,7 @@ def task_scrape_youtube_thumbnail_callback(self, results, run,  # pylint: disabl
     time_limit=COURSE_LEVEL_TIMEOUT_SECONDS,
     routing_key=settings.SCRAPE_YOUTUBE_THUMBNAILS_JOB_QUEUE
 )
-def task_scrape_youtube_thumbnail(self, course_videos, run):   # pylint: disable=unused-argument
+def task_scrape_youtube_thumbnail(self, course_videos, run):  # pylint: disable=unused-argument
     """
     Task to scrape youtube thumbnails and update them in edxval for the given course-videos.
 
@@ -240,7 +240,7 @@ def get_course_videos(course_key):
     time_limit=COURSE_LEVEL_TIMEOUT_SECONDS,
     routing_key=settings.VIDEO_TRANSCRIPT_MIGRATIONS_JOB_QUEUE
 )
-def async_migrate_transcript(self, course_key, **kwargs):   # pylint: disable=unused-argument
+def async_migrate_transcript(self, course_key, **kwargs):  # pylint: disable=unused-argument
     """
     Migrates the transcripts of all videos in a course as a new celery task.
     """
@@ -484,6 +484,7 @@ def rerun_course(source_course_key_string, destination_course_key_string, user_i
             new_restricted_course = clone_instance(restricted_course, {'course_key': destination_course_key})
             for country_access_rule in country_access_rules:
                 clone_instance(country_access_rule, {'restricted_course': new_restricted_course})
+
         apply_post_rerun_creation_tasks(source_course_key, destination_course_key, user_id)
 
         return "succeeded"
@@ -786,6 +787,7 @@ def import_olx(self, user_id, course_key_string, archive_path, archive_name, lan
                     Read and return a sequence of bytes from the source file.
                     """
                     return source.read(FILE_READ_CHUNK)
+
                 for chunk in iter(read_chunk, b''):
                     destination.write(chunk)
         LOGGER.info(u'Course import %s: Download from storage complete', courselike_key)
@@ -878,7 +880,7 @@ def import_olx(self, user_id, course_key_string, archive_path, archive_name, lan
         LOGGER.debug(u'new course at %s', new_location)
 
         LOGGER.info(u'Course import %s: Course import successful', courselike_key)
-    except Exception as exception:   # pylint: disable=broad-except
+    except Exception as exception:  # pylint: disable=broad-except
         LOGGER.exception(u'error importing course', exc_info=True)
         self.status.fail(text_type(exception))
     finally:
