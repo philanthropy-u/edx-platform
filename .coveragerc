@@ -11,6 +11,7 @@ source =
     openedx
     pavelib
     openedx/features/course_card
+    openedx/features/philu_courseware
     openedx/features/teams
     openedx/features/student_certificates
     openedx/features/cms
