@@ -1,6 +1,6 @@
 import factory
 
-from common.djangoapps.student.tests.factories import UserFactory as ParentUserFactory
+from student.tests.factories import UserFactory as ParentUserFactory
 from factory.django import DjangoModelFactory
 
 from ..models import UserExtendedProfile, Organization, EmailPreference
@@ -53,3 +53,14 @@ class OrganizationFactory(DjangoModelFactory):
         django_get_or_create = ('label', )
 
     label = factory.Sequence(u'Organization{0}'.format)
+    country = factory.Faker('country')
+    city = factory.Faker('city')
+    unclaimed_org_admin_email = factory.Faker('email')
+    url = factory.Faker('url')
+    founding_year = factory.Faker('random_int')
+    registration_number = 'dummy'
+    org_type = 'dummy'
+    level_of_operation = 'dummy'
+    total_employees = 'dummy'
+    alternate_admin_email = factory.Faker('email')
+    has_affiliated_partner = True

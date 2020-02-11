@@ -2365,6 +2365,9 @@ INSTALLED_APPS = [
     # Philu Overrides
     'lms.djangoapps.philu_overrides',
 
+    # management of user-triggered async tasks (course import/export, etc.)
+    'user_tasks',
+
     # Philu Features
     'openedx.features.partners',
     'openedx.features.philu_courseware',

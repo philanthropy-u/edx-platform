@@ -1,7 +1,6 @@
 import json
 
 from course_action_state.models import CourseRerunState
-from cms.djangoapps.contentstore.tasks import rerun_course as rerun_course_task
 from cms.djangoapps.contentstore.utils import add_instructor
 from opaque_keys.edx.locator import CourseLocator
 from openedx.features.course_card.helpers import get_related_card_id
@@ -70,6 +69,9 @@ class CourseRerunFactory(XModuleFactory):
         parent_course_key = get_related_card_id(source_course_id)
         # Mark the action as initiated
         CourseRerunState.objects.initiated(parent_course_key, rerun_course_id, user, display_name)
+
+        from cms.djangoapps.contentstore.tasks import rerun_course as rerun_course_task
+
 
         return rerun_course_task.delay(
             unicode(source_course_id), unicode(rerun_course_id), user.id,

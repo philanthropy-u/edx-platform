@@ -36,7 +36,7 @@ from six import iteritems, text_type
 from user_tasks.models import UserTaskArtifact, UserTaskStatus
 from user_tasks.tasks import UserTask
 
-from contentstore.courseware_index import CoursewareSearchIndexer, LibrarySearchIndexer, SearchIndexingError
+from cms.djangoapps.contentstore.courseware_index import CoursewareSearchIndexer, LibrarySearchIndexer, SearchIndexingError
 from contentstore.storage import course_import_export_storage
 from contentstore.utils import initialize_permissions, reverse_usage_url
 from contentstore.video_utils import scrape_youtube_thumbnail
@@ -484,7 +484,7 @@ def rerun_course(source_course_key_string, destination_course_key_string, user_i
             new_restricted_course = clone_instance(restricted_course, {'course_key': destination_course_key})
             for country_access_rule in country_access_rules:
                 clone_instance(country_access_rule, {'restricted_course': new_restricted_course})
-        
+
         apply_post_rerun_creation_tasks(source_course_key, destination_course_key, user_id)
 
         return "succeeded"
