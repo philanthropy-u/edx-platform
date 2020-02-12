@@ -15,26 +15,9 @@ from . import constants as badge_constants
 log = logging.getLogger('edx.badging')
 
 
-class Badge(models.Model):
-    BADGE_TYPES = (
-        badge_constants.CONVERSATIONALIST,
-        badge_constants.TEAM_PLAYER
-    )
+class BadgeManager(models.Manager):
+    """Custom manager for retrieving badges"""
 
-    name = models.CharField(max_length=255, blank=False, null=False)
-    description = models.TextField(blank=True, null=True)
-    threshold = models.IntegerField(blank=False, null=False)
-    type = models.CharField(max_length=100, blank=False, null=False, choices=BADGE_TYPES)
-    image = models.CharField(max_length=255, blank=False, null=False)
-    date_created = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        app_label = 'badging'
-
-    def __unicode__(self):
-        return self.name
-
-    @classmethod
     def get_badges_json(cls, badge_type):
         """
         Get json of all badges of provided badge type
@@ -51,6 +34,31 @@ class Badge(models.Model):
         """
         badges = Badge.objects.filter(type=badge_type).order_by('threshold').values()
         return JSONRenderer().render(badges)
+
+
+class Badge(models.Model):
+    BADGE_TYPES = (
+        badge_constants.CONVERSATIONALIST,
+        badge_constants.TEAM_PLAYER
+    )
+
+    name = models.CharField(max_length=255, blank=False, null=False)
+    description = models.TextField(blank=True, null=True)
+    threshold = models.IntegerField(blank=False, null=False)
+    type = models.CharField(max_length=100, blank=False, null=False, choices=BADGE_TYPES)
+    image = models.CharField(max_length=255, blank=False, null=False)
+    color_image = models.CharField(max_length=255, blank=False, null=False, default='')
+    date_created = models.DateTimeField(auto_now=True)
+
+    objects = BadgeManager()
+
+    class Meta:
+        app_label = 'badging'
+        unique_together = ('type', 'threshold')
+        ordering = ('type', 'threshold')
+
+    def __unicode__(self):
+        return self.name
 
 
 class UserBadge(models.Model):
@@ -120,13 +128,16 @@ class UserBadge(models.Model):
                 raise Exception(error)
 
             all_team_members = CourseTeamMembership.objects.filter(team_id=team_group_chat['team_id'])
+            assigned = False
             for member in all_team_members:
-                UserBadge.objects.get_or_create(
+                user_badge, assigned = UserBadge.objects.get_or_create(
                     user_id=member.user_id,
                     badge_id=badge_id,
                     course_id=course_id,
                     community_id=community_id
                 )
+
+            return assigned
         elif badge_type == badge_constants.CONVERSATIONALIST[CONVERSATIONALIST_ENTRY_INDEX]:
             course_id = get_course_id_by_community_id(community_id)
 
@@ -135,12 +146,14 @@ class UserBadge(models.Model):
                 log.exception(error)
                 raise Exception(error)
 
-            UserBadge.objects.get_or_create(
+            user_badge, assigned = UserBadge.objects.get_or_create(
                 user_id=user_id,
                 badge_id=badge_id,
                 course_id=course_id,
                 community_id=community_id
             )
+
+            return assigned
         else:
             error = badge_constants.BADGE_TYPE_ERROR.format(badge_id=badge_id, badge_type=badge_type)
             log.exception(error)

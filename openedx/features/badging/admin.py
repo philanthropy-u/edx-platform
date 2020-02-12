@@ -1,7 +1,10 @@
 from django.contrib import admin
 from .models import Badge, UserBadge
 
-admin.site.register(Badge)
+
+@admin.register(Badge)
+class BadgeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'type', 'threshold')
 
 
 @admin.register(UserBadge)
