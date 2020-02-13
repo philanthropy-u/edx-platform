@@ -3,7 +3,11 @@ from mock import patch
 
 from lms.djangoapps.onboarding.models import Organization, OrgSector, TotalEmployee
 from openedx.features.student_account.forms import AccountCreationFormCustom
-from openedx.features.student_account.helpers import *
+from openedx.features.student_account.helpers import (
+    compose_and_send_activation_email_custom,
+    save_user_utm_info,
+    set_opt_in_and_affiliate_user_organization
+)
 from openedx.features.user_leads.models import UserLeads
 from student.tests.factories import RegistrationFactory, UserFactory
 
@@ -177,8 +181,8 @@ class TestSetOptInAndAffiliateOrganization(TestCase):
         request = RequestFactory().post('/user_api/v1/account/registration/', self.request_data)
         params = dict(request.POST.copy().items())
         params['name'] = '{f_name} {l_name}'.format(f_name=params.get('first_name'), l_name=params.get('last_name'))
-        OrgSector.objects.create(order=1, code="IWRNS")
-        TotalEmployee.objects.create(order=1, code="6-10")
+        OrgSector.objects.create(order=1, code='IWRNS')
+        TotalEmployee.objects.create(order=1, code='6-10')
 
         form = AccountCreationFormCustom(data=params,
                                          extended_profile_fields=None,
@@ -210,9 +214,9 @@ class TestSetOptInAndAffiliateOrganization(TestCase):
         errors, the EmailPreferences are also set for that user.
         """
         organization_data = {
-            "label": "existing_organization",
-            "total_employees": "6-10",
-            "org_type": "IWRNS"
+            'label': 'existing_organization',
+            'total_employees': '6-10',
+            'org_type': 'IWRNS'
         }
 
         existing_organization = Organization.objects.create(**organization_data)
@@ -232,9 +236,9 @@ class TestSetOptInAndAffiliateOrganization(TestCase):
             'organization_id': existing_organization.id
         }
 
-        self.assertEqual(existing_organization.label, organization_data["label"])
-        self.assertEqual(existing_organization.total_employees, organization_data["total_employees"])
-        self.assertEqual(existing_organization.org_type, organization_data["org_type"])
+        self.assertEqual(existing_organization.label, organization_data['label'])
+        self.assertEqual(existing_organization.total_employees, organization_data['total_employees'])
+        self.assertEqual(existing_organization.org_type, organization_data['org_type'])
         mock_user_extended_profile_create_method.assert_called_once_with(user=self.user, **user_extended_profile_data)
         mock_email_preferences_create_method.assert_called_once_with(user=self.user,
                                                                      opt_in=form.cleaned_data.get('opt_in'))
