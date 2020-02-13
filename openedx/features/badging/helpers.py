@@ -1,5 +1,3 @@
-import logging
-
 from collections import OrderedDict
 
 from lms.djangoapps.courseware.courses import get_course_by_id
@@ -7,16 +5,8 @@ from lms.djangoapps.teams import is_feature_enabled as is_teams_feature_enabled
 from lms.djangoapps.teams.models import CourseTeam
 from nodebb.constants import TEAM_PLAYER_ENTRY_INDEX
 
-from .constants import (
-    BADGES_KEY,
-    FILTER_BADGES_ERROR,
-    TEAM_PLAYER,
-    TEAM_ID_KEY,
-    TEAM_ROOM_ID_KEY
-)
+from .constants import BADGES_KEY, FILTER_BADGES_ERROR, TEAM_ID_KEY, TEAM_PLAYER, TEAM_ROOM_ID_KEY
 from .models import Badge
-
-log = logging.getLogger('edx.badging')
 
 
 def populate_trophycase(user, courses, earned_badges):
@@ -119,7 +109,6 @@ def filter_earned_badge_by_joined_team(user, course, earned_badges):
 
     if not course_team[TEAM_ROOM_ID_KEY]:
         error = FILTER_BADGES_ERROR.format(team_id=course_team[TEAM_ID_KEY])
-        log.exception(error)
         raise Exception(error)
 
     # filter earned badges for joined team only
