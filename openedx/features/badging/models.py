@@ -44,7 +44,7 @@ class Badge(models.Model):
 
     name = models.CharField(max_length=255, blank=False, null=False)
     description = models.TextField(blank=True, null=True)
-    threshold = models.IntegerField(blank=False, null=False)
+    threshold = models.PositiveIntegerField(blank=False, null=False)
     type = models.CharField(max_length=100, blank=False, null=False, choices=BADGE_TYPES)
     image = models.CharField(max_length=255, blank=False, null=False)
     color_image = models.CharField(max_length=255, blank=False, null=False, default='')

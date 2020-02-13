@@ -17,6 +17,11 @@ class Migration(migrations.Migration):
             name='color_image',
             field=models.CharField(default=b'', max_length=255),
         ),
+        migrations.AlterField(
+            model_name='badge',
+            name='threshold',
+            field=models.PositiveIntegerField(),
+        ),
         migrations.AlterModelOptions(
             name='badge',
             options={'ordering': ('type', 'threshold')},
