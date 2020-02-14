@@ -2,6 +2,7 @@ import logging
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db import transaction
 from rest_framework.renderers import JSONRenderer
 
 from lms.djangoapps.teams.models import CourseTeamMembership
@@ -87,6 +88,7 @@ class UserBadge(models.Model):
         return 'User: {}, Badge: {}'.format(self.user.id, self.badge.id)
 
     @classmethod
+    @transaction.atomic
     def assign_badge(cls, user_id, badge_id, community_id):
         """ Save an entry in the UserBadge table specifying a
             specific badge assignment to a user badge in community

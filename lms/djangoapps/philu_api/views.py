@@ -191,7 +191,7 @@ def assign_user_badge(request):
 
     try:
         assigned = UserBadge.assign_badge(user_id=user_id, badge_id=badge_id, community_id=community_id)
-        return JsonResponse({'success': True}, status=status.HTTP_201_CREATED if assigned else status.HTTP_200_OK)
+        return JsonResponse({'success': True}, status=status.HTTP_201_CREATED if assigned else status.HTTP_409_CONFLICT)
     except Exception as e:
         logging.exception(e)
         return JsonResponse({'success': False, 'message': str(e)},
