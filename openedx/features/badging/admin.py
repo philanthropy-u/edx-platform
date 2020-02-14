@@ -9,6 +9,7 @@ class BadgeAdmin(admin.ModelAdmin):
 
 @admin.register(UserBadge)
 class UserBadgeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'badge', 'date_earned')
 
     def has_add_permission(self, request, obj=None):
         # disable add functionality

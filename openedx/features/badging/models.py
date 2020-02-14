@@ -19,7 +19,7 @@ log = logging.getLogger('edx.badging')
 class BadgeManager(models.Manager):
     """Custom manager for retrieving badges"""
 
-    def get_badges_json(cls, badge_type):
+    def get_badges_json(self, badge_type):
         """
         Get json of all badges of provided badge type
 
