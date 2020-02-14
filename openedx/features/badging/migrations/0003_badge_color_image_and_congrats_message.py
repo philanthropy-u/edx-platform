@@ -12,6 +12,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RemoveField(
+            model_name='badge',
+            name='description',
+        ),
+        migrations.AddField(
+            model_name='badge',
+            name='congrats_message',
+            field=models.TextField(default=b''),
+        ),
         migrations.AddField(
             model_name='badge',
             name='color_image',

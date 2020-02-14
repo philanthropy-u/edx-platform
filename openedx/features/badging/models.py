@@ -43,12 +43,12 @@ class Badge(models.Model):
         badge_constants.TEAM_PLAYER
     )
 
-    name = models.CharField(max_length=255, blank=False, null=False)
-    description = models.TextField(blank=True, null=True)
-    threshold = models.PositiveIntegerField(blank=False, null=False)
-    type = models.CharField(max_length=100, blank=False, null=False, choices=BADGE_TYPES)
-    image = models.CharField(max_length=255, blank=False, null=False)
-    color_image = models.CharField(max_length=255, blank=False, null=False, default='')
+    name = models.CharField(max_length=255)
+    congrats_message = models.TextField(default='')
+    threshold = models.PositiveIntegerField()
+    type = models.CharField(max_length=100, choices=BADGE_TYPES)
+    image = models.CharField(max_length=255)
+    color_image = models.CharField(max_length=255, default='')
     date_created = models.DateTimeField(auto_now=True)
 
     objects = BadgeManager()
@@ -77,7 +77,7 @@ class UserBadge(models.Model):
     user = models.ForeignKey(User, db_index=True, on_delete=models.CASCADE)
     badge = models.ForeignKey(Badge, on_delete=models.CASCADE)
     course_id = CourseKeyField(blank=False, max_length=255, db_index=True, db_column='course_id', null=False)
-    community_id = models.IntegerField(blank=False, null=False, db_column='community_id')
+    community_id = models.IntegerField(db_column='community_id')
     date_earned = models.DateTimeField(auto_now=True)
 
     class Meta:
