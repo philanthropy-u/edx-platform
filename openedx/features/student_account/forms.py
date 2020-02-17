@@ -49,10 +49,10 @@ class AccountCreationFormCustom(AccountCreationForm):
         self.do_third_party_auth = do_third_party_auth
 
     def clean_opt_in(self):
-        '''
+        """
         Verifies a opt_in is valid only either 'yes', or 'no',
         raises a ValidationError otherwise.
-        '''
+        """
         cleaned_opt_in = self.cleaned_data.get('opt_in')
         if cleaned_opt_in not in ['yes', 'no']:
             raise forms.ValidationError(_('Invalid email opt in option provided'))
