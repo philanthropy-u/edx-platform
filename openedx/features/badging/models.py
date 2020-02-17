@@ -130,7 +130,7 @@ class UserBadge(models.Model):
                 raise Exception(error)
 
             all_team_members = CourseTeamMembership.objects.filter(team_id=team_group_chat['team_id'])
-            assigned = False
+            all_assigned = bool(all_team_members)
             for member in all_team_members:
                 user_badge, assigned = UserBadge.objects.get_or_create(
                     user_id=member.user_id,
@@ -138,8 +138,9 @@ class UserBadge(models.Model):
                     course_id=course_id,
                     community_id=community_id
                 )
+                all_assigned = all_assigned and assigned
 
-            return assigned
+            return all_assigned
         elif badge_type == badge_constants.CONVERSATIONALIST[CONVERSATIONALIST_ENTRY_INDEX]:
             course_id = get_course_id_by_community_id(community_id)
 
