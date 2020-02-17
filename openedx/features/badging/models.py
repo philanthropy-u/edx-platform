@@ -138,7 +138,7 @@ class UserBadge(models.Model):
                     course_id=course_id,
                     community_id=community_id
                 )
-                all_assigned = all_assigned and assigned
+                all_assigned &= assigned
 
             return all_assigned
         elif badge_type == badge_constants.CONVERSATIONALIST[CONVERSATIONALIST_ENTRY_INDEX]:
