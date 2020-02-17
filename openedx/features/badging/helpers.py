@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from collections import OrderedDict
 
 from lms.djangoapps.courseware.courses import get_course_by_id
@@ -9,6 +10,7 @@ from nodebb.constants import TEAM_PLAYER_ENTRY_INDEX
 
 from .constants import (
     BADGES_KEY,
+    BADGE_ROOT_URL,
     FILTER_BADGES_ERROR,
     TEAM_PLAYER,
     TEAM_ID_KEY,
@@ -111,7 +113,8 @@ def filter_earned_badge_by_joined_team(user, course, earned_badges):
         flag: Has user joined any team
         earned_badges: All badges earned in a course, specific to joined team
     """
-    course_team = CourseTeam.objects.filter(course_id=course.id, users=user).values(TEAM_ID_KEY, TEAM_ROOM_ID_KEY).first()
+    course_team = CourseTeam.objects.filter(course_id=course.id, users=user).values(TEAM_ID_KEY,
+                                                                                    TEAM_ROOM_ID_KEY).first()
 
     if not course_team:
         # if user has not joined any team, return empty list for earned badges
@@ -127,3 +130,44 @@ def filter_earned_badge_by_joined_team(user, course, earned_badges):
         earned_badge for earned_badge in earned_badges if
         earned_badge.community_id == course_team[TEAM_ROOM_ID_KEY]
     ]
+
+
+def get_badge_url(course_id, badge_type, team_id):
+    """
+        This method return badge url depends on badge_type
+        :param course_id: Course Id
+        :param badge_type: Badge type can be communicator or team
+        :param team_id: Team Id
+        :return: URL of badge in String format.
+            Return "#" if user hasn't join any team.
+    """
+    badge_url = '#'
+    badge_root_url = BADGE_ROOT_URL.format(root_url=settings.LMS_ROOT_URL, course_id=course_id)
+    if badge_type == 'communicator':
+        badge_url = badge_root_url + "/discussion/nodebb/"
+    elif badge_type == 'team' and team_id:
+        badge_url = badge_root_url + "/teams/team/" + team_id
+    return badge_url
+
+
+def get_badge_progress(index, badges, team_joined=True):
+    """
+        This method calls from "my_badges.html" and "course_trophy_case.html".
+        It return status for badges that will be applied as class on badges
+        :param index: Index of badge which status is required.
+        :param badges: Complete badges list
+        :param team_joined: Boolean
+        :return: A tuple containing classname and status.
+            classname will be added to the div of badge and status text will be displayed on badge.
+    """
+    current_badge = badges[index]
+    previous_badge = index and badges[index - 1]
+
+    badge_progress = ('', 'Not Started')
+    if not team_joined:
+        return badge_progress
+    elif 'date_earned' in current_badge:
+        badge_progress = ('completed', 'Completed!')
+    elif not previous_badge or 'date_earned' in previous_badge:
+        badge_progress = ('in-progress', 'In Progress')
+    return badge_progress
