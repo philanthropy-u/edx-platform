@@ -1,15 +1,14 @@
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
-from nodebb.tasks import task_delete_badge_info_from_nodebb, task_sync_badge_info_with_nodebb
-
-from .models import Badge
-from .constants import PHILU_BADGING_NOTIFICATION_TYPE, PHILU_BADGING_NOTIFICATION_RENDERER
-
 from edx_notifications import startup
 from edx_notifications.data import NotificationType
 from edx_notifications.lib.publisher import register_notification_type
 from edx_notifications.signals import perform_type_registrations
+from nodebb.tasks import task_delete_badge_info_from_nodebb, task_sync_badge_info_with_nodebb
+
+from .constants import PHILU_BADGING_NOTIFICATION_RENDERER, PHILU_BADGING_NOTIFICATION_TYPE
+from .models import Badge
 
 
 @receiver(post_save, sender=Badge)

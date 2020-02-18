@@ -1,18 +1,23 @@
 from collections import OrderedDict
 
+from django.template.loader import render_to_string
+
+from edx_notifications.data import NotificationMessage
+from edx_notifications.lib.publisher import get_notification_type, publish_notification_to_user
 from lms.djangoapps.courseware.courses import get_course_by_id
 from lms.djangoapps.teams import is_feature_enabled as is_teams_feature_enabled
 from lms.djangoapps.teams.models import CourseTeam
 from nodebb.constants import TEAM_PLAYER_ENTRY_INDEX
 
-from .constants import BADGES_KEY, FILTER_BADGES_ERROR, TEAM_ID_KEY, TEAM_PLAYER, TEAM_ROOM_ID_KEY, PHILU_BADGING_NOTIFICATION_TYPE
-from .models import Badge
-
-from edx_notifications.data import NotificationMessage
-from edx_notifications.lib.publisher import (
-    get_notification_type,
-    publish_notification_to_user
+from .constants import (
+    BADGES_KEY,
+    FILTER_BADGES_ERROR,
+    PHILU_BADGING_NOTIFICATION_TYPE,
+    TEAM_ID_KEY,
+    TEAM_PLAYER,
+    TEAM_ROOM_ID_KEY
 )
+from .models import Badge
 
 
 def populate_trophycase(user, courses, earned_badges):
@@ -124,9 +129,12 @@ def filter_earned_badge_by_joined_team(user, course, earned_badges):
     ]
 
 
-def send_user_badge_notification(username, my_badge_url, badge_name):
+def send_user_badge_notification(user, my_badge_url, badge_name):
     """
-
+    Send user new badge notification
+    :param user: Notification sender user
+    :param my_badge_url: Redirect url on notification click
+    :param badge_name: Newly earned badge
     """
     context = {
         "badge_name": badge_name
@@ -140,10 +148,10 @@ def send_user_badge_notification(username, my_badge_url, badge_name):
     message = NotificationMessage(
         msg_type=message_type,
         payload={
-            'from_user': username,
+            'from_user': user.username,
             'path': my_badge_url,
             'bodyShort': body_short,
         }
     )
 
-    publish_notification_to_user(request.user.id, message)
+    publish_notification_to_user(user.id, message)
