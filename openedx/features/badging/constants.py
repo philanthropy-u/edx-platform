@@ -9,7 +9,6 @@ TEAM_ID_KEY = 'team_id'
 TEAM_ROOM_ID_KEY = 'team__room_id'
 THRESHOLD_KEY = 'badge__threshold'
 
-BADGE_ROOT_URL = '{root_url}/courses/{course_id}'
 MY_BADGES_URL_NAME = 'my_badges'
 
 BADGE_ASSIGNMENT_ERROR = 'Rollback assigned badges for {num_of} users in team {team_id}'
