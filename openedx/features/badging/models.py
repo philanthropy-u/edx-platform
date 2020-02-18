@@ -14,6 +14,9 @@ from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
 from . import constants as badge_constants
 from .tasks import task_user_badge_email
 
+from edx_notifications.load_notification_startup import start_up as notification_startup
+notification_startup()
+
 log = logging.getLogger('edx.badging')
 
 

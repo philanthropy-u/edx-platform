@@ -5,8 +5,14 @@ from lms.djangoapps.teams import is_feature_enabled as is_teams_feature_enabled
 from lms.djangoapps.teams.models import CourseTeam
 from nodebb.constants import TEAM_PLAYER_ENTRY_INDEX
 
-from .constants import BADGES_KEY, FILTER_BADGES_ERROR, TEAM_ID_KEY, TEAM_PLAYER, TEAM_ROOM_ID_KEY
+from .constants import BADGES_KEY, FILTER_BADGES_ERROR, TEAM_ID_KEY, TEAM_PLAYER, TEAM_ROOM_ID_KEY, PHILU_BADGING_NOTIFICATION_TYPE
 from .models import Badge
+
+from edx_notifications.data import NotificationMessage
+from edx_notifications.lib.publisher import (
+    get_notification_type,
+    publish_notification_to_user
+)
 
 
 def populate_trophycase(user, courses, earned_badges):
@@ -116,3 +122,28 @@ def filter_earned_badge_by_joined_team(user, course, earned_badges):
         earned_badge for earned_badge in earned_badges if
         earned_badge.community_id == course_team[TEAM_ROOM_ID_KEY]
     ]
+
+
+def send_user_badge_notification(username, my_badge_url, badge_name):
+    """
+
+    """
+    context = {
+        "badge_name": badge_name
+    }
+
+    body_short = render_to_string('philu_notifications/templates/user_badge_earned.html', context)
+
+    message_type = get_notification_type(
+        PHILU_BADGING_NOTIFICATION_TYPE.format(prefix='philu.badging', type='user-badge-earned'))
+
+    message = NotificationMessage(
+        msg_type=message_type,
+        payload={
+            'from_user': username,
+            'path': my_badge_url,
+            'bodyShort': body_short,
+        }
+    )
+
+    publish_notification_to_user(request.user.id, message)
