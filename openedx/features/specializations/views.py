@@ -7,3 +7,4 @@ def list_specializations(request):
 
 def specialization_about(request, specialization_uuid):
     return render_to_response('features/specializations/about.html', {})
+    
