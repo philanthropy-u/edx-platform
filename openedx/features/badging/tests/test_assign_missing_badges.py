@@ -7,7 +7,6 @@ from mock import patch
 from lms.djangoapps.teams.tests.factories import CourseTeamFactory, CourseTeamMembershipFactory
 from nodebb.constants import TEAM_PLAYER_ENTRY_INDEX
 from opaque_keys.edx.keys import CourseKey
-from opaque_keys.edx.locator import CourseLocator
 from openedx.features.badging.constants import BADGE_ID_KEY, TEAM_PLAYER
 from openedx.features.badging.models import UserBadge
 from openedx.features.teams.tests.factories import TeamGroupChatFactory
