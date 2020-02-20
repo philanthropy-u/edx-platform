@@ -1,22 +1,25 @@
-import logging
-
 from collections import OrderedDict
+
+from django.template.loader import render_to_string
+from django.urls import reverse
+from edx_notifications.data import NotificationMessage
+from edx_notifications.lib.publisher import get_notification_type, publish_notification_to_user
 
 from lms.djangoapps.courseware.courses import get_course_by_id
 from lms.djangoapps.teams import is_feature_enabled as is_teams_feature_enabled
 from lms.djangoapps.teams.models import CourseTeam
-from nodebb.constants import TEAM_PLAYER_ENTRY_INDEX
+from nodebb.constants import CONVERSATIONALIST_ENTRY_INDEX, TEAM_PLAYER_ENTRY_INDEX
 
 from .constants import (
     BADGES_KEY,
+    CONVERSATIONALIST,
+    EARNED_BADGE_NOTIFICATION_TYPE,
     FILTER_BADGES_ERROR,
-    TEAM_PLAYER,
     TEAM_ID_KEY,
+    TEAM_PLAYER,
     TEAM_ROOM_ID_KEY
 )
 from .models import Badge
-
-log = logging.getLogger('edx.badging')
 
 
 def populate_trophycase(user, courses, earned_badges):
@@ -111,7 +114,8 @@ def filter_earned_badge_by_joined_team(user, course, earned_badges):
         flag: Has user joined any team
         earned_badges: All badges earned in a course, specific to joined team
     """
-    course_team = CourseTeam.objects.filter(course_id=course.id, users=user).values(TEAM_ID_KEY, TEAM_ROOM_ID_KEY).first()
+    course_team = CourseTeam.objects.filter(course_id=course.id, users=user).values(TEAM_ID_KEY,
+                                                                                    TEAM_ROOM_ID_KEY).first()
 
     if not course_team:
         # if user has not joined any team, return empty list for earned badges
@@ -119,7 +123,6 @@ def filter_earned_badge_by_joined_team(user, course, earned_badges):
 
     if not course_team[TEAM_ROOM_ID_KEY]:
         error = FILTER_BADGES_ERROR.format(team_id=course_team[TEAM_ID_KEY])
-        log.exception(error)
         raise Exception(error)
 
     # filter earned badges for joined team only
@@ -127,3 +130,67 @@ def filter_earned_badge_by_joined_team(user, course, earned_badges):
         earned_badge for earned_badge in earned_badges if
         earned_badge.community_id == course_team[TEAM_ROOM_ID_KEY]
     ]
+
+
+def get_badge_url(course_id, badge_type, team_id):
+    """
+    This method return badge url depends on badge_type
+    :param course_id: Course Id
+    :param badge_type: Badge type can be communicator or team
+    :param team_id: Team Id
+    :return: URL of badge in String format. Return "#" if user hasn't join any team.
+    """
+    badge_url = '#'
+    if badge_type == CONVERSATIONALIST[CONVERSATIONALIST_ENTRY_INDEX]:
+        badge_url = reverse('nodebb_forum_discussion', kwargs={'course_id': course_id})
+    elif badge_type == TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX] and team_id:
+        badge_url = reverse('view_team', kwargs={'course_id': course_id, 'team_id': team_id})
+    return badge_url
+
+
+def get_badge_progress(index, badges, team_joined=True):
+    """
+    This method calls from "my_badges.html" and "course_trophy_case.html".
+    It return status for badges that will be applied as class on badges
+    :param index: Index of badge which status is required.
+    :param badges: Complete badges list
+    :param team_joined: Boolean
+    :return: A tuple containing classname and status. classname will be added to the div of badge and status
+        text will be displayed on badge.
+    """
+    current_badge = badges[index]
+    previous_badge = index and badges[index - 1]
+
+    badge_progress = ('', 'Not Started')
+    if not team_joined:
+        return badge_progress
+    elif 'date_earned' in current_badge:
+        badge_progress = ('completed', 'Completed!')
+    elif not previous_badge or 'date_earned' in previous_badge:
+        badge_progress = ('in-progress', 'In Progress')
+    return badge_progress
+
+
+def send_user_badge_notification(user, my_badge_url, badge_name):
+    """
+    Send user new badge notification
+    :param user: User receiving the Notification
+    :param my_badge_url: Redirect url to my_badge view on notification click
+    :param badge_name: Newly earned badge
+    """
+    context = {
+        'badge_name': badge_name
+    }
+
+    body_short = render_to_string('philu_notifications/templates/user_badge_earned.html', context)
+
+    message = NotificationMessage(
+        msg_type=get_notification_type(EARNED_BADGE_NOTIFICATION_TYPE),
+        payload={
+            'from_user': user.username,
+            'path': my_badge_url,
+            'bodyShort': body_short,
+        }
+    )
+
+    publish_notification_to_user(user.id, message)
