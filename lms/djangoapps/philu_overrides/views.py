@@ -177,7 +177,7 @@ def login_and_registration_form(request, initial_mode="login", org_name=None, ad
     if initial_mode is "login":
         return render_to_response('student_account/login.html', context)
 
-    return render_to_response('student_account/login_and_register.html', context)
+    return render_to_response('student_account/register.html', context)
 
 
 @ensure_csrf_cookie
