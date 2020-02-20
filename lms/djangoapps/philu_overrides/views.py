@@ -174,6 +174,9 @@ def login_and_registration_form(request, initial_mode="login", org_name=None, ad
 
         context['fields_to_disable'] = json.dumps([email_field['name'], org_field['name'], is_poc_field['name']])
 
+    if initial_mode is "login":
+        return render_to_response('student_account/login.html', context)
+
     return render_to_response('student_account/login_and_register.html', context)
 
 
