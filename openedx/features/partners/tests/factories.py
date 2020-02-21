@@ -85,12 +85,7 @@ class OrganizationFactory(DjangoModelFactory):
     label = factory.Sequence(u'Organization{0}'.format)
     country = factory.Faker('country')
     city = factory.Faker('city')
-    unclaimed_org_admin_email = factory.Faker('email')
-    url = factory.Faker('url')
     founding_year = factory.Faker('random_int')
-    registration_number = 'dummy'
-    org_type = 'dummy'
+    org_type = 'IWRNS'
     level_of_operation = 'dummy'
     total_employees = 'dummy'
-    alternate_admin_email = factory.Faker('email')
-    has_affiliated_partner = True
