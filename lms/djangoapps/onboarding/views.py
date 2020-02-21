@@ -448,11 +448,6 @@ def update_account_settings(request):
         if form.is_valid():
             user_extended_profile = form.save(user=user_extended_profile.user, commit=True)
             save_user_partner_network_consent(user_extended_profile.user, partners_opt_in)
-            unattended_surveys = user_extended_profile.unattended_surveys(_type='list')
-            are_forms_complete = not (bool(unattended_surveys))
-
-            if not are_forms_complete:
-                return redirect(reverse(unattended_surveys[0]))
 
             return redirect(reverse('update_account_settings'))
 
