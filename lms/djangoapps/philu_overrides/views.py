@@ -67,7 +67,7 @@ def get_form_field_by_name(fields, name):
 @require_http_methods(['GET'])
 @ensure_csrf_cookie
 @xframe_allow_whitelisted
-def login_and_registration_form(request, initial_mode="login", org_name=None, admin_email=None):
+def login_and_registration_form(request, initial_mode="login"):
     """Render the combined login/registration form, defaulting to login
 
     This relies on the JS to asynchronously load the actual form from
@@ -78,12 +78,9 @@ def login_and_registration_form(request, initial_mode="login", org_name=None, ad
 
     """
     # Determine the URL to redirect to following login/registration/third_party_auth
-    from openedx.features.student_account.views import local_server_get
     from openedx.core.djangoapps.user_authn.views.login_form import _external_auth_intercept, _get_form_descriptions,\
         _third_party_auth_context
 
-
-    local_server_get('/user_api/v1/account/registration/', request.session)
     redirect_to = get_next_url_for_login_page_override(request)
     # If we're already logged in, redirect to the dashboard
     if request.user.is_authenticated():
@@ -144,7 +141,6 @@ def login_and_registration_form(request, initial_mode="login", org_name=None, ad
             # but we include them in the initial page load to avoid
             # the additional round-trip to the server.
             'login_form_desc': json.loads(form_descriptions['login']),
-            'registration_form_desc': json.loads(form_descriptions['registration']),
             'password_reset_form_desc': json.loads(form_descriptions['password_reset']),
         },
         'login_redirect_url': redirect_to,  # This gets added to the query string of the "Sign In" button in header
@@ -158,26 +154,8 @@ def login_and_registration_form(request, initial_mode="login", org_name=None, ad
         'fields_to_disable': []
     }
 
-    registration_fields = context['data']['registration_form_desc']['fields']
-    registration_fields = context['data']['registration_form_desc']['fields'] = reorder_registration_form_fields(registration_fields)
-
-    if org_name and admin_email:
-        org_name = base64.b64decode(org_name)
-        admin_email = base64.b64decode(admin_email)
-
-        email_field = get_form_field_by_name(registration_fields, 'email')
-        org_field = get_form_field_by_name(registration_fields, 'organization_name')
-        is_poc_field = get_form_field_by_name(registration_fields, 'is_poc')
-        email_field['defaultValue'] = admin_email
-        org_field['defaultValue'] = org_name
-        is_poc_field['defaultValue'] = "1"
-
-        context['fields_to_disable'] = json.dumps([email_field['name'], org_field['name'], is_poc_field['name']])
-
-    if initial_mode is "login":
-        return render_to_response('student_account/login.html', context)
-
-    return render_to_response('student_account/register.html', context)
+    template = 'student_account/{}.html'.format(initial_mode)
+    return render_to_response(template, context)
 
 
 @ensure_csrf_cookie
