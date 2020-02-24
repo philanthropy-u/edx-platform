@@ -67,7 +67,7 @@ class G2ARegistrationViewTest(ApiTestCase):
         organization = Organization.objects.filter(label__iexact=self.ORGANIZATION).first()
         extended_profile = UserExtendedProfile.objects.filter(user=user).first()
 
-        # verify if user is registered and data is stored int he database
+        # verify if user is registered and data is stored in the database
         self.assertIsNotNone(user)
         self.assertEqual(self.USERNAME, user.username)
         self.assertEqual(self.EMAIL, user.email)
@@ -105,7 +105,7 @@ class G2ARegistrationViewTest(ApiTestCase):
         organization = Organization.objects.filter(label__iexact=self.ORGANIZATION).first()
         extended_profile = UserExtendedProfile.objects.filter(user=user).first()
 
-        # verify if user is registered and data is stored int he database
+        # verify if user is registered and data is stored in the database
         self.assertIsNotNone(user)
         self.assertEqual(self.USERNAME, user.username)
         self.assertEqual(self.EMAIL, user.email)
