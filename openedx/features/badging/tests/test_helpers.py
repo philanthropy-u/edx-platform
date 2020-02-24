@@ -13,6 +13,7 @@ from xmodule.modulestore.tests.factories import CourseFactory
 from .. import helpers as badge_helpers
 from ..models import Badge
 from .factories import BadgeFactory, UserBadgeFactory
+from .. import handlers as badge_handlers
 
 
 class BadgeHelperTestCases(ModuleStoreTestCase):
@@ -275,13 +276,15 @@ class BadgeHelperTestCases(ModuleStoreTestCase):
         self.assertIsNone(course_team)
         self.assertEqual(earned_badges, list())
 
-    @mock.patch('openedx.features.badging.helpers.send_user_badge_notification.publish_notification_to_user')
+    @mock.patch('openedx.features.badging.helpers.publish_notification_to_user')
     def test_send_user_badge_notification(self, publish_notification_to_user):
         """
         Test badge notification is sent to user
         :param publish_notification_to_user: mock send notification through edx notifications
         :return: None
         """
+        # register badge notification type
+        badge_handlers.register_notification_types(None)
         newly_earned_badge = BadgeFactory()
 
         badge_helpers.send_user_badge_notification(self.user, 'dummy_badge_url', newly_earned_badge.name)
