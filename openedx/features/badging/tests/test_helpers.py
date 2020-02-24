@@ -1,23 +1,18 @@
 import factory
 import mock
-
 from django.db.models import signals
 
 from lms.djangoapps.teams.tests.factories import CourseTeamFactory, CourseTeamMembershipFactory
-from nodebb.constants import (
-    TEAM_PLAYER_ENTRY_INDEX,
-    CONVERSATIONALIST_ENTRY_INDEX
-)
+from nodebb.constants import CONVERSATIONALIST_ENTRY_INDEX, TEAM_PLAYER_ENTRY_INDEX
 from openedx.features.badging.constants import CONVERSATIONALIST, TEAM_PLAYER
 from openedx.features.teams.tests.factories import TeamGroupChatFactory
-from student.tests.factories import CourseEnrollmentFactory
-from student.tests.factories import UserFactory
+from student.tests.factories import CourseEnrollmentFactory, UserFactory
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from xmodule.modulestore.tests.factories import CourseFactory
 
-from .factories import BadgeFactory, UserBadgeFactory
 from .. import helpers as badge_helpers
 from ..models import Badge
+from .factories import BadgeFactory, UserBadgeFactory
 
 
 class BadgeHelperTestCases(ModuleStoreTestCase):
@@ -279,3 +274,15 @@ class BadgeHelperTestCases(ModuleStoreTestCase):
 
         self.assertIsNone(course_team)
         self.assertEqual(earned_badges, list())
+
+    @mock.patch('openedx.features.badging.helpers.send_user_badge_notification.publish_notification_to_user')
+    def test_send_user_badge_notification(self, publish_notification_to_user):
+        """
+        Test badge notification is sent to user
+        :param publish_notification_to_user: mock send notification through edx notifications
+        :return: None
+        """
+        newly_earned_badge = BadgeFactory()
+
+        badge_helpers.send_user_badge_notification(self.user, 'dummy_badge_url', newly_earned_badge.name)
+        assert publish_notification_to_user.called_once
