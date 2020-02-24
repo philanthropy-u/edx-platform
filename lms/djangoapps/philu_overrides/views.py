@@ -1,5 +1,4 @@
 """ Views for a student's account information. """
-import base64
 from datetime import datetime
 import json
 import third_party_auth
@@ -33,7 +32,7 @@ from xmodule.modulestore.django import modulestore
 from lms.djangoapps.philu_overrides.courseware.views.views import get_course_related_keys
 from lms.djangoapps.courseware.access import has_access, _can_enroll_courselike
 from lms.djangoapps.courseware.courses import get_courses, sort_by_start_date, get_course_by_id, sort_by_announcement
-from lms.djangoapps.onboarding.helpers import reorder_registration_form_fields, get_alquity_community_url
+from lms.djangoapps.onboarding.helpers import get_alquity_community_url
 from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from openedx.core.djangoapps.theming.helpers import is_request_in_themed_site
