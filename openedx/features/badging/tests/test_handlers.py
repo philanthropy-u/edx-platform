@@ -4,7 +4,7 @@ from edx_notifications.lib.publisher import get_notification_type
 
 from openedx.features.badging.constants import EARNED_BADGE_NOTIFICATION_TYPE, JSON_NOTIFICATION_RENDERER
 
-from .. import handlers as badge_handlers
+from ..handlers import register_notification_types
 
 
 class BadgeHandlerTestCase(TestCase):
@@ -15,7 +15,7 @@ class BadgeHandlerTestCase(TestCase):
         :return: None
         """
         # register badge notification type
-        badge_handlers.register_notification_types(None)
+        register_notification_types(None)
 
         badge_notification_type = get_notification_type(EARNED_BADGE_NOTIFICATION_TYPE)
 
@@ -29,7 +29,5 @@ class BadgeHandlerTestCase(TestCase):
         :return: None
         """
 
-        with self.assertRaises(ItemNotFoundError) as not_found_error:
+        with self.assertRaises(ItemNotFoundError):
             get_notification_type("invalid")
-
-        self.assertEqual(not_found_error.exception.message, "")
