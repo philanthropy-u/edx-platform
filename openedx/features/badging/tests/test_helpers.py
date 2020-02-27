@@ -1,8 +1,6 @@
 import factory
 import mock
 from django.db.models import signals
-from edx_notifications.data import NotificationMessage
-from edx_notifications.lib.publisher import get_notification_type
 
 from lms.djangoapps.teams.tests.factories import CourseTeamFactory, CourseTeamMembershipFactory
 from nodebb.constants import CONVERSATIONALIST_ENTRY_INDEX, TEAM_PLAYER_ENTRY_INDEX
@@ -283,9 +281,9 @@ class BadgeHelperTestCases(ModuleStoreTestCase):
     def test_send_user_badge_notification(self, mock_publish_notification_to_user,
                                           mock_render_to_string):
         """
-        Test badge notification is sent to user
-        :param mock_publish_notification_to_user: mock send notification through edx notifications
-        :param mock_render_to_string: mock message body sent through notification
+        Test newly earned badge notification is sent to user
+        :param mock_publish_notification_to_user: mock and send notification through edx_notifications
+        :param mock_render_to_string: mock and return message body that appear in notification
         :return: None
         """
         # register badge notification type
@@ -301,13 +299,4 @@ class BadgeHelperTestCases(ModuleStoreTestCase):
         mock_render_to_string.assert_called_once_with('philu_notifications/templates/user_badge_earned.html',
                                                       expected_context)
 
-        message = NotificationMessage(
-            msg_type=get_notification_type(EARNED_BADGE_NOTIFICATION_TYPE),
-            payload={
-                'from_user': self.user.username,
-                'path': 'dummy_badge_url',
-                'bodyShort': 'You have earned a new badge:<br><strong>newly_earned_badge_name</strong>',
-            }
-        )
-
-        mock_publish_notification_to_user.assert_called_once_with(self.user.id, message)
+        mock_publish_notification_to_user.assert_called_once_with(self.user.id, mock.ANY)
