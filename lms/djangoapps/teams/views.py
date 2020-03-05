@@ -20,12 +20,13 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 from rest_framework_oauth.authentication import OAuth2Authentication
-from edx_rest_framework_extensions.auth.session.authentication import SessionAuthenticationAllowInactiveUser
 
 from courseware.courses import get_course_with_access, has_access
 from django_comment_client.utils import has_discussion_privileges
 from lms.djangoapps.teams.models import CourseTeam, CourseTeamMembership
 from edx_rest_framework_extensions.paginators import DefaultPagination, paginate_search_results
+from edx_rest_framework_extensions.auth.session.authentication import SessionAuthenticationAllowInactiveUser
+from openedx.core.lib.api.authentication import OAuth2AuthenticationAllowInactiveUser
 from openedx.core.lib.api.parsers import MergePatchParser
 from openedx.core.lib.api.permissions import IsStaffOrReadOnly
 from openedx.core.lib.api.view_utils import (
@@ -34,7 +35,6 @@ from openedx.core.lib.api.view_utils import (
     add_serializer_errors,
     build_api_error
 )
-from openedx.core.lib.api.authentication import OAuth2AuthenticationAllowInactiveUser
 from student.models import CourseAccessRole, CourseEnrollment
 from student.roles import CourseStaffRole
 from util.model_utils import truncate_fields
