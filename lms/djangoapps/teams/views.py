@@ -354,7 +354,7 @@ class TeamsListView(ExpandableFieldViewMixin, GenericAPIView):
             If the specified course does not exist, a 404 error is returned.
     """
 
-    # OAuth2Authentication must come first to return a 401 for unauthenticated users
+    # OAuth2AuthenticationAllowInactiveUser must come first to return a 401 for unauthenticated users
     # use OAuth2AuthenticationAllowInactiveUser, SessionAuthenticationAllowInactiveUser
     # instead of OAuth2Authentication, SessionAuthentication to allow inactive user to get
     # or create course team
