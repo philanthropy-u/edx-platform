@@ -355,7 +355,9 @@ class TeamsListView(ExpandableFieldViewMixin, GenericAPIView):
     """
 
     # OAuth2Authentication must come first to return a 401 for unauthenticated users
-    # Allow inactive user to get or create course team
+    # use OAuth2AuthenticationAllowInactiveUser, SessionAuthenticationAllowInactiveUser
+    # instead of OAuth2Authentication, SessionAuthentication to allow inactive user to get
+    # or create course team
     authentication_classes = (OAuth2AuthenticationAllowInactiveUser, SessionAuthenticationAllowInactiveUser)
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = CourseTeamSerializer
@@ -657,6 +659,9 @@ class TeamsDetailView(ExpandableFieldViewMixin, RetrievePatchAPIView):
             If the user is logged in and the team does not exist, a 404 is returned.
 
     """
+    # use OAuth2AuthenticationAllowInactiveUser, SessionAuthenticationAllowInactiveUser
+    # instead of OAuth2Authentication, SessionAuthentication to allow inactive user to
+    # get, update, or delete a course team's information
     authentication_classes = (OAuth2AuthenticationAllowInactiveUser, SessionAuthenticationAllowInactiveUser)
     permission_classes = (permissions.IsAuthenticated, IsStaffOrPrivilegedOrReadOnly, IsEnrolledOrIsStaff,)
     lookup_field = 'team_id'
@@ -1014,7 +1019,9 @@ class MembershipListView(ExpandableFieldViewMixin, GenericAPIView):
             when a staff or discussion privileged user posts a request adding
             another user to a team.
     """
-
+    # use OAuth2AuthenticationAllowInactiveUser, SessionAuthenticationAllowInactiveUser
+    # instead of OAuth2Authentication, SessionAuthentication to allow inactive user to
+    # get list of course team memberships or add user to a course team
     authentication_classes = (OAuth2AuthenticationAllowInactiveUser, SessionAuthenticationAllowInactiveUser)
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = MembershipSerializer
@@ -1215,6 +1222,9 @@ class MembershipDetailView(ExpandableFieldViewMixin, GenericAPIView):
             If the membership does not exist, a 404 error is returned.
     """
 
+    # use OAuth2AuthenticationAllowInactiveUser, SessionAuthenticationAllowInactiveUser
+    # instead of OAuth2Authentication, SessionAuthentication to allow inactive user to
+    # get individual course team memberships or removes a user from a course team
     authentication_classes = (OAuth2AuthenticationAllowInactiveUser, SessionAuthenticationAllowInactiveUser)
     permission_classes = (permissions.IsAuthenticated,)
 
