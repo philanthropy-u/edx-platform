@@ -20,6 +20,7 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 from rest_framework_oauth.authentication import OAuth2Authentication
+from edx_rest_framework_extensions.auth.session.authentication import SessionAuthenticationAllowInactiveUser
 
 from courseware.courses import get_course_with_access, has_access
 from django_comment_client.utils import has_discussion_privileges
@@ -33,6 +34,7 @@ from openedx.core.lib.api.view_utils import (
     add_serializer_errors,
     build_api_error
 )
+from openedx.core.lib.api.authentication import OAuth2AuthenticationAllowInactiveUser
 from student.models import CourseAccessRole, CourseEnrollment
 from student.roles import CourseStaffRole
 from util.model_utils import truncate_fields
@@ -50,8 +52,6 @@ from .serializers import (
 )
 from openedx.features.teams.serializers import CustomCourseTeamCreationSerializer
 from .utils import emit_team_event
-from edx_rest_framework_extensions.auth.session.authentication import SessionAuthenticationAllowInactiveUser
-from openedx.core.lib.api.authentication import OAuth2AuthenticationAllowInactiveUser
 
 TEAM_MEMBERSHIPS_PER_PAGE = 2
 TOPICS_PER_PAGE = 12
@@ -355,6 +355,7 @@ class TeamsListView(ExpandableFieldViewMixin, GenericAPIView):
     """
 
     # OAuth2Authentication must come first to return a 401 for unauthenticated users
+    # Allow inactive user to get or create course team
     authentication_classes = (OAuth2AuthenticationAllowInactiveUser, SessionAuthenticationAllowInactiveUser)
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = CourseTeamSerializer
