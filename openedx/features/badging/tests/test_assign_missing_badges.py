@@ -20,14 +20,14 @@ class MissingBadgeTestCase(TestCase):
     def setUp(self):
         self.team_badge = BadgeFactory(type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX])
         self.course_key = CourseKey.from_string('abc/course/123')
-        self.test_chat = 200
+        self.test_chat_room_id = 200
 
     @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def test_assign_missing_team_badges(self):
         old_user = UserFactory()
         new_user = UserFactory()
         course_team = CourseTeamFactory(course_id=self.course_key, team_id='team1')
-        team_group_chat = TeamGroupChatFactory(team=course_team, room_id=self.test_chat)
+        team_group_chat = TeamGroupChatFactory(team=course_team, room_id=self.test_chat_room_id)
 
         # Add first user to team in course
         CourseTeamMembershipFactory(user=old_user, team=course_team)
@@ -62,7 +62,7 @@ class MissingBadgeTestCase(TestCase):
         old_user_2 = UserFactory()
         new_user = UserFactory()
         course_team = CourseTeamFactory(course_id=self.course_key, team_id='team1')
-        team_group_chat = TeamGroupChatFactory(team=course_team, room_id=self.test_chat)
+        team_group_chat = TeamGroupChatFactory(team=course_team, room_id=self.test_chat_room_id)
 
         # Add two users to team in course
         CourseTeamMembershipFactory(user=old_user, team=course_team)
