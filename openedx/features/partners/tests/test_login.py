@@ -10,15 +10,15 @@ class LoginTestCases(APITestCase):
 
     def setUp(self):
         self.partner_login_end_point = reverse('partner_login', args=['give2asia'])
-        self.user = UserFactory(username='testuser', password='Abc12345', email='abc@test.com')
+        self.user = UserFactory(password='Abc12345')
 
     def test_login_with_correct_credentials(self):
         """
-                Testing login with valid credentials, i.e, The email is registered and correct password is provided
+        Testing login with valid credentials, i.e, The email is registered and correct password is provided
         """
         valid_data = {
-            'email': 'abc@test.com',
-            'password': 'Abc12345'
+            'email': self.user.email,
+            'password': self.user.password
         }
 
         partner = PartnerFactory(slug='give2asia')
@@ -33,10 +33,10 @@ class LoginTestCases(APITestCase):
 
     def test_login_with_incorrect_password(self):
         """
-                Providing incorrect password
+        Providing incorrect password
         """
         invalid_data = {
-            'email': 'abc@test.com',
+            'email': self.user.email,
             'password': 'incorrectpassword'
         }
         partner = PartnerFactory(slug='give2asia')
@@ -51,7 +51,7 @@ class LoginTestCases(APITestCase):
 
     def test_login_with_not_registered_username(self):
         """
-                Providing username which isn't registered yet
+        Providing username which isn't registered yet
         """
         invalid_data = {
             'email': 'efg@test.com',
@@ -66,11 +66,11 @@ class LoginTestCases(APITestCase):
 
     def test_login_with_username_not_affiliated_with_partner(self):
         """
-                Providing username which isn't affiliated to any partner
+        Providing username which isn't affiliated to any partner
         """
         invalid_data = {
-            'email': 'abc@test.com',
-            'password': 'Abc12345'
+            'email': self.user.email,
+            'password': self.user.password
         }
         partner = PartnerFactory(slug='give2asia')
         response = self.client.post(
@@ -81,11 +81,11 @@ class LoginTestCases(APITestCase):
 
     def test_login_with_username_with_nonexistant_partner(self):
         """
-                The url does not exist
+        The url does not exist
         """
         invalid_data = {
-            'email': 'abc@test.com',
-            'password': 'Abc12345'
+            'email': self.user.email,
+            'password': self.user.password
         }
         response = self.client.post(
             self.partner_login_end_point,
@@ -95,12 +95,12 @@ class LoginTestCases(APITestCase):
 
     def test_login_with_affiliated_partner_but_non_existing_directory(self):
         """
-                The directory of partner does not exist at
-                openedx/features/partners/
+        The directory of partner does not exist at
+        openedx/features/partners/
         """
         valid_data = {
-            'email': 'abc@test.com',
-            'password': 'Abc12345'
+            'email': self.user.email,
+            'password': self.user.password
         }
         partner = PartnerFactory(slug='invalid_slug')
 
