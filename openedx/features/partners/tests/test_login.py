@@ -84,8 +84,8 @@ class LoginTestCases(APITestCase):
         The url does not exist
         """
         invalid_data = {
-            'email': self.user.email,
-            'password': self.user.password
+            'email': 'none@none.com',
+            'password': 'none'
         }
         response = self.client.post(
             self.partner_login_end_point,
