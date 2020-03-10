@@ -21,32 +21,33 @@ class MissingBadgeTestCase(TestCase):
         self.type_team = TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX]
         self.team_badge = BadgeFactory(type=self.type_team)
         self.course_key = CourseKey.from_string('abc/course/123')
+        self.test_chat = 200
 
     @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def test_assign_missing_team_badges(self):
-        user = UserFactory()
-        user2 = UserFactory()
+        old_user = UserFactory()
+        new_user = UserFactory()
         course_team = CourseTeamFactory(course_id=self.course_key, team_id='team1')
-        team_group_chat = TeamGroupChatFactory(team=course_team, room_id=200)
+        team_group_chat = TeamGroupChatFactory(team=course_team, room_id=self.test_chat)
 
         # Add first user to team in course
-        CourseTeamMembershipFactory(user=user, team=course_team)
+        CourseTeamMembershipFactory(user=old_user, team=course_team)
 
         # Assigning badge to user in team
-        UserBadgeFactory(user=user, badge=self.team_badge, community_id=team_group_chat.room_id)
+        UserBadgeFactory(user=old_user, badge=self.team_badge, community_id=team_group_chat.room_id)
 
         assigned_user_badges = UserBadge.objects.filter(
-            user_id=user.id
+            user_id=old_user.id
         ).values(BADGE_ID_KEY)
 
         # Add second user to team in course
-        CourseTeamMembershipFactory(user=user2, team=course_team)
+        CourseTeamMembershipFactory(user=new_user, team=course_team)
 
         # Assigning missing badges to second user
-        UserBadge.assign_missing_team_badges(user2.id, course_team.id)
+        UserBadge.assign_missing_team_badges(new_user.id, course_team.id)
 
         assigned_user2_badges = UserBadge.objects.filter(
-            user_id=user2.id
+            user_id=new_user.id
         ).values(BADGE_ID_KEY)
 
         self.assertEqual(len(assigned_user_badges), len(assigned_user2_badges))
@@ -58,26 +59,25 @@ class MissingBadgeTestCase(TestCase):
     @patch('openedx.features.badging.models.UserBadge.objects.get_or_create')
     @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def test_assign_missing_team_badges_distinct_earned_badges(self, mock_get_or_create):
-        user = UserFactory()
-        user2 = UserFactory()
-        user3 = UserFactory()
+        old_user = UserFactory()
+        old_user_2 = UserFactory()
+        new_user = UserFactory()
         course_team = CourseTeamFactory(course_id=self.course_key, team_id='team1')
-        team_group_chat = TeamGroupChatFactory(team=course_team, room_id=200)
+        team_group_chat = TeamGroupChatFactory(team=course_team, room_id=self.test_chat)
 
         # Add two users to team in course
-        CourseTeamMembershipFactory(user=user, team=course_team)
-        CourseTeamMembershipFactory(user=user2, team=course_team)
+        CourseTeamMembershipFactory(user=old_user, team=course_team)
+        CourseTeamMembershipFactory(user=old_user_2, team=course_team)
 
         # Assigning badge to users in team
-        UserBadgeFactory(user=user, badge=self.team_badge, community_id=team_group_chat.room_id)
-        UserBadgeFactory(user=user2, badge=self.team_badge, community_id=team_group_chat.room_id)
+        UserBadgeFactory(user=old_user, badge=self.team_badge, community_id=team_group_chat.room_id)
+        UserBadgeFactory(user=old_user_2, badge=self.team_badge, community_id=team_group_chat.room_id)
 
         # Adding third user to team in course
-        CourseTeamMembershipFactory(user=user3, team=course_team)
+        CourseTeamMembershipFactory(user=new_user, team=course_team)
 
         # Assigning missing badges to third user
-        UserBadge.assign_missing_team_badges(user3.id, course_team.id)
+        UserBadge.assign_missing_team_badges(new_user.id, course_team.id)
 
         # The mocked function should only be called once
         self.assertEqual(mock_get_or_create.call_count, 1)
-
