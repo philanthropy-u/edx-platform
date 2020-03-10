@@ -10,15 +10,15 @@ class ResetPasswordTestCases(APITestCase):
 
     def setUp(self):
         self.partner_reset_password_end_point = reverse('partner_reset_password')
-        self.user = UserFactory(username='testuser', password='12345', email='abc@test.com')
+        self.user = UserFactory()
 
 
     def test_valid_partner_email(self):
         """
-                Providing correct email
+        Providing correct email
         """
         valid_data = {
-            'email': 'abc@test.com'
+            'email': self.user.email
         }
         partner = PartnerFactory(slug='partner')
 
@@ -32,10 +32,10 @@ class ResetPasswordTestCases(APITestCase):
 
     def test_valid_partner_email_not_affiliated_to_partner(self):
         """
-                Providing email of user not affiliated with partner
+        Providing email of user not affiliated with partner
         """
         valid_data = {
-            'email': 'abc@test.com'
+            'email': self.user.email
         }
         response = self.client.post(
             self.partner_reset_password_end_point,
@@ -45,7 +45,7 @@ class ResetPasswordTestCases(APITestCase):
 
     def test_invalid_partner_email(self):
         """
-                Providing email that isn't registered
+        Providing email that isn't registered
         """
         invalid_data = {
             'email': 'efg@test.com'

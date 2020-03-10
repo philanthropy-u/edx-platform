@@ -6,7 +6,7 @@ from openedx.features.partners.tests.factories import PartnerUserFactory, Partne
 from student.tests.factories import UserFactory
 
 
-class ResetPasswordTestCases(APITestCase):
+class LoginTestCases(APITestCase):
 
     def setUp(self):
         self.partner_login_end_point = reverse('partner_login', args=['give2asia'])
