@@ -18,8 +18,7 @@ from .factories import BadgeFactory, UserBadgeFactory
 class MissingBadgeTestCase(TestCase):
 
     def setUp(self):
-        self.type_team = TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX]
-        self.team_badge = BadgeFactory(type=self.type_team)
+        self.team_badge = BadgeFactory(type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX])
         self.course_key = CourseKey.from_string('abc/course/123')
         self.test_chat = 200
 
