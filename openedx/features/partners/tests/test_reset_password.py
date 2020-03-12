@@ -30,19 +30,6 @@ class ResetPasswordTestCases(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_valid_partner_email_not_affiliated_to_partner(self):
-        """
-        Providing email of user not affiliated with partner
-        """
-        valid_data = {
-            'email': self.user.email
-        }
-        response = self.client.post(
-            self.partner_reset_password_end_point,
-            data=valid_data
-        )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
     def test_invalid_partner_email(self):
         """
         Providing email that isn't registered
