@@ -10,6 +10,7 @@ from factory.django import DjangoModelFactory
 from opaque_keys.edx.keys import CourseKey
 from pytz import UTC
 
+from lms.djangoapps.onboarding.models import UserExtendedProfile
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from openedx.core.djangoapps.content.course_overviews.tests.factories import CourseOverviewFactory
 from student.models import (
@@ -46,6 +47,11 @@ class UserStandingFactory(DjangoModelFactory):
     account_status = None
     changed_by = None
 
+
+class UserExtendedProfileFactory(DjangoModelFactory):
+    class Meta(object):
+        model = UserExtendedProfile
+        django_get_or_create = ('user',)
 
 class UserProfileFactory(DjangoModelFactory):
     class Meta(object):
@@ -107,6 +113,16 @@ class UserFactory(DjangoModelFactory):
 
         for group_name in extracted:
             self.groups.add(GroupFactory.simple_generate(create, name=group_name))
+
+    @factory.post_generation
+    def extended_profile(obj, create, extracted, **kwargs):
+        if create:
+            obj.save()
+            return UserExtendedProfileFactory.create(user=obj, **kwargs)
+        elif kwargs:
+            raise Exception("Cannot build a user profile without saving the user")
+        else:
+            return None
 
 
 class AnonymousUserFactory(factory.Factory):
