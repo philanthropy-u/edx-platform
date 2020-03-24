@@ -41,7 +41,7 @@ class NodeBBUserCreationTestCase(TestCase):
             with mock.patch('common.djangoapps.nodebb.tasks.task_update_user_profile_on_nodebb.delay') as method:
                 task_update_user_profile_on_nodebb.delay(username=username, profile_data=data_to_sync)
 
-                method.assert_called_with(username=username, kwargs=data_to_sync)
+                method.assert_called_with(username=username, profile_data=data_to_sync)
 
     def test_user_deletion(self):
         username = "testuser"
@@ -49,8 +49,7 @@ class NodeBBUserCreationTestCase(TestCase):
         try:
             with mock.patch('common.lib.nodebb_client.users.ForumUser.delete', side_effect=ConnectionError):
                 nodebb_client.users.delete_user(
-                    username=username,
-                    kwargs={}
+                    username=username
                 )
         except ConnectionError:
             with mock.patch('common.djangoapps.nodebb.tests.task_delete_user_on_nodebb.delay') as method:
