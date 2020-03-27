@@ -30,34 +30,6 @@ from helpers import (
 from models import CertificateVerificationKey
 
 
-
-
-
-
-
-
-
-from common.lib.credentials_client.client import CredentialsClient
-from edxmako.shortcuts import render_to_response
-
-
-def func():
-    context = CredentialsClient().certs()
-    return context
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @login_required
 @ensure_csrf_cookie
 def student_certificates(request):
@@ -156,16 +128,25 @@ def student_certificates(request):
             'linkedin': '',
             'facebook_after_enroll': ''
         }
-    user_certificates.append({
-        'course_name': 'name',
-        'course_title': '',
-        'social_sharing_urls': ssu,
-        'certificate_url': '',
-        'course_start': '',
-        'completion_date': '',
-    })
-    certificates = CredentialsClient().certs()
-    print(certificates)
+
+    import json
+    certificates = '{ "count": 1,"next": "","previous": "","results": [{"username": "edx","credential": {"type": "program","credential_id": 3,"program_uuid": "eb228773-a9a5-48cf-bb0e-94725d5aa4f1"},"status": "awarded","download_url": "","uuid": "5a1620c5-cb31-421e-b720-5704229d8c9a","attributes": [{"name": "program_name","value": "Test Discovery Program"}],"created": "2020-02-11T12:45:54Z","modified": "2020-03-27T16:43:59Z","certificate_url": "http://local.philanthropyu.org:18150/credentials/5a1620c5cb31421eb7205704229d8c9a/"}  ]}'
+    certificates = json.loads(certificates)
+    for record in certificates['results']:
+        if record['credential']['type'] == 'program':
+            for attribute in record['attributes']:
+                if attribute['name'] == 'program_name':
+                    print(attribute['value'])
+                    user_certificates.append({
+                        'course_name': attribute['name'],
+                        'course_title': '',
+                        'social_sharing_urls': ssu,
+                        'certificate_url': record['certificate_url'],
+                        'course_start': '',
+                        'completion_date': '',
+                    })
+
+
     context = {
         'user_certificates': user_certificates,
     }
