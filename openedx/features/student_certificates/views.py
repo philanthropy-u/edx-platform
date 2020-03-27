@@ -30,6 +30,34 @@ from helpers import (
 from models import CertificateVerificationKey
 
 
+
+
+
+
+
+
+
+from common.lib.credentials_client.client import CredentialsClient
+from edxmako.shortcuts import render_to_response
+
+
+def func():
+    context = CredentialsClient().certs()
+    return context
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @login_required
 @ensure_csrf_cookie
 def student_certificates(request):
@@ -119,6 +147,25 @@ def student_certificates(request):
             'completion_date': completion_date.strftime('%b %d, %Y') if completion_date else None,
         })
 
+    now = datetime.now()
+    ssu = \
+        {
+            'twitter': '',
+            'facebook': '',
+            'email': '',
+            'linkedin': '',
+            'facebook_after_enroll': ''
+        }
+    user_certificates.append({
+        'course_name': 'name',
+        'course_title': '',
+        'social_sharing_urls': ssu,
+        'certificate_url': '',
+        'course_start': '',
+        'completion_date': '',
+    })
+    certificates = CredentialsClient().certs()
+    print(certificates)
     context = {
         'user_certificates': user_certificates,
     }
@@ -210,7 +257,7 @@ def verify_certificate(request, key):
     context = {
         'achieved_by': certificate.user.get_full_name(),
         'achieved_at': certificate.created_date.strftime('%B %d, %Y'),
-        'course_name': get_course(certificate.course_id).display_name, 
+        'course_name': get_course(certificate.course_id).display_name,
         'certificate_image': get_certificate_image_url(certificate)
     }
 
