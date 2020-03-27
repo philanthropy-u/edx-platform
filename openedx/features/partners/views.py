@@ -20,7 +20,7 @@ from notification_prefs.views import enable_notifications
 from pytz import UTC
 from rest_framework import status
 
-from lms.djangoapps.philu_overrides.user_api.views import RegistrationViewCustom
+from openedx.core.djangoapps.user_api.views import RegistrationView
 from lms.djangoapps.onboarding.models import EmailPreference, Organization, PartnerNetwork, UserExtendedProfile
 from nodebb.helpers import update_nodebb_for_user_status, set_user_activation_status_on_nodebb
 from openedx.core.djangoapps.lang_pref import LANGUAGE_KEY
@@ -29,6 +29,7 @@ from openedx.core.djangoapps.user_authn.cookies import set_logged_in_cookies
 from openedx.core.djangoapps.user_authn.views.register import REGISTER_USER, record_registration_attributions
 from openedx.features.partners.helpers import auto_join_partner_community, get_partner_recommended_courses
 from openedx.features.partners.models import PartnerUser
+from openedx.features.student_account.helpers import save_user_utm_info
 from philu_overrides.user_api.views import LoginSessionViewCustom
 from student.models import Registration, UserProfile
 from student.views import password_change_request_handler
@@ -107,7 +108,7 @@ def reset_password_view(request):
     return JsonResponse({'Error': dict(reset_password_form.errors.items())}, status=status.HTTP_404_NOT_FOUND)
 
 
-class PartnerRegistrationView(RegistrationViewCustom):
+class PartnerRegistrationView(RegistrationView):
     """
     This class handles registration flow for partner users. It inherit some basic functionality from original (normal)
     registration flow
@@ -134,7 +135,7 @@ class PartnerRegistrationView(RegistrationViewCustom):
             # Create or update models for User, UserProfile,
             # UserExtendedProfile, Organization, PartnerUser and EmailPreference
             user = create_account_with_params_custom(request, registration_data, partner)
-            self.save_user_utm_info(user)
+            save_user_utm_info(request, user)
         except PartnerLimitReachedError as er:
             error_message = {'Error': er.message,
                              'Partner': partner.label}
@@ -209,7 +210,9 @@ def create_account_with_params_custom(request, params, partner):
                 organization_to_assign.save()
 
             # Make user first learner either if his organization is new or his organization is orphan
-            extended_profile_data[partner_constants.IS_FIRST_LEARNER] = organization_to_assign.users_count() == 0
+            extended_profile_data[
+                partner_constants.IS_FIRST_LEARNER] = organization_to_assign.can_join_as_first_learner(
+                exclude_user=user)
 
             if extended_profile_data[partner_constants.IS_FIRST_LEARNER]:
                 # submit organization detail form
