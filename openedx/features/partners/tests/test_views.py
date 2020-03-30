@@ -84,15 +84,15 @@ class PartnerRegistrationViewTest(ApiTestCase):
         self.assertTrue(extended_profile.is_first_learner)
         self.assertHttpOK(response)
 
-    @mock.patch('openedx.features.partners.views.Organization.users_count')
-    def test_create_new_partner_user_with_non_orphan_organization(self, mock_org_user_count):
+    @mock.patch('openedx.features.partners.views.Organization.can_join_as_first_learner')
+    def test_create_new_partner_user_with_non_orphan_organization(self, mock_can_join_as_first_learner):
         """
         Test user is not first learner if organization already exists with some members
         Create an organization and then try to register.
         :return : None
         """
         OrganizationFactory(label=self.ORGANIZATION)
-        mock_org_user_count.return_value = 5
+        mock_can_join_as_first_learner.return_value = False
 
         response = self.client.post(self.registration_url, {
             'name': self.NAME,
