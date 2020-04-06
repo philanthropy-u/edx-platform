@@ -1,6 +1,10 @@
+from datetime import datetime
 import factory
+import json
 import mock
+from mock import call
 from django.db.models import signals
+from django.forms.models import model_to_dict
 
 from lms.djangoapps.teams.tests.factories import CourseTeamFactory, CourseTeamMembershipFactory
 from nodebb.constants import CONVERSATIONALIST_ENTRY_INDEX, TEAM_PLAYER_ENTRY_INDEX
@@ -11,6 +15,17 @@ from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from xmodule.modulestore.tests.factories import CourseFactory
 
 from .. import helpers as badge_helpers
+from ..constants import (
+    COURSES_KEY,
+    DISCUSSION_ID_KEY,
+    DISCUSSION_COUNT_KEY,
+    TEAM_ID_KEY,
+    TEAM_COUNT_KEY,
+    TEAM_ROOM_ID_KEY,
+    BADGES_DATE_EARNED_KEY,
+    BADGES_PROGRESS_KEY,
+    USERNAME_KEY
+)
 from ..handlers import register_notification_types
 from ..models import Badge
 from .factories import BadgeFactory, UserBadgeFactory
@@ -22,8 +37,7 @@ class BadgeHelperTestCases(ModuleStoreTestCase):
         super(BadgeHelperTestCases, self).setUp()
         self.user = UserFactory()
         self.course1 = CourseFactory(org="test1", number="123", run="1", display_name="ABC")
-        self.type_conversationalist = CONVERSATIONALIST[CONVERSATIONALIST_ENTRY_INDEX] # badge type
-
+        self.type_conversationalist = CONVERSATIONALIST[CONVERSATIONALIST_ENTRY_INDEX]  # badge type
 
     def test_populate_trophycase_with_empty_course_list(self):
         """
@@ -99,9 +113,9 @@ class BadgeHelperTestCases(ModuleStoreTestCase):
     @mock.patch('openedx.features.badging.helpers.is_teams_feature_enabled')
     @mock.patch('openedx.features.badging.helpers.get_course_by_id')
     def test_get_course_badges_successfully(self, mock_get_course_by_id,
-                                        mock_is_teams_feature_enabled,
-                                        mock_filter_earned_badge_by_joined_team,
-                                        mock_add_badge_earned_date):
+                                            mock_is_teams_feature_enabled,
+                                            mock_filter_earned_badge_by_joined_team,
+                                            mock_add_badge_earned_date):
         """
         Create 1 course, 3 badges (1 team, 2 conversationalist), none of the badges are earned, to test success case
         :param mock_get_course_by_id: mock course id, because it is irrelevant here
@@ -149,9 +163,9 @@ class BadgeHelperTestCases(ModuleStoreTestCase):
     @mock.patch('openedx.features.badging.helpers.is_teams_feature_enabled')
     @mock.patch('openedx.features.badging.helpers.get_course_by_id')
     def test_get_course_badges_user_not_joined_any_course_team(self, mock_get_course_by_id,
-                                                           mock_is_teams_feature_enabled,
-                                                           mock_filter_earned_badge_by_joined_team,
-                                                           mock_add_badge_earned_date):
+                                                               mock_is_teams_feature_enabled,
+                                                               mock_filter_earned_badge_by_joined_team,
+                                                               mock_add_badge_earned_date):
         """
         Create 1 course, 1 conversationalist badge, to test course badges, when team feature is enabled but user
         has not joined any team in a course
@@ -271,7 +285,7 @@ class BadgeHelperTestCases(ModuleStoreTestCase):
         :return: None
         """
         course_team, earned_badges = badge_helpers.filter_earned_badge_by_joined_team(
-        self.user, self.course1, earned_badges=mock.ANY)
+            self.user, self.course1, earned_badges=mock.ANY)
 
         self.assertIsNone(course_team)
         self.assertEqual(earned_badges, list())
@@ -300,3 +314,213 @@ class BadgeHelperTestCases(ModuleStoreTestCase):
                                                       expected_context)
 
         mock_publish_notification_to_user.assert_called_once_with(self.user.id, mock.ANY)
+
+    def test_get_discussion_team_ids_without_team_id(self):
+        """
+        Test dictionary returned from 'get_discussion_team_ids_without_team_id' helper method doesn't contains
+        team Id. In this test we are not passing our testable method with an team Id thus the resultant dictionary
+        shouldn't contain one.
+        :return: None
+        """
+        discussion_board_id = 1
+        course_discussion_team_sample_data = {
+            str(self.course1.id): {
+                DISCUSSION_ID_KEY: discussion_board_id
+            }
+        }
+        test_data = badge_helpers.get_discussion_team_ids(str(self.course1.id), discussion_board_id, {})
+        self.assertEqual(course_discussion_team_sample_data, test_data)
+
+    def test_get_discussion_team_ids_with_team_id(self):
+        """
+        Test dictionary returned from 'get_discussion_team_ids_without_team_id' helper method contains team Id.
+        :return: None
+        """
+        team_room_id = 2
+        discussion_board_id = 1
+        course_discussion_team_sample_data = {
+            str(self.course1.id): {
+                DISCUSSION_ID_KEY: discussion_board_id,
+                TEAM_ID_KEY: team_room_id
+            }
+        }
+        test_data = badge_helpers.get_discussion_team_ids(str(self.course1.id), discussion_board_id,
+                                                          {TEAM_ROOM_ID_KEY: team_room_id})
+        self.assertEqual(course_discussion_team_sample_data, test_data)
+
+    def test_get_badge_progress_request_data(self):
+        """
+        Test dictionary returned from 'get_badge_progress_request_data' helper method is correct.
+        :return: None
+        """
+        discussion_board_id = 1
+        course_data = [{str(self.course1.id): {DISCUSSION_ID_KEY: discussion_board_id}}]
+
+        sample_data = {
+            USERNAME_KEY: self.user.username,
+            COURSES_KEY: json.dumps(course_data)
+        }
+
+        test_data = badge_helpers.get_badge_progress_request_data(self.user.username, course_data)
+        self.assertEqual(sample_data, test_data)
+
+    @mock.patch('openedx.features.badging.helpers.add_badge_progress')
+    def test_add_posts_count_in_badges_list_badge_progress_method_calls(self, mock_add_badge_progress):
+        """
+        Test mock_add_badge_progress method calls count and the arguments this method is called with.
+        :param mock_add_badge_progress: mock add_badge_progress helper method
+        :return: None
+        """
+        team_room_id = 2
+        team_posts_count = 2
+        discussion_board_id = 1
+        discussion_posts_count = 3
+        team_badge = model_to_dict(BadgeFactory(type=TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX], threshold=5))
+        conversationalist_badge = model_to_dict(BadgeFactory(type=self.type_conversationalist, threshold=5))
+
+        badges = {
+            CONVERSATIONALIST[CONVERSATIONALIST_ENTRY_INDEX]: [conversationalist_badge],
+            TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX]: [team_badge]
+        }
+
+        course_discussion_data = {
+            str(self.course1.id): {
+                DISCUSSION_ID_KEY: discussion_board_id,
+                DISCUSSION_COUNT_KEY: discussion_posts_count,
+                TEAM_ID_KEY: team_room_id,
+                TEAM_COUNT_KEY: team_posts_count
+            }
+        }
+
+        badge_helpers.add_posts_count_in_badges_list(course_discussion_data, badges)
+
+        mock_add_badge_progress.assert_has_calls(
+            [call([conversationalist_badge], discussion_posts_count), call([team_badge], team_posts_count)])
+        self.assertEqual(mock_add_badge_progress.call_count, 2)
+
+    @mock.patch('openedx.features.badging.helpers.add_badge_progress')
+    def test_add_posts_count_in_badges_list_badge_progress_method_calls_without_team_badges(
+        self, mock_add_badge_progress):
+        """
+        Test mock_add_badge_progress method calls count and the arguments this method is called with.
+        Test data will be without team badges
+        :param mock_add_badge_progress: mock add_badge_progress helper method
+        :return: None
+        """
+        discussion_board_id = 1
+        discussion_posts_count = 3
+        conversationalist_badge = model_to_dict(BadgeFactory(type=self.type_conversationalist, threshold=5))
+
+        badges = {
+            CONVERSATIONALIST[CONVERSATIONALIST_ENTRY_INDEX]: [conversationalist_badge],
+        }
+
+        course_discussion_data = {
+            str(self.course1.id): {
+                DISCUSSION_ID_KEY: discussion_board_id,
+                DISCUSSION_COUNT_KEY: discussion_posts_count,
+            }
+        }
+
+        badge_helpers.add_posts_count_in_badges_list(course_discussion_data, badges)
+
+        mock_add_badge_progress.assert_called_once_with([conversationalist_badge], discussion_posts_count)
+
+    @mock.patch('openedx.features.badging.helpers.add_badge_progress')
+    def test_add_posts_count_in_badges_list_check_badge_list_after_progress_added(self, mock_add_badge_progress):
+        """
+        Test list of badges passed to "add_posts_count_in_badges_list" helper method that updates as a result of
+        mock_add_badge_progress method calls.
+        :param mock_add_badge_progress: mock add_badge_progress helper method
+        :return: None
+        """
+        badge_progress = 100
+        badges = {
+            CONVERSATIONALIST[CONVERSATIONALIST_ENTRY_INDEX]: [],
+            TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX]: []
+        }
+
+        course_discussion_data = {
+            str(self.course1.id): {
+                DISCUSSION_COUNT_KEY: 1,
+                TEAM_COUNT_KEY: 1
+            }
+        }
+
+        expected_output = {
+            CONVERSATIONALIST[CONVERSATIONALIST_ENTRY_INDEX]: badge_progress,
+            TEAM_PLAYER[TEAM_PLAYER_ENTRY_INDEX]: badge_progress
+        }
+
+        mock_add_badge_progress.return_value = badge_progress
+
+        badge_helpers.add_posts_count_in_badges_list(course_discussion_data, badges)
+        self.assertEqual(expected_output, badges)
+
+    def test_add_badge_progress_no_badge_earned(self):
+        """
+        Test badge progress when user hasn't earned any badges.
+        :return: None
+        """
+        lower_threshold_badge = model_to_dict(BadgeFactory(type=self.type_conversationalist, threshold=2))
+        higher_threshold_badge = model_to_dict(BadgeFactory(type=self.type_conversationalist, threshold=5))
+
+        conversationalist_badges = [lower_threshold_badge, higher_threshold_badge]
+
+        # Passing 1 to test its output
+        badges = badge_helpers.add_badge_progress(conversationalist_badges, 1)
+
+        self.assertEqual(badges[0][BADGES_PROGRESS_KEY], 50)
+        self.assertEqual(badges[1][BADGES_PROGRESS_KEY], 0)
+
+    def test_add_badge_progress_lower_threshold_badge_earned_with_date_earned_flag(self):
+        """
+        Test badge progress when their is some badge with date_earned flag. For badge to earned it must have
+        date_earned flag in it.
+        :return: None
+        """
+        lower_threshold_badge = model_to_dict(BadgeFactory(type=self.type_conversationalist, threshold=2))
+        higher_threshold_badge = model_to_dict(BadgeFactory(type=self.type_conversationalist, threshold=5))
+
+        lower_threshold_badge[BADGES_DATE_EARNED_KEY] = datetime.now()
+        conversationalist_badges = [lower_threshold_badge, higher_threshold_badge]
+
+        # Passing 1 to test its output
+        badges = badge_helpers.add_badge_progress(conversationalist_badges, 1)
+
+        self.assertEqual(badges[0][BADGES_PROGRESS_KEY], 100)
+        self.assertEqual(badges[1][BADGES_PROGRESS_KEY], 0)
+
+    def test_add_badge_progress_lower_threshold_badge_earned_without_date_earned_flag(self):
+        """
+        Test badge progress when their is some badge without date_earned flag. For badge to earned it must have
+        date_earned flag in it. In this test badge progress will 100 yet badge will not be considered as earned.
+        :return: None
+        """
+        lower_threshold_badge = model_to_dict(BadgeFactory(type=self.type_conversationalist, threshold=2))
+        higher_threshold_badge = model_to_dict(BadgeFactory(type=self.type_conversationalist, threshold=5))
+
+        conversationalist_badges = [lower_threshold_badge, higher_threshold_badge]
+
+        # Passing 2 to test its output
+        badges = badge_helpers.add_badge_progress(conversationalist_badges, 2)
+
+        self.assertEqual(badges[0][BADGES_PROGRESS_KEY], 100)
+        self.assertEqual(badges[1][BADGES_PROGRESS_KEY], 0)
+
+    def test_add_badge_progress_one_badge_earned_with_other_in_progress(self):
+        """
+        Test progress of two badges one is earned and other is not.
+        :return: None
+        """
+        lower_threshold_badge = model_to_dict(BadgeFactory(type=self.type_conversationalist, threshold=2))
+        higher_threshold_badge = model_to_dict(BadgeFactory(type=self.type_conversationalist, threshold=5))
+
+        lower_threshold_badge[BADGES_DATE_EARNED_KEY] = datetime.now()
+        conversationalist_badges = [lower_threshold_badge, higher_threshold_badge]
+
+        # Passing 4 to test its output
+        badges = badge_helpers.add_badge_progress(conversationalist_badges, 4)
+
+        self.assertEqual(badges[0][BADGES_PROGRESS_KEY], 100)
+        self.assertEqual(badges[1][BADGES_PROGRESS_KEY], 66)

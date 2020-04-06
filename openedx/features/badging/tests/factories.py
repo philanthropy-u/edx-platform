@@ -2,6 +2,7 @@ import factory
 
 from faker.providers import internet
 
+from nodebb.models import DiscussionCommunity
 from nodebb.constants import CONVERSATIONALIST_ENTRY_INDEX
 from openedx.features.badging.models import Badge, UserBadge
 from openedx.features.badging.constants import CONVERSATIONALIST
@@ -29,3 +30,11 @@ class UserBadgeFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     course_id = CourseKey.from_string('abc/123/course')
     community_id = 1
+
+
+class DiscussionCommunityFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = DiscussionCommunity
+
+    course_id = CourseKey.from_string('abc/123/course')
+    community_url = 1
