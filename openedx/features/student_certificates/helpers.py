@@ -28,6 +28,7 @@ from constants import (
 )
 from lms.djangoapps.certificates.models import GeneratedCertificate
 from lms.djangoapps.philu_api.helpers import get_course_custom_settings, get_social_sharing_urls
+from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from openedx.core.djangoapps.credentials.utils import get_credentials
 from openedx.features.student_certificates.signals import USER_CERTIFICATE_DOWNLOADABLE
 
@@ -72,6 +73,16 @@ def get_certificate_image_url_by_uuid(verify_uuid):
         prefix=CERTIFICATE_IMG_PREFIX,
         uuid=verify_uuid
     )
+
+
+def get_course_display_name_by_uuid(verify_uuid):
+    """
+    :param certificate uuid:
+    """
+    course_id = GeneratedCertificate.objects.get(verify_uuid=verify_uuid).course_id
+    course_display_name = CourseOverview.objects.get(id=course_id).display_name
+
+    return course_display_name
 
 
 def get_certificate_url(verify_uuid):

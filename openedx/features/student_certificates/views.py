@@ -27,6 +27,7 @@ from lms.djangoapps.certificates.models import (
 from helpers import (
     get_certificate_image_url,
     get_certificate_image_url_by_uuid,
+    get_course_display_name_by_uuid,
     get_credential_certificates,
     get_image_and_size_from_url,
     get_pdfkit_html,
@@ -194,8 +195,12 @@ def download_certificate_pdf(request, certificate_uuid):
 
     pdf_document_object = pdfkit.from_string(certificate_image_html, PDFKIT_IMAGE_PATH, pdfkit_options)
 
+    course_display_name = get_course_display_name_by_uuid(certificate_uuid)
+
     response_pdf_certificate = HttpResponse(pdf_document_object, content_type='application/pdf')
-    response_pdf_certificate['Content-Disposition'] = PDF_RESPONSE_HEADER.format(certificate_pdf_name='certificate')
+    response_pdf_certificate['Content-Disposition'] = PDF_RESPONSE_HEADER.format(
+        certificate_pdf_name='PhilanthropyUniversity_{course_name}'.format(
+            course_name=course_display_name.replace(' ', '')))
 
     return response_pdf_certificate
 
