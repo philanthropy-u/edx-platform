@@ -56,52 +56,24 @@ pipeline {
         WTW_CONTEXT = "python"
     }
     stages {
-        stage('Mark build as pending on Github') {
-            when {
-                 // Only run github-build-status for master builds
-                 expression { env.ghprbActualCommit == null }
-            }
-            steps {
-                script {
-                    commit_sha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-                    build job: 'github-build-status',
-                        parameters: [
-                            string(name: 'GIT_SHA', value: commit_sha),
-                            string(name: 'GITHUB_ORG', value: 'philanthropy-u'),
-                            string(name: 'GITHUB_REPO', value: "${REPO_NAME}"),
-                            string(name: 'TARGET_URL', value: "${BUILD_URL}"),
-                            string(name: 'DESCRIPTION', value: 'Pending'),
-                            string(name: 'CONTEXT', value: "${GITHUB_CONTEXT}"),
-                            string(name: 'CREATE_DEPLOYMENT', value: 'false'),
-                            string(name: 'BUILD_STATUS', value: 'pending')
-                        ],
-                        propagate: false, wait: false
-                }
-            }
-        }
         stage('Run Tests') {
             parallel {
                 stage("lms-unit") {
-                    agent { label "jenkins-worker" }
+                    // agent { label "jenkins-worker" }
                     environment {
                         TEST_SUITE = "lms-unit"
                         XDIST_NUM_WORKERS = 10
                         XDIST_REMOTE_NUM_PROCESSES = 1
                     }
                     steps {
-                        script {
-                            runPythonTests()
-                        }
+                      sh """
+                      #!/bin/bash
+                      cd ~
+                      touch testfile
+                      echo -e "DONE"
+                      """
                     }
-                    post {
-                        always {
-                            script {
-                                pythonTestCleanup()
-                            }
-                        }
-                    }
-                }
-                 
+                }    
             }
         }
     }
