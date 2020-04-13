@@ -39,7 +39,7 @@ def xdist_git_refspec() {
 }
 
 pipeline {
-    agent none
+    agent { label "master" }
     options {
         timestamps()
         timeout(250)
