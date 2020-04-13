@@ -12,7 +12,7 @@ def runPythonTests() {
             doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption', honorRefspec: true,
             noTags: true, shallow: true]], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'jenkins-worker',
             refspec: git_refspec, url: "git@github.com:edx/${REPO_NAME}.git"]]]
-        console_output = sh(returnStdout: true, script: 'bash scripts/all-unit-tests.sh').trim()
+        console_output = sh(returnStdout: true, script: 'bash scripts/all-tests.sh').trim()
         dir('stdout') {
             writeFile file: "${TEST_SUITE}-stdout.log", text: console_output
         }
@@ -36,10 +36,10 @@ def xdist_git_branch() {
 }
 
 pipeline {
-    agent { label "jenkins-worker" }
+    agent { label "ironwood-jenkins-worker" }
     options {
         timestamps()
-        timeout(120)
+        timeout(60)
     }
     environment {
         XDIST_CONTAINER_SUBNET = credentials('XDIST_CONTAINER_SUBNET')
