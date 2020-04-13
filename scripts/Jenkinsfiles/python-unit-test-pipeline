@@ -2,11 +2,11 @@ def runPythonTests() {
     // Determine git refspec, branch, and clone type
     git_branch = xdist_git_branch()
     git_refspec = xdist_git_refspec()
-    sshagent(credentials: ['jenkins-worker', 'jenkins-worker-pem'], ignoreMissing: true) {
+    sshagent(credentials: ['jenkins-worker'], ignoreMissing: true) {
         checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: git_branch]],
             doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption', honorRefspec: true,
             noTags: true, shallow: true]], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'jenkins-worker',
-            refspec: git_refspec, url: "git@github.com:ucsd-ets/${REPO_NAME}.git"]]]
+            refspec: git_refspec, url: "git@github.com:philanthropy-u/${REPO_NAME}.git"]]]
         console_output = sh(returnStdout: true, script: 'bash scripts/all-unit-tests.sh').trim()
         dir('stdout') {
             writeFile file: "${TEST_SUITE}-stdout.log", text: console_output
@@ -50,7 +50,7 @@ pipeline {
         XDIST_INSTANCE_TYPE = "c5d.large"
         XDIST_WORKER_AMI = credentials('XDIST_WORKER_AMI')
         XDIST_WORKER_IAM_PROFILE_ARN = credentials('XDIST_WORKER_IAM_PROFILE_ARN')
-        XDIST_WORKER_KEY_NAME = "ucsd-jenkins-worker"
+        XDIST_WORKER_KEY_NAME = "jenkins-worker"
         XDIST_WORKER_SUBNET = credentials('XDIST_WORKER_SUBNET')
         XDIST_WORKER_SECURITY_GROUP = credentials('XDIST_WORKER_SECURITY_GROUP')
         WTW_CONTEXT = "python"
@@ -67,7 +67,7 @@ pipeline {
                     build job: 'github-build-status',
                         parameters: [
                             string(name: 'GIT_SHA', value: commit_sha),
-                            string(name: 'GITHUB_ORG', value: 'ucsd-ets'),
+                            string(name: 'GITHUB_ORG', value: 'philanthropy-u'),
                             string(name: 'GITHUB_REPO', value: "${REPO_NAME}"),
                             string(name: 'TARGET_URL', value: "${BUILD_URL}"),
                             string(name: 'DESCRIPTION', value: 'Pending'),
@@ -166,7 +166,7 @@ pipeline {
                             doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption',
                             honorRefspec: true, noTags: true, shallow: true]], submoduleCfg: [],
                             userRemoteConfigs: [[credentialsId: 'jenkins-worker',
-                            refspec: git_refspec, url: "git@github.com:ucsd-ets/${REPO_NAME}.git"]]]
+                            refspec: git_refspec, url: "git@github.com:philanthropy-u/${REPO_NAME}.git"]]]
                         unstash 'lms-unit-reports'
                         unstash 'cms-unit-reports'
                         unstash 'commonlib-unit-reports'
@@ -216,7 +216,7 @@ pipeline {
                     build job: 'github-build-status',
                         parameters: [
                             string(name: 'GIT_SHA', value: commit_sha),
-                            string(name: 'GITHUB_ORG', value: 'ucsd-ets'),
+                            string(name: 'GITHUB_ORG', value: 'philanthropy-u'),
                             string(name: 'GITHUB_REPO', value: "${REPO_NAME}"),
                             string(name: 'TARGET_URL', value: "${BUILD_URL}"),
                             string(name: 'DESCRIPTION', value: build_description),
