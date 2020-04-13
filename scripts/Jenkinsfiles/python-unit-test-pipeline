@@ -39,7 +39,7 @@ def xdist_git_refspec() {
 }
 
 pipeline {
-    // agent { label "jenkins-worker" }
+    agent none
     options {
         timestamps()
         timeout(250)
