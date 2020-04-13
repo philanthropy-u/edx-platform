@@ -39,7 +39,7 @@ pipeline {
     agent { label "jenkins-worker" }
     options {
         timestamps()
-        timeout(60)
+        timeout(120)
     }
     environment {
         XDIST_CONTAINER_SUBNET = credentials('XDIST_CONTAINER_SUBNET')
