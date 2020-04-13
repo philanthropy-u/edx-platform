@@ -65,12 +65,7 @@ pipeline {
                         XDIST_REMOTE_NUM_PROCESSES = 1
                     }
                     steps {
-                      sh """
-                      #!/bin/bash
-                      cd ~
-                      touch testfile
-                      echo -e "DONE"
-                      """
+                      echo "DONE"
                     }
                 }    
             
