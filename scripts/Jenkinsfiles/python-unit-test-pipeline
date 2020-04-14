@@ -82,10 +82,10 @@ pipeline {
         stage('Run Tests') {
             parallel {
                 stage("lms-unit") {
-                    agent { label "jenkins-worker" }
+                    // agent { label "jenkins-worker" }
                     environment {
                         TEST_SUITE = "lms-unit"
-                        XDIST_NUM_WORKERS = 10
+                        XDIST_NUM_WORKERS = 1
                         XDIST_REMOTE_NUM_PROCESSES = 1
                     }
                     steps {
