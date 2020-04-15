@@ -37,6 +37,17 @@ pipeline {
         timestamps()
         timeout(900)
     }
+    environment {
+        XDIST_GIT_BRANCH = xdist_git_branch()
+        XDIST_GIT_REFSPEC = xdist_git_refspec()
+        //XDIST_INSTANCE_TYPE = "c5d.large"
+        //XDIST_WORKER_AMI = credentials('XDIST_WORKER_AMI')
+        //XDIST_WORKER_IAM_PROFILE_ARN = credentials('XDIST_WORKER_IAM_PROFILE_ARN')
+        //XDIST_WORKER_KEY_NAME = "ucsd-jenkins-worker"
+        //XDIST_WORKER_SUBNET = credentials('XDIST_WORKER_SUBNET')
+        //XDIST_WORKER_SECURITY_GROUP = credentials('XDIST_WORKER_SECURITY_GROUP')
+        //WTW_CONTEXT = "python"
+    }
     stages {
         
         stage('Mark build as pending on Github') {
@@ -67,7 +78,9 @@ pipeline {
                 sh """#!/bin/bash
                 sudo apt-get update && sudo apt-get -y sudo dist-upgrade && \
                 sudo apt-get -y --no-install-recommends install sudo git python virtualenv python-dev build-essential libmysqlclient-dev libffi-dev libssl-dev openssh-client
-                sudo pip install -r requirements/edx/base.txt
+                git clone --branch master --depth 1 -q https://github.com/ucsd-ets/edx-platform.git; cd edx-platform;
+                echo "HERE:  ${XDIST_GIT_REFSPEC}"
+                git fetch -fq origin ${XDIST_GIT_REFSPEC}; git checkout -q ${XDIST_GIT_BRANCH};
                 """
                 }
             }
