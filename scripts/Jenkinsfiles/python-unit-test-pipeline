@@ -82,6 +82,8 @@ pipeline {
                 git clone --branch master --depth 1 -q https://github.com/philanthropy-u/edx-platform.git; cd edx-platform;
                 echo "HERE:  ${XDIST_GIT_REFSPEC}"
                 git fetch -fq origin ${XDIST_GIT_REFSPEC}; git checkout -q ${XDIST_GIT_BRANCH};
+                source ../../../edx-venv/bin/activate
+                pip install -r requirements/edx/testing.txt
                 """
                 }
             }
