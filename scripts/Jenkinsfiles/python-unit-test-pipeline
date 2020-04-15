@@ -65,9 +65,9 @@ pipeline {
             steps {
                 script {
                 sh """#!/bin/bash
-                apt-get update && apt-get -y dist-upgrade && \
-                apt-get -y --no-install-recommends install sudo git python virtualenv python-dev build-essential libmysqlclient-dev libffi-dev libssl-dev openssh-client
-                pip install -r requirements/edx/base.txt
+                sudo apt-get update && sudo apt-get -y sudo dist-upgrade && \
+                sudo apt-get -y --no-install-recommends install sudo git python virtualenv python-dev build-essential libmysqlclient-dev libffi-dev libssl-dev openssh-client
+                sudo pip install -r requirements/edx/base.txt
                 """
                 }
             }
