@@ -78,6 +78,7 @@ pipeline {
                 sh """#!/bin/bash
                 sudo apt-get update && sudo apt-get -y sudo dist-upgrade && \
                 sudo apt-get -y --no-install-recommends install sudo git python virtualenv python-dev build-essential libmysqlclient-dev libffi-dev libssl-dev openssh-client
+                'if [ -e edx-platform ]; then rm -rf edx-platform; fi;
                 git clone --branch master --depth 1 -q https://github.com/philanthropy-u/edx-platform.git; cd edx-platform;
                 echo "HERE:  ${XDIST_GIT_REFSPEC}"
                 git fetch -fq origin ${XDIST_GIT_REFSPEC}; git checkout -q ${XDIST_GIT_BRANCH};
