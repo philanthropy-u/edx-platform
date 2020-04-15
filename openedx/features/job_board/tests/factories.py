@@ -4,7 +4,6 @@ from openedx.features.job_board.models import Job
 
 
 class JobFactory(factory.django.DjangoModelFactory):
-    """Factory for idea model. It contains fake data or sub-factories for all mandatory fields"""
 
     class Meta(object):
         model = Job
