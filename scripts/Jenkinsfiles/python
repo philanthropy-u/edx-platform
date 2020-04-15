@@ -36,21 +36,16 @@ def xdist_git_branch() {
 }
 
 pipeline {
-    agent { label "jenkins-worker" }
+    agent { label "ironwood-jenkins-worker" }
     options {
         timestamps()
         timeout(60)
     }
     environment {
+        XDIST_CONTAINER_SUBNET = credentials('XDIST_CONTAINER_SUBNET')
+        XDIST_CONTAINER_SECURITY_GROUP = credentials('XDIST_CONTAINER_SECURITY_GROUP')
+        XDIST_CONTAINER_TASK_NAME = "ironwood-jenkins-worker-task"
         XDIST_GIT_BRANCH = xdist_git_branch()
-        XDIST_GIT_REFSPEC = xdist_git_refspec()
-        XDIST_INSTANCE_TYPE = "m5.large"
-        XDIST_WORKER_AMI = credentials('XDIST_WORKER_AMI')
-        XDIST_WORKER_IAM_PROFILE_ARN = credentials('XDIST_WORKER_IAM_PROFILE_ARN')
-        XDIST_WORKER_KEY_NAME = "jenkins-worker"
-        XDIST_WORKER_SUBNET = credentials('XDIST_WORKER_SUBNET')
-        XDIST_WORKER_SECURITY_GROUP = credentials('XDIST_WORKER_SECURITY_GROUP')
-        WTW_CONTEXT = "python"
     }
     stages {
         stage('Mark build as pending on Github') {
@@ -79,7 +74,7 @@ pipeline {
         stage('Run Tests') {
             parallel {
                 stage("lms-unit") {
-                    agent { label "jenkins-worker" }
+                    agent { label "ironwood-jenkins-worker" }
                     environment {
                         TEST_SUITE = "lms-unit"
                         XDIST_NUM_TASKS = 10
@@ -99,7 +94,7 @@ pipeline {
                     }
                 }
                 stage("cms-unit") {
-                    agent { label "jenkins-worker" }
+                    agent { label "ironwood-jenkins-worker" }
                     environment {
                         TEST_SUITE = "cms-unit"
                         XDIST_NUM_TASKS = 3
@@ -119,7 +114,7 @@ pipeline {
                     }
                 }
                 stage("commonlib-unit") {
-                    agent { label "jenkins-worker" }
+                    agent { label "ironwood-jenkins-worker" }
                     environment {
                         TEST_SUITE = "commonlib-unit"
                         XDIST_NUM_TASKS = 3
@@ -185,6 +180,64 @@ pipeline {
                                 reportDir: 'reports', reportFiles: 'diff_coverage_combined.html',
                                 reportName: 'Diff Coverage Report', reportTitles: ''])
                         }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script{
+                if (env.ghprbPullId != null) {
+                    // For PR jobs, run the edx-platform-test-notifier for PR reporting
+                    build job: 'edx-platform-test-notifier', parameters: [string(name: 'PR_NUMBER', value: "${ghprbPullId}")], wait: false
+                } else {
+                    // For master jobs run github-build-status and report to slack when necessary
+                    if (currentBuild.currentResult == "SUCCESS") {
+                        create_deployment = "true"
+                        build_status = "success"
+                        build_description = "Build Passed"
+                    }
+                    else {
+                        create_deployment = "false"
+                        build_status = "failure"
+                        build_description = "Build Failed"
+                    }
+
+                    commit_sha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+                    build job: 'github-build-status',
+                        parameters: [
+                            string(name: 'GIT_SHA', value: commit_sha),
+                            string(name: 'GITHUB_ORG', value: 'edx'),
+                            string(name: 'GITHUB_REPO', value: "${REPO_NAME}"),
+                            string(name: 'TARGET_URL', value: "${BUILD_URL}"),
+                            string(name: 'DESCRIPTION', value: build_description),
+                            string(name: 'CONTEXT', value: "${GITHUB_CONTEXT}"),
+                            string(name: 'CREATE_DEPLOYMENT', value: create_deployment),
+                            string(name: 'BUILD_STATUS', value: build_status)
+                        ],
+                        propagate: false, wait: false
+
+                    if (currentBuild.currentResult != "SUCCESS"){
+                        slackSend botUser: true,
+                            message: "`${JOB_NAME}` #${BUILD_NUMBER}: ${currentBuild.currentResult} after ${currentBuild.durationString.replace(' and counting', '')}\n${BUILD_URL}"
+
+                        email_body = "See: <${BUILD_URL}>\n\nChanges:\n"
+                        change_sets = currentBuild.changeSets
+                        for (int j = 0; j < change_sets.size(); j++) {
+                            change_set_items = change_sets[j].items
+                            for (int k = 0; k < change_set_items.length; k++) {
+                                item = change_set_items[k]
+                                email_body = email_body + "\n Commit: ${item.commitId} by ${item.author}: ${item.msg}"
+                            }
+                        }
+                        emailext body: email_body,
+                            subject: "Build failed in Jenkins: ${JOB_NAME} #${BUILD_NUMBER}", to: 'testeng@edx.org'
+                    } else if (currentBuild.currentResult == "SUCCESS" && currentBuild.previousBuild.currentResult != "SUCCESS") {
+                        slackSend botUser: true,
+                            message: "`${JOB_NAME}` #${BUILD_NUMBER}: Back to normal after ${currentBuild.durationString.replace(' and counting', '')}\n${BUILD_URL}"
+                        emailext body: "See <${BUILD_URL}>",
+                            subject: "Jenkins Build is back to normal: ${JOB_NAME} #${BUILD_NUMBER}", to: 'testeng@edx.org'
                     }
                 }
             }
