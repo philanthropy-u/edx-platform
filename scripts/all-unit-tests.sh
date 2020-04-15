@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-echo "Here we go again"
+echo "Do I reach this script?"
 ###############################################################################
 #
 #   all-tests.sh
