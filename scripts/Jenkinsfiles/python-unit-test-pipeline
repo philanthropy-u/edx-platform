@@ -72,7 +72,7 @@ pipeline {
                 }
             }
         }
-        stage('test') {
+        stage('clone') {
             steps {
                 script {
                 sh """#!/bin/bash
@@ -83,6 +83,16 @@ pipeline {
                 echo "HERE:  ${XDIST_GIT_REFSPEC}"
                 git fetch -fq origin ${XDIST_GIT_REFSPEC}; git checkout -q ${XDIST_GIT_BRANCH};
                 source ../../../edx-venv/bin/activate
+                pip install -r requirements/edx/testing.txt
+                """
+                }
+            }
+        }
+        stage('install-requirements') {
+            steps {
+                script {
+                sh """#!/bin/bash
+                source ../../edx-venv/bin/activate
                 pip install -r requirements/edx/testing.txt
                 """
                 }
