@@ -22,7 +22,7 @@ for ip in $(echo $ip_list | sed "s/,/ /g")
 do
     worker_reqs_cmd="ssh -o StrictHostKeyChecking=no jenkins@$ip
     'if [ -e /home/jenkins/edx-platform ]; then rm -rf /home/jenkins/edx-platform; fi;
-    git clone --branch master --depth 1 -q https://github.com/ucsd-ets/edx-platform.git; cd edx-platform;
+    git clone --branch master --depth 1 -q https://github.com/philanthropy-u/edx-platform.git; cd edx-platform;
     git fetch -fq origin ${XDIST_GIT_REFSPEC}; git checkout -q ${XDIST_GIT_BRANCH};
     if [ -e /home/jenkins/edx-venv ]; then rm -rf /home/jenkins/edx-venv; fi;
     mkdir /home/jenkins/edx-venv; tar -C /home/jenkins/ -xf /home/jenkins/edx-venv_clean.tar.gz;
