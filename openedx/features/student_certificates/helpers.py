@@ -1,16 +1,15 @@
 import base64
 import shutil
+from datetime import datetime
 from importlib import import_module
 from tempfile import TemporaryFile
 
 import boto
 import requests
-
-from datetime import datetime
-from PIL import Image
 from boto.s3.key import Key
 from django.conf import settings
 from django.urls import reverse
+from PIL import Image
 
 from constants import (
     COMPLETION_DATE_FORMAT,
@@ -78,6 +77,7 @@ def get_certificate_image_url_by_uuid(verify_uuid):
 def get_course_display_name_by_uuid(verify_uuid):
     """
     :param certificate uuid:
+    :return: display name of the course
     """
     course_id = GeneratedCertificate.objects.get(verify_uuid=verify_uuid).course_id
     course_display_name = CourseOverview.objects.get(id=course_id).display_name
