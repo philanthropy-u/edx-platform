@@ -54,6 +54,11 @@ class PytestWorkerManager():
                     SubnetId=subnet,
                     SecurityGroupIds=security_group_ids,
                     KeyName=key_name,
+                    NetworkInterfaces=[
+                        {
+                        'AssociatePublicIpAddress': True,
+                        },
+                    ],
                     TagSpecifications=[
                         {
                             'ResourceType': 'instance',
