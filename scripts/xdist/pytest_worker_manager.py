@@ -57,8 +57,8 @@ class PytestWorkerManager():
                         'AssociatePublicIpAddress': True,
                         'DeviceIndex': 0,
                         'DeleteOnTermination': True,
-                        'Groups'=security_group_ids,
-                        'SubnetId'=subnet,
+                        'Groups': security_group_ids,
+                        'SubnetId': subnet,
                         },
                     ],
                     TagSpecifications=[
