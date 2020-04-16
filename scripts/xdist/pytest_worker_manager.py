@@ -57,6 +57,7 @@ class PytestWorkerManager():
                     NetworkInterfaces=[
                         {
                         'AssociatePublicIpAddress': True,
+                        'DeviceIndex': 0
                         },
                     ],
                     TagSpecifications=[

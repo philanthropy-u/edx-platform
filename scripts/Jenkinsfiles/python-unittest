@@ -1,5 +1,4 @@
 def runPythonTests() {
-    // Determine git refspec, branch, and clone type
     git_branch = xdist_git_branch()
     git_refspec = xdist_git_refspec()
     sshagent(credentials: ['jenkins-worker', 'jenkins-worker-pem'], ignoreMissing: true) {
@@ -93,53 +92,6 @@ pipeline {
                             runPythonTests()
                         }
                     }
-                    //post {
-                     //   always {
-                      //      script {
-                        //        pythonTestCleanup()
-                         //   }
-                      //  }
-                    //}
-                }
-                stage("cms-unit") {
-                    agent { label "jenkins-worker" }
-                    environment {
-                        TEST_SUITE = "cms-unit"
-                        XDIST_NUM_WORKERS = 1
-                        XDIST_REMOTE_NUM_PROCESSES = 1
-                    }
-                    steps {
-                        script {
-                            runPythonTests()
-                        }
-                    }
-                    //post {
-                   //     always {
-                    //        script {
-                    //            pythonTestCleanup()
-                     //       }
-                     //   }
-                    //}
-                }
-                stage("commonlib-unit") {
-                    agent { label "jenkins-worker" }
-                    environment {
-                        TEST_SUITE = "commonlib-unit"
-                        XDIST_NUM_WORKERS = 1
-                        XDIST_REMOTE_NUM_PROCESSES = 1
-                    }
-                    steps {
-                        script {
-                            runPythonTests()
-                        }
-                    }
-                    //post {
-                    //    always {
-                     //       script {
-                       //         pythonTestCleanup()
-                       //     }
-                       // }
-                  //  }
                 }
             }
         }
@@ -176,21 +128,6 @@ pipeline {
                     }
                 }
             }
-            //post {
-          //      always {
-        //            script {
-      //                  publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true,
-    //                        reportDir: 'reports/cover', reportFiles: 'index.html',
-  //                          reportName: 'Coverage.py Report', reportTitles: ''])
-//
-                      //  if (env.ghprbPullId != null) {
-                     //       publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true,
-                   //             reportDir: 'reports', reportFiles: 'diff_coverage_combined.html',
-                 //               reportName: 'Diff Coverage Report', reportTitles: ''])
-                //        }
-               //     }
-              //  }
-            //}
         }
     }
 }
