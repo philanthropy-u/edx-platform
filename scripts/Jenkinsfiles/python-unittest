@@ -93,13 +93,13 @@ pipeline {
                             runPythonTests()
                         }
                     }
-                    post {
-                        always {
-                            script {
-                                pythonTestCleanup()
-                            }
-                        }
-                    }
+                    //post {
+                     //   always {
+                      //      script {
+                        //        pythonTestCleanup()
+                         //   }
+                      //  }
+                    //}
                 }
                 stage("cms-unit") {
                     agent { label "jenkins-worker" }
@@ -113,13 +113,13 @@ pipeline {
                             runPythonTests()
                         }
                     }
-                    post {
-                        always {
-                            script {
-                                pythonTestCleanup()
-                            }
-                        }
-                    }
+                    //post {
+                   //     always {
+                    //        script {
+                    //            pythonTestCleanup()
+                     //       }
+                     //   }
+                    //}
                 }
                 stage("commonlib-unit") {
                     agent { label "jenkins-worker" }
@@ -133,13 +133,13 @@ pipeline {
                             runPythonTests()
                         }
                     }
-                    post {
-                        always {
-                            script {
-                                pythonTestCleanup()
-                            }
-                        }
-                    }
+                    //post {
+                    //    always {
+                     //       script {
+                       //         pythonTestCleanup()
+                       //     }
+                       // }
+                  //  }
                 }
             }
         }
@@ -176,21 +176,21 @@ pipeline {
                     }
                 }
             }
-            post {
-                always {
-                    script {
-                        publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true,
-                            reportDir: 'reports/cover', reportFiles: 'index.html',
-                            reportName: 'Coverage.py Report', reportTitles: ''])
-
-                        if (env.ghprbPullId != null) {
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true,
-                                reportDir: 'reports', reportFiles: 'diff_coverage_combined.html',
-                                reportName: 'Diff Coverage Report', reportTitles: ''])
-                        }
-                    }
-                }
-            }
+            //post {
+          //      always {
+        //            script {
+      //                  publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true,
+    //                        reportDir: 'reports/cover', reportFiles: 'index.html',
+  //                          reportName: 'Coverage.py Report', reportTitles: ''])
+//
+                      //  if (env.ghprbPullId != null) {
+                     //       publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true,
+                   //             reportDir: 'reports', reportFiles: 'diff_coverage_combined.html',
+                 //               reportName: 'Diff Coverage Report', reportTitles: ''])
+                //        }
+               //     }
+              //  }
+            //}
         }
     }
 }
