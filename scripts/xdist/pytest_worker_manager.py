@@ -169,7 +169,7 @@ if __name__ == "__main__":
                         help="Action for PytestWorkerManager to perform. "
                         "Either up for spinning up AWS EC2 workers or down for terminating them")
 
-    parser.add_argument('--region', '-g', default='us-west-2',
+    parser.add_argument('--region', '-g', default='eu-central-1',
                         help="AWS region where EC2 infrastructure lives. Defaults to us-west-2")
 
     # Spinning up workers
