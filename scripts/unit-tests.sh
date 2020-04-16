@@ -55,15 +55,15 @@ case "${TEST_SUITE}" in
     "lms-unit")
         case "$SHARD" in
             "all")
-                paver test_system -s lms --disable_capture ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.log
+                paver test_system -s lms --disable_capture ${PAVER_ARGS} ${PARALLEL} 
                 mv reports/.coverage reports/.coverage.lms
                 ;;
             [1-9])
-                paver test_system -s lms --disable_capture --eval-attr="shard==$SHARD" ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.${SHARD}.log
+                paver test_system -s lms --disable_capture --eval-attr="shard==$SHARD" ${PAVER_ARGS} ${PARALLEL} 
                 mv reports/.coverage reports/.coverage.lms.${SHARD}
                 ;;
             10|"noshard")
-                paver test_system -s lms --disable_capture --eval-attr="shard>=$SHARD or not shard" ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.10.log
+                paver test_system -s lms --disable_capture --eval-attr="shard>=$SHARD or not shard" ${PAVER_ARGS} ${PARALLEL} 
                 mv reports/.coverage reports/.coverage.lms.10
                 ;;
             *)
