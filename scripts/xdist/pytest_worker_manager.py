@@ -51,13 +51,14 @@ class PytestWorkerManager():
                     MaxCount=number_of_workers,
                     ImageId=ami,
                     InstanceType=instance_type,
-                    SubnetId=subnet,
-                    SecurityGroupIds=security_group_ids,
                     KeyName=key_name,
                     NetworkInterfaces=[
                         {
                         'AssociatePublicIpAddress': True,
-                        'DeviceIndex': 0
+                        'DeviceIndex': 0,
+                        'DeleteOnTermination': True,
+                        'Groups'=security_group_ids,
+                        'SubnetId'=subnet,
                         },
                     ],
                     TagSpecifications=[
