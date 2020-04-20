@@ -93,6 +93,19 @@ pipeline {
                         }
                     }
                 }
+                stage("cms-unit") {
+                    agent { label "jenkins-worker" }
+                    environment {
+                        TEST_SUITE = "cms-unit"
+                        XDIST_NUM_WORKERS = 1
+                        XDIST_REMOTE_NUM_PROCESSES = 1
+                    }
+                    steps {
+                        script {
+                            runPythonTests()
+                        }
+                    }
+                }
             }
         }
     }
