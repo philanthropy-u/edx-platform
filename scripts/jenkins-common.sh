@@ -17,10 +17,11 @@ mongo --quiet --eval 'db.getMongo().getDBNames().forEach(function(i){db.getSibli
 # a release branc) Some of the reporting tools compare the checked out
 # branch to a target branch; depending on how the GitHub plugin refspec
 # is configured, this may not already be fetched.
-if [ ! -z ${TARGET_BRANCH+x} ]; then
-    TARGET_BRANCH_WITHOUT_ORIGIN=$(echo "${TARGET_BRANCH}" | sed 's:^origin/::')
-    git fetch origin $TARGET_BRANCH_WITHOUT_ORIGIN:refs/remotes/origin/$TARGET_BRANCH_WITHOUT_ORIGIN
-fi
+
+#if [ ! -z ${TARGET_BRANCH+x} ]; then
+#    TARGET_BRANCH_WITHOUT_ORIGIN=$(echo "${TARGET_BRANCH}" | sed 's:^origin/::')
+#    git fetch origin $TARGET_BRANCH_WITHOUT_ORIGIN:refs/remotes/origin/$TARGET_BRANCH_WITHOUT_ORIGIN
+#fi
 
 # Reset the jenkins worker's virtualenv back to the
 # state it was in when the instance was spun up.
@@ -29,6 +30,7 @@ if [ -e $HOME/edx-venv_clean.tar.gz ]; then
     tar -C $HOME -xf $HOME/edx-venv_clean.tar.gz
 fi
 
+echo "TAR EXTRACTED!"
 # Load the npm packages from the time the worker was built
 # into the npm cache. This is an attempt to reduce the number
 # of times that npm gets stuck during an installation, by
@@ -65,6 +67,7 @@ if [ $WAIT_COUNT -eq 2 ]; then
     exit 1
 fi
 
+echo "NODE INSTALLED!"
 source $NODE_ENV_DIR/bin/activate
 echo "done setting up nodeenv"
 echo "node version is `node --version`"
