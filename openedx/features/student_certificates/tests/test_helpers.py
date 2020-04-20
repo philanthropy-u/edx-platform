@@ -118,7 +118,6 @@ class GenerateStudentCertificateHelpersTestCase(SharedModuleStoreTestCase):
         """
             Test generation of course display name
         """
-        # expected_course_display_name = self.course.name
         expected_course_display_name = CourseOverview.objects.get(id=self.course.id).display_name
         current_course_display_name = get_course_display_name_by_uuid(self.certificate.verify_uuid)
 
