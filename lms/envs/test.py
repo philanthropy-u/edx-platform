@@ -176,18 +176,18 @@ CONTENTSTORE = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'edxtest',
+        'NAME': 'edxapp',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': 'password',
         'HOST': 'edx.devstack.mysql',
         'PORT': '3306',
         'ATOMIC_REQUESTS': True,
     },
     'student_module_history': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'edxtest',
+        'NAME': 'edxapp',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': 'password',
         'HOST': 'edx.devstack.mysql',
         'PORT': '3306',
         'ATOMIC_REQUESTS': True,
@@ -656,3 +656,33 @@ plugin_settings.add_plugins(__name__, plugin_constants.ProjectType.LMS, plugin_c
 ########################## Derive Any Derived Settings  #######################
 
 derive_settings(__name__)
+
+AUTH_TOKENS = dict()
+
+LMS_ROOT_URL = "http://localhost:18000"
+
+NODEBB_RETRY_DELAY = 60
+NODEBB_ENDPOINT = "http://local.philanthropyu.org:4567"
+# # replace NODEBB_MASTER_TOKEN with value from your setup
+NODEBB_MASTER_TOKEN = AUTH_TOKENS.get("NODEBB_MASTER_TOKEN")
+
+MANDRILL_API_KEY = AUTH_TOKENS.get("MANDRILL_API_KEY")
+MAILCHIMP_API_KEY = AUTH_TOKENS.get("MAILCHIMP_API_KEY")
+MAILCHIMP_LEARNERS_LIST_ID = ""
+
+# with open(CONFIG_ROOT / CONFIG_PREFIX + "env.json") as env_file:
+#     ENV_TOKENS = json.load(env_file)
+
+ENV_TOKENS = dict()
+
+if ENV_TOKENS.get('COMPREHENSIVE_THEME_DIR'):
+    COMPREHENSIVE_THEME_DIR = ENV_TOKENS.get('COMPREHENSIVE_THEME_DIR')
+
+COMPREHENSIVE_THEME_DIRS = ENV_TOKENS.get('COMPREHENSIVE_THEME_DIRS', COMPREHENSIVE_THEME_DIRS) or []
+COMPREHENSIVE_THEME_LOCALE_PATHS = ENV_TOKENS.get('COMPREHENSIVE_THEME_LOCALE_PATHS', [])
+
+NODEBB_MASTER_TOKEN = "1dae9ee7-3b32-4d17-a35b-c179a1788ec3"
+
+MAILCHIMP_API_KEY = "21bf1dc52e6ef64a6a3f573e4ea9a999-us12"
+
+MANDRILL_API_KEY = "jicwd0XRtP-b7b-lG9hTuQ"
