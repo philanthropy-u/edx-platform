@@ -92,6 +92,13 @@ pipeline {
                             runPythonTests()
                         }
                     }
+                    post {
+                        always {
+                            script {
+                                pythonTestCleanup()
+                            }
+                        }
+                    }
                 }
             }
         }
