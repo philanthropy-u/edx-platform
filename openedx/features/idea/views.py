@@ -2,8 +2,10 @@
 from __future__ import unicode_literals
 
 from django.views import View
+from django.views.generic.list import ListView
 from edxmako.shortcuts import render_to_response
 
+from .models import Idea
 
 class ChallengeLandingView(View):
     template_name = 'features/idea/challenges_landing.html'
@@ -12,12 +14,13 @@ class ChallengeLandingView(View):
         return render_to_response(self.template_name, {})
 
 
-class IdeaListingView(View):
+class IdeaListingView(ListView):
+    model = Idea
+    context_object_name = 'idea_list'
+    paginate_by = 9
     template_name = 'features/idea/idea_listing.html'
-
-    def get(self, request, *args, **kwargs):
-        return render_to_response(self.template_name, {})
-
+    ordering = ['-created']
+    template_engine = 'mako'
 
 class IdeaCreateView(View):
     template_name = 'features/idea/idea_form.html'
