@@ -83,15 +83,15 @@ case "${TEST_SUITE}" in
     "cms-unit")
         case "$SHARD" in
             "all")
-                paver test_system -s cms --disable_capture ${PAVER_ARGS} ${PARALLEL} 2> cms-tests.log
+                # paver test_system -s cms --disable_capture ${PAVER_ARGS} ${PARALLEL} 2> cms-tests.log
                 mv reports/.coverage reports/.coverage.cms
                 ;;
             1)
-                paver test_system -s cms --disable_capture --eval-attr="shard==$SHARD" ${PAVER_ARGS} 2> cms-tests.${SHARD}.log
+                # paver test_system -s cms --disable_capture --eval-attr="shard==$SHARD" ${PAVER_ARGS} 2> cms-tests.${SHARD}.log
                 mv reports/.coverage reports/.coverage.cms.${SHARD}
                 ;;
             2|"noshard")
-                paver test_system -s cms --disable_capture --eval-attr="shard>=$SHARD or not shard" ${PAVER_ARGS} 2> cms-tests.2.log
+                # paver test_system -s cms --disable_capture --eval-attr="shard>=$SHARD or not shard" ${PAVER_ARGS} 2> cms-tests.2.log
                 mv reports/.coverage reports/.coverage.cms.2
                 ;;
             *)
@@ -108,15 +108,15 @@ case "${TEST_SUITE}" in
     "commonlib-unit")
         case "$SHARD" in
             "all")
-                paver test_lib --disable_capture ${PAVER_ARGS} ${PARALLEL} 2> common-tests.log
+                # paver test_lib --disable_capture ${PAVER_ARGS} ${PARALLEL} 2> common-tests.log
                 mv reports/.coverage reports/.coverage.commonlib
                 ;;
             [1-2])
-                paver test_lib -l common/lib/xmodule --disable_capture --eval-attr="shard==$SHARD" ${PAVER_ARGS} 2> common-tests.${SHARD}.log
+                # paver test_lib -l common/lib/xmodule --disable_capture --eval-attr="shard==$SHARD" ${PAVER_ARGS} 2> common-tests.${SHARD}.log
                 mv reports/.coverage reports/.coverage.commonlib.${SHARD}
                 ;;
             3|"noshard")
-                paver test_lib --disable_capture --eval-attr="shard>=$SHARD or not shard" ${PAVER_ARGS} 2> common-tests.3.log
+                # paver test_lib --disable_capture --eval-attr="shard>=$SHARD or not shard" ${PAVER_ARGS} 2> common-tests.3.log
                 mv reports/.coverage reports/.coverage.commonlib.3
                 ;;
             *)
