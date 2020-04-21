@@ -25,6 +25,7 @@ from lms.djangoapps.onboarding.helpers import get_current_utc_date
 from lms.djangoapps.onboarding.tests.factories import UserFactory
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from openedx.core.djangoapps.theming.models import SiteTheme
+from openedx.core.djangolib.testing.philu_utils import configure_philu_theme
 from openedx.features.student_certificates.constants import (
     COURSE_URL_FMT,
     PDFKIT_IMAGE_PATH,
@@ -55,10 +56,7 @@ class GenerateStudentCertificateViewsTestCase(SharedModuleStoreTestCase):
     @factory.django.mute_signals(signals.pre_save, signals.post_save)
     def setUpClass(cls):
         super(GenerateStudentCertificateViewsTestCase, cls).setUpClass()
-        site = Site(domain='testserver', name='test')
-        site.save()
-        theme = SiteTheme(site=site, theme_dir_name='philu')
-        theme.save()
+        configure_philu_theme()
 
         cls.download_url = '/certificate.pdf'
         cls.course = CourseFactory.create()
