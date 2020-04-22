@@ -165,7 +165,7 @@ class SystemTestSuite(PytestSuite):
                                      .format('{}.envs.{}'.format(self.root, self.settings))
                 xdist_string = '--tx {}*ssh="ubuntu@{} -o StrictHostKeyChecking=no"' \
                                '//python="source edx-venv/bin/activate; {}; python"' \
-                               '//chdir="/edx/app/edxapp/edx-platform"' \
+                               '//chdir="edx-platform"' \
                                .format(xdist_remote_processes, ip, django_env_var_cmd)
                 cmd.append(xdist_string)
             for rsync_dir in Env.rsync_dirs():
@@ -286,7 +286,7 @@ class LibTestSuite(PytestSuite):
                     django_env_var_cmd = "export DJANGO_SETTINGS_MODULE='openedx.tests.settings'"
                 xdist_string = '--tx {}*ssh="ubuntu@{} -o StrictHostKeyChecking=no"' \
                                '//python="source edx-venv/bin/activate; {}; python"' \
-                               '//chdir="/edx/app/edxapp/edx-platform"' \
+                               '//chdir="edx-platform"' \
                                .format(xdist_remote_processes, ip, django_env_var_cmd)
                 cmd.append(xdist_string)
             for rsync_dir in Env.rsync_dirs():
