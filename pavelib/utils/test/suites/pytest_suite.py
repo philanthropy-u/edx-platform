@@ -164,7 +164,7 @@ class SystemTestSuite(PytestSuite):
                 django_env_var_cmd = 'export DJANGO_SETTINGS_MODULE={}' \
                                      .format('{}.envs.{}'.format(self.root, self.settings))
                 xdist_string = '--tx {}*ssh="ubuntu@{} -o StrictHostKeyChecking=no"' \
-                               '//python="source /edx/app/edxapp/edxapp_env; {}; python"' \
+                               '//python="source edx-venv/bin/activate; {}; python"' \
                                '//chdir="/edx/app/edxapp/edx-platform"' \
                                .format(xdist_remote_processes, ip, django_env_var_cmd)
                 cmd.append(xdist_string)
@@ -285,7 +285,7 @@ class LibTestSuite(PytestSuite):
                 else:
                     django_env_var_cmd = "export DJANGO_SETTINGS_MODULE='openedx.tests.settings'"
                 xdist_string = '--tx {}*ssh="ubuntu@{} -o StrictHostKeyChecking=no"' \
-                               '//python="source /edx/app/edxapp/edxapp_env; {}; python"' \
+                               '//python="source edx-venv/bin/activate; {}; python"' \
                                '//chdir="/edx/app/edxapp/edx-platform"' \
                                .format(xdist_remote_processes, ip, django_env_var_cmd)
                 cmd.append(xdist_string)
