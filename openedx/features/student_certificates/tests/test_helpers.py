@@ -6,6 +6,7 @@ from django.conf import settings
 
 from certificates.tests.factories import GeneratedCertificateFactory
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+from openedx.features.student_certificates.constants import CERTIFICATE_NOT_FOUND_AGAINST_UUID_MSG
 from openedx.features.student_certificates.helpers import (
     CERTIFICATE_IMG_PREFIX,
     get_certificate_image_name,
@@ -122,3 +123,7 @@ class GenerateStudentCertificateHelpersTestCase(SharedModuleStoreTestCase):
         current_course_display_name = get_course_display_name_by_uuid(self.certificate.verify_uuid)
 
         self.assertEqual(expected_course_display_name, current_course_display_name)
+
+        verify_uuid = 'test_uuid'
+        with self.assertRaisesRegexp(Exception, CERTIFICATE_NOT_FOUND_AGAINST_UUID_MSG.format(verify_uuid=verify_uuid)):
+            get_course_display_name_by_uuid(verify_uuid)

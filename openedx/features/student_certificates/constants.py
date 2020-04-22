@@ -39,3 +39,5 @@ COMPLETION_DATE_FORMAT = '%b %d, %Y'
 CREDENTIALS_DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 CERTIFICATE_PDF_NAME = 'PhilanthropyUniversity_{display_name}'
+
+CERTIFICATE_NOT_FOUND_AGAINST_UUID_MSG = 'Certificate does not exist against the provided verify_uuid: {verify_uuid}'
