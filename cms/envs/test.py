@@ -122,10 +122,19 @@ CONTENTSTORE = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': "edxtest",
+        'NAME': 'edxapp',
         'USER': 'root',
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
+        'PASSWORD': 'password',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'ATOMIC_REQUESTS': True,
+    },
+    'student_module_history': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'edxapp',
+        'USER': 'root',
+        'PASSWORD': 'password',
+        'HOST': 'localhost',
         'PORT': '3306',
         'ATOMIC_REQUESTS': True,
     },
