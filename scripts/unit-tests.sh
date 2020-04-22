@@ -59,18 +59,18 @@ case "${TEST_SUITE}" in
         case "$SHARD" in
             "all")
                 echo "FIRST PAVER COMMAND:"
-                paver test_python ${PAVER_ARGS} -t openedx/features/partners/tests/test_views.py::PartnerRegistrationViewTest
-                # paver test_system -s lms ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.log
+                # paver test_python ${PAVER_ARGS} -t openedx/features/partners/tests/test_views.py::PartnerRegistrationViewTest
+                paver test_system -s lms ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.log
                 mv reports/.coverage reports/.coverage.lms
                 ;;
             [1-9])
-                paver test_python ${PAVER_ARGS} -t openedx/features/partners/tests/test_views.py::PartnerRegistrationViewTest
-                # paver test_system -s lms --eval-attr="shard==$SHARD" ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.${SHARD}.log
+                # paver test_python ${PAVER_ARGS} -t openedx/features/partners/tests/test_views.py::PartnerRegistrationViewTest
+                paver test_system -s lms --eval-attr="shard==$SHARD" ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.${SHARD}.log
                 mv reports/.coverage reports/.coverage.lms.${SHARD}
                 ;;
             10|"noshard")
-                paver test_python ${PAVER_ARGS} -t openedx/features/partners/tests/test_views.py::PartnerRegistrationViewTest
-                # paver test_system -s lms --eval-attr="shard>=$SHARD or not shard" ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.10.log
+                # paver test_python ${PAVER_ARGS} -t openedx/features/partners/tests/test_views.py::PartnerRegistrationViewTest
+                paver test_system -s lms --eval-attr="shard>=$SHARD or not shard" ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.10.log
                 mv reports/.coverage reports/.coverage.lms.10
                 ;;
             *)
