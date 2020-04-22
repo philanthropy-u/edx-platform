@@ -78,8 +78,6 @@ pipeline {
                 }
             }
         }
-        stage('Run Tests') {
-            parallel {
                 stage("lms-unit") {
                     agent { label "jenkins-worker" }
                     environment {
@@ -100,7 +98,7 @@ pipeline {
                         }
                     }
                 }
-            }
-        }
+            
+        
     }
 }
