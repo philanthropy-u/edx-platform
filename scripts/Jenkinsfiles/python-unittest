@@ -41,7 +41,7 @@ pipeline {
     agent { label "jenkins-worker" }
     options {
         timestamps()
-        timeout(63)
+        timeout(120)
     }
     environment {
         XDIST_GIT_BRANCH = xdist_git_branch()
