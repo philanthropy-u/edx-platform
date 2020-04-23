@@ -8,11 +8,11 @@ import boto
 import requests
 from boto.s3.key import Key
 from django.conf import settings
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from PIL import Image
 
 from constants import (
-    CERTIFICATE_NOT_FOUND_AGAINST_UUID_MSG,
     COMPLETION_DATE_FORMAT,
     CREDENTIALS_DATE_FORMAT,
     PAGE_HEIGHT,
@@ -80,11 +80,7 @@ def get_course_display_name_by_uuid(verify_uuid):
     :param certificate uuid:
     :return: display name of the course
     """
-    try:
-        course_id = GeneratedCertificate.objects.get(verify_uuid=verify_uuid).course_id
-    except GeneratedCertificate.DoesNotExist:
-        raise Exception(CERTIFICATE_NOT_FOUND_AGAINST_UUID_MSG.format(verify_uuid=verify_uuid))
-
+    course_id = get_object_or_404(GeneratedCertificate, verify_uuid=verify_uuid).course_id
     course_display_name = CourseOverview.objects.get(id=course_id).display_name
 
     return course_display_name
