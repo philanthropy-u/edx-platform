@@ -36,6 +36,7 @@ do
     if [ -e /home/jenkins/edx-venv ]; then rm -rf /home/jenkins/edx-venv; fi;
     mkdir /home/jenkins/edx-venv; tar -C /home/jenkins/ -xf /home/jenkins/edx-venv_clean.tar.gz;
     source ../edx-venv/bin/activate;
+    pip install -r requirements/philu/base.txt;
     pip install -r requirements/edx/testing.txt; mkdir reports' & "
 
     cmd=$cmd$worker_reqs_cmd
