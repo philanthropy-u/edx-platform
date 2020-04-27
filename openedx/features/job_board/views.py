@@ -4,7 +4,6 @@ from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 from django_countries import countries
 
-from openedx.features.teams.helpers import USER_ICON_COLORS
 from .constants import (
     DJANGO_COUNTRIES_KEY_INDEX,
     DJANGO_COUNTRIES_VALUE_INDEX,
@@ -23,7 +22,6 @@ from .constants import (
     JOB_TYPE_ONSITE_KEY,
     JOB_TYPE_REMOTE_KEY
 )
-from .forms import JobCreationForm
 from .models import Job
 
 
@@ -96,7 +94,6 @@ class JobListView(ListView):
         }
 
         context['filtered'] = any(context['search_fields'].values())
-        context['ICON_BACKGROUND_COLOR'] = USER_ICON_COLORS
 
         return context
 
@@ -108,7 +105,8 @@ class JobDetailView(DetailView):
 
 
 class JobCreateView(CreateView):
-    form_class = JobCreationForm
+    model = Job
+    fields = '__all__'
     template_name = 'features/job_board/create_job_form.html'
 
     def get_success_url(self):
