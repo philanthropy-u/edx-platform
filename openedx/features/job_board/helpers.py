@@ -24,7 +24,6 @@ def validate_file_size(file):
 class UploadToPathAndRename(object):
     """
     Rename file uploaded by user.
-    :param path: path where file will be uploaded
     """
 
     def __init__(self, path):
