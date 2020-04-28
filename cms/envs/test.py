@@ -122,10 +122,19 @@ CONTENTSTORE = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': "edxtest",
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
+        'NAME': 'edxapp',
+        'USER': 'jenkins',
+        'PASSWORD': 'password',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'ATOMIC_REQUESTS': True,
+    },
+    'student_module_history': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'edxapp',
+        'USER': 'jenkins',
+        'PASSWORD': 'password',
+        'HOST': 'localhost',
         'PORT': '3306',
         'ATOMIC_REQUESTS': True,
     },
@@ -332,12 +341,14 @@ FEATURES['CUSTOM_COURSES_EDX'] = True
 
 SERVICE_VARIANT = os.environ.get('SERVICE_VARIANT', None)
 
-CONFIG_ROOT = path(os.environ.get('CONFIG_ROOT', ENV_ROOT))
+# CONFIG_ROOT = path(os.environ.get('CONFIG_ROOT', ENV_ROOT))
 
-CONFIG_PREFIX = SERVICE_VARIANT + "." if SERVICE_VARIANT else ""
+# CONFIG_PREFIX = SERVICE_VARIANT + "." if SERVICE_VARIANT else ""
 
-with open(CONFIG_ROOT / CONFIG_PREFIX + "auth.json") as auth_file:
-    AUTH_TOKENS = json.load(auth_file)
+# with open(CONFIG_ROOT / CONFIG_PREFIX + "auth.json") as auth_file:
+#     AUTH_TOKENS = json.load(auth_file)
+
+AUTH_TOKENS = dict()
 
 NODEBB_RETRY_DELAY = 60
 NODEBB_ENDPOINT = "http://local.philanthropyu.org:4567"
