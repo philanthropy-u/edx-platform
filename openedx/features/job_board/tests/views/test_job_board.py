@@ -19,13 +19,11 @@ class JobBoardViewTest(TestCase):
         configure_philu_theme()
 
     def test_job_create_view(self):
-        self.client.logout()
         response = self.client.get(reverse('job_create'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(JobCreateView.fields, '__all__')
 
     def test_create_view_post_successful(self):
-        self.client.logout()
         self.client.post('/jobs/create/', {"function": "dummy function",
                                            "city": "Lahore",
                                            "description": "dummy description",
@@ -42,7 +40,6 @@ class JobBoardViewTest(TestCase):
         self.assertEqual(Job.objects.all().count(), 1)
 
     def test_create_view_post_unsuccessful(self):
-        self.client.logout()
         self.client.post('/jobs/create/', {"function": "dummy function",
                                            "city": "Lahore",
                                            "description": "dummy description",
@@ -59,18 +56,15 @@ class JobBoardViewTest(TestCase):
         self.assertEqual(Job.objects.all().count(), 0)
 
     def test_job_detail_view_invalid_pk(self):
-        self.client.logout()
         response = self.client.get(reverse('job_detail', kwargs={'pk': 1}), follow=True)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_job_detail_view_valid_pk(self):
-        self.client.logout()
         job = JobFactory()
         response = self.client.get(reverse('job_detail', kwargs={'pk': job.id}), follow=True)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_job_list_view(self):
-        self.client.logout()
         response = self.client.get(reverse('job_list'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(JobListView.paginate_by, 10)
