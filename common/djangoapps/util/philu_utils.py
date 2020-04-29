@@ -39,11 +39,8 @@ class UploadToPathAndRename(object):
     def __call__(self, instance, filename):
         file_extension = filename.split('.')[-1] if filename else ''
 
-        name_prefix = 'image' if instance._meta.get_field(self.field_name).__class__ is ImageField else 'file'
-
-        # if pk has been created then use pk otherwise set filename as random string
-        unique_name = instance.pk or uuid4().hex
-        filename = '{}_{}.{}'.format(name_prefix, unique_name, file_extension)
+        name_prefix = 'image' if isinstance(instance._meta.get_field(self.field_name), ImageField) else 'file'
+        filename = '{}_{}.{}'.format(name_prefix, uuid4().hex, file_extension)
 
         # return the whole path to the file
         return os.path.join(self.sub_path, filename)
