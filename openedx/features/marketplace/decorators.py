@@ -9,7 +9,7 @@ def has_affiliated_user(function=None):
         if user.is_authenticated:
             redirect_url = reverse('additional_information')
         else:
-            redirect_url = "/login?next=%s" % request.path
+            redirect_url = "/login?next={next}".format(next=request.path)
 
         if user.is_authenticated and user.extended_profile.organization:
             return function(request, *args, **kwargs)
