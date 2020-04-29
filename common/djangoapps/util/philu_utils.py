@@ -32,15 +32,14 @@ class UploadToPathAndRename(object):
     Rename file uploaded by user.
     """
 
-    def __init__(self, path, field_name):
+    def __init__(self, path, name_prefix='file'):
         self.sub_path = path
-        self.field_name = field_name
+        self.name_prefix = name_prefix
 
     def __call__(self, instance, filename):
         file_extension = filename.split('.')[-1] if filename else ''
 
-        name_prefix = 'image' if isinstance(instance._meta.get_field(self.field_name), ImageField) else 'file'
-        filename = '{}_{}.{}'.format(name_prefix, uuid4().hex, file_extension)
+        filename = '{}_{}.{}'.format(self.name_prefix, uuid4().hex, file_extension)
 
         # return the whole path to the file
         return os.path.join(self.sub_path, filename)
