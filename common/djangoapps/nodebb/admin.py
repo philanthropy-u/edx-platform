@@ -17,4 +17,3 @@ class DiscussionCommunityMembershipAdmin(admin.ModelAdmin):
 
 admin.site.register(DiscussionCommunity, DiscussionCommunityAdmin)
 admin.site.register(DiscussionCommunityMembership, DiscussionCommunityMembershipAdmin)
-
