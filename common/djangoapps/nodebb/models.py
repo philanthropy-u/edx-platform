@@ -46,5 +46,3 @@ class DiscussionCommunityMembership(models.Model):
 
     def __str__(self):
         return "%s" % self.user
-
-
