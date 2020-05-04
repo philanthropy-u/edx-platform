@@ -4,7 +4,7 @@ from models import DiscussionCommunity, DiscussionCommunityMembership, Discussio
 
 
 class DiscussionCommunityAdmin(admin.ModelAdmin):
-    list_display = ('course_id', 'community_url' )
+    list_display = ('course_id', 'community_url')
 
 
 class DiscussionCommunityInline(admin.TabularInline):
