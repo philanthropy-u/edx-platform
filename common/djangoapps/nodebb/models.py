@@ -1,6 +1,7 @@
 """
     Models related to nodeBB integrations
 """
+from django.contrib.auth.models import User
 from django.db import models
 from model_utils.models import TimeStampedModel
 from django.conf import settings
@@ -32,3 +33,18 @@ class TeamGroupChat(TimeStampedModel):
 
     def __str__(self):
         return "%s" % self.room_id
+
+
+class DiscussionCommunityThrough(TimeStampedModel):
+    community = models.ForeignKey(DiscussionCommunity)
+    membership = models.ForeignKey('DiscussionCommunityMembership')
+
+
+class DiscussionCommunityMembership(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, primary_key=True)
+    communities = models.ManyToManyField(DiscussionCommunity, through=DiscussionCommunityThrough)
+
+    def __str__(self):
+        return "%s" % self.user
+
+
