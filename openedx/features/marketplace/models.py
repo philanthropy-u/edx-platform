@@ -11,6 +11,7 @@ from openedx.features.idea.models import Location, OrganizationBase, VisualAttac
 from openedx.features.marketplace.constants import (
     ORGANIZATION_SECTOR_CHOICES,
     ORGANIZATIONAL_PROBLEM_CHOICES,
+    PUBLISHED_DATE_FORMAT,
     USER_SERVICES
 )
 
@@ -43,3 +44,7 @@ class MarketplaceRequest(OrganizationBase, Location, VisualAttachment, TimeStamp
 
     brief_services_summary = models.TextField(verbose_name=_(
         'Brief explanation of services that you can provide to others.'), blank=True, null=True)
+
+    @property
+    def created_date(self):
+        return self.created.strftime(PUBLISHED_DATE_FORMAT)
