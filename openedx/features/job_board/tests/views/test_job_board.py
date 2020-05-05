@@ -92,7 +92,7 @@ class JobBoardViewTest(TestCase):
     @data(('', 10), ('?page=2', 4))
     def test_job_list_view_pagination(self, page_query_param, job_list_size):
         # Create multiple new jobs to test pagination.
-        jobs = JobFactory.create_batch(14)
+        JobFactory.create_batch(14)
         response_second_page = self.client.get(reverse('job_list') + page_query_param)
         self.assertEqual(response_second_page.status_code, status.HTTP_200_OK)
         self.assertTrue('is_paginated' in response_second_page.context_data)
@@ -102,7 +102,9 @@ class JobBoardViewTest(TestCase):
     @data(JOB_TYPE_REMOTE_KEY, JOB_TYPE_ONSITE_KEY)
     def test_job_list_view_filters_job_type(self, job_type):
         # Create a new job with `type=job_type` to search for.
-        job = JobFactory(type=job_type)
+        # And another job with `type="test"` to see it's not fetched.
+        JobFactory(type=job_type)
+        JobFactory(type="test")
 
         query_params = {job_type: JOB_PARAM_TRUE_VALUE}
         response = self.client.get(add_or_replace_parameters(reverse('job_list'), query_params))
@@ -117,12 +119,13 @@ class JobBoardViewTest(TestCase):
         self.assertTrue(response.context_data['filtered'], True)
         self.assertTrue(len(response.context_data['job_list']) == 1)
         self.assertEqual(response.context_data['job_list'].first().type, job_type)
-        self.assertEqual(response.context_data['job_list'].first().pk, job.pk)
 
     @data(JOB_COMP_VOLUNTEER_KEY, JOB_COMP_HOURLY_KEY, JOB_COMP_SALARIED_KEY)
     def test_job_list_view_filters_job_compensation(self, job_comp):
         # Create a new job with `compensation=job_comp` to search for.
-        job = JobFactory(compensation=job_comp)
+        # And another job with `compensation="test"` to see it's not fetched.
+        JobFactory(compensation=job_comp)
+        JobFactory(compensation="test")
 
         query_params = {job_comp: JOB_PARAM_TRUE_VALUE}
         response = self.client.get(add_or_replace_parameters(reverse('job_list'), query_params))
@@ -137,12 +140,13 @@ class JobBoardViewTest(TestCase):
         self.assertTrue(response.context_data['filtered'], True)
         self.assertTrue(len(response.context_data['job_list']) == 1)
         self.assertEqual(response.context_data['job_list'].first().compensation, job_comp)
-        self.assertEqual(response.context_data['job_list'].first().pk, job.pk)
 
     @data(JOB_HOURS_FULLTIME_KEY, JOB_HOURS_PARTTIME_KEY, JOB_HOURS_FREELANCE_KEY)
     def test_job_list_view_filters_job_hours(self, job_hours):
         # Create a new job with `hours=job_hours` to search for.
-        job = JobFactory(hours=job_hours)
+        # And another job with `hours="test"` to see it's not fetched.
+        JobFactory(hours=job_hours)
+        JobFactory(hours="test")
 
         query_params = {job_hours: JOB_PARAM_TRUE_VALUE}
         response = self.client.get(add_or_replace_parameters(reverse('job_list'), query_params))
@@ -157,7 +161,6 @@ class JobBoardViewTest(TestCase):
         self.assertTrue(response.context_data['filtered'], True)
         self.assertTrue(len(response.context_data['job_list']) == 1)
         self.assertEqual(response.context_data['job_list'].first().hours, job_hours)
-        self.assertEqual(response.context_data['job_list'].first().pk, job.pk)
 
     def test_job_list_view_filters_job_location(self):
         # Create a new job with custom location to search for.
