@@ -39,6 +39,9 @@ class DiscussionCommunityThrough(TimeStampedModel):
     community = models.ForeignKey(DiscussionCommunity)
     membership = models.ForeignKey('DiscussionCommunityMembership')
 
+    class Meta:
+        unique_together = (("community", "membership"),)
+
 
 class DiscussionCommunityMembership(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, primary_key=True)
