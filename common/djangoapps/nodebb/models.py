@@ -41,6 +41,3 @@ class DiscussionCommunityMembership(TimeStampedModel):
 
     class Meta:
         unique_together = (("user", "community"),)
-
-    def __str__(self):
-        return "%s" % self.user
