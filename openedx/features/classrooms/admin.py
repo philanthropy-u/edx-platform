@@ -1,6 +1,10 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from django.contrib import admin
 
-# Register your models here.
+from models import DiscussionCommunityMembership
+
+
+class DiscussionCommunityMembershipAdmin(admin.ModelAdmin):
+    list_display = ('user', 'community')
+
+
+admin.site.register(DiscussionCommunityMembership, DiscussionCommunityMembershipAdmin)
