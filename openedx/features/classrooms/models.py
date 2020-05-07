@@ -7,7 +7,7 @@ from django.db import models
 
 class DiscussionCommunityMembership(TimeStampedModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    community = models.ForeignKey(DiscussionCommunity, on_delete=models.CASCADE)
+    community_url = models.ForeignKey(DiscussionCommunity, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (("user", "community"),)
+        unique_together = (("user", "community_url"),)
