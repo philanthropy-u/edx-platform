@@ -46,7 +46,7 @@ class CourseOverview(TimeStampedModel):
         app_label = 'course_overviews'
 
     # IMPORTANT: Bump this whenever you modify this model and/or add a migration.
-    VERSION = 6
+    VERSION = 7
 
     # Cache entry versioning.
     version = IntegerField()
@@ -105,6 +105,7 @@ class CourseOverview(TimeStampedModel):
     eligible_for_financial_aid = BooleanField(default=True)
 
     language = TextField(null=True)
+    specialization = BooleanField(default=False)
 
     @classmethod
     def _create_or_update(cls, course):

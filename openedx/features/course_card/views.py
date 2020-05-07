@@ -1,20 +1,23 @@
 from datetime import datetime
 
 import pytz
-from course_action_state.models import CourseRerunState
-from philu_overrides.helpers import get_user_current_enrolled_class
-from edxmako.shortcuts import render_to_response
-from openedx.features.course_card.models import CourseCard
 from django.views.decorators.csrf import csrf_exempt
+
+from course_action_state.models import CourseRerunState
+from edxmako.shortcuts import render_to_response
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+from openedx.features.course_card.models import CourseCard
+from philu_overrides.helpers import get_user_current_enrolled_class
 from student.models import CourseEnrollment
+
+from ...core.djangoapps.catalog.utils import get_programs
+from ..specializations.helpers import date_from_str
 from .helpers import get_course_open_date
 
 utc = pytz.UTC
 
 
 def get_course_start_date(course):
-
     """
     this function takes course and returns start date of the course
     if start and end dates are set and start date is in future
@@ -30,7 +33,6 @@ def get_course_start_date(course):
 
 @csrf_exempt
 def get_course_cards(request):
-
     """
     :param request:
     :return: list of active cards
@@ -48,13 +50,25 @@ def get_course_cards(request):
         if course.invitation_only and not CourseEnrollment.is_enrolled(request.user, course.id):
             continue
 
+        programs = get_programs(request.site)
+
+        # check if any active (currently open or are starting in future)
+        # run of a course is part of a program.
+        course_program = [program for program in programs
+                          for program_course in program['courses']
+                          if program_course['course_runs']
+                          and str(course.id) in [rerun['key'] for rerun in program_course['course_runs']
+                                                 if rerun['enrollment_start'] and rerun['enrollment_end']
+                                                 and (date_from_str(rerun['enrollment_start']) > current_time
+                                                 or date_from_str(rerun['enrollment_start']) <= current_time <= date_from_str(rerun['enrollment_end']))]]
+
         course_rerun_states = [crs.course_key for crs in CourseRerunState.objects.filter(
             source_course_key=course.id, action="rerun", state="succeeded")]
 
         course_rerun_object = CourseOverview.objects.select_related('image_set').filter(
             id__in=course_rerun_states, enrollment_end__gte=current_time).order_by('enrollment_start').first()
 
-        course = get_course_with_link_and_start_date(course, course_rerun_object, request)
+        course = get_course_with_link_and_start_date(course, course_rerun_object, request, course_program)
 
         filtered_courses.append(course)
 
@@ -66,8 +80,7 @@ def get_course_cards(request):
     )
 
 
-def get_course_with_link_and_start_date(course, course_rerun_object, request):
-
+def get_course_with_link_and_start_date(course, course_rerun_object, request, course_program):
     date_time_format = '%b %-d, %Y'
     current_time = datetime.utcnow().replace(tzinfo=utc)
 
@@ -76,6 +89,8 @@ def get_course_with_link_and_start_date(course, course_rerun_object, request):
 
     if current_class:
         current_class_start_date = get_course_open_date(current_class)
+
+    course.specialization = any(course_program)
 
     if user_current_enrolled_class:
         course.is_enrolled = True
@@ -107,7 +122,3 @@ def get_course_with_link_and_start_date(course, course_rerun_object, request):
 
     course.start_date = None
     return course
-
-
-
-
