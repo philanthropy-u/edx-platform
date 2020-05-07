@@ -8,3 +8,4 @@ class DiscussionCommunityAdmin(admin.ModelAdmin):
 
 
 admin.site.register(DiscussionCommunity, DiscussionCommunityAdmin)
+
