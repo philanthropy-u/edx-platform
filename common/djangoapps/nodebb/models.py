@@ -35,17 +35,12 @@ class TeamGroupChat(TimeStampedModel):
         return "%s" % self.room_id
 
 
-class DiscussionCommunityThrough(TimeStampedModel):
-    community = models.ForeignKey(DiscussionCommunity)
-    membership = models.ForeignKey('DiscussionCommunityMembership')
+class DiscussionCommunityMembership(TimeStampedModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    community = models.ForeignKey(DiscussionCommunity, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (("community", "membership"),)
-
-
-class DiscussionCommunityMembership(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, primary_key=True)
-    communities = models.ManyToManyField(DiscussionCommunity, through=DiscussionCommunityThrough)
+        unique_together = (("user", "community"),)
 
     def __str__(self):
         return "%s" % self.user
