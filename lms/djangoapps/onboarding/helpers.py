@@ -7864,6 +7864,10 @@ def get_close_matching_orgs_with_suggestions(request, query):
     data = {}
 
     organizations = Organization.objects.filter(label__istartswith=query)
+    if len(query) == settings.PHILU_DEFAULT_TERM_SEARCH_LENGTH:
+        organizations = organizations.extra(
+            where=['LENGTH(label) = {term_length}'.format(term_length=settings.PHILU_DEFAULT_TERM_SEARCH_LENGTH)])
+
     for organization in organizations:
         match_ratio = get_str_match_ratio(query.lower(), organization.label.lower())
         is_suggestion = True if re.match(query, organization.label, re.I) else False

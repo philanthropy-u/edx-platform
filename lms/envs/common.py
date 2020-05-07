@@ -3564,3 +3564,6 @@ OEF_RENEWAL_DAYS = 180
 # CDN LINK
 
 CDN_LINK = "https://static.philanthropyu.org/"
+
+# PHILU Configuration Parameters.
+PHILU_DEFAULT_TERM_SEARCH_LENGTH = 2
