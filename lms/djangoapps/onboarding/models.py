@@ -23,6 +23,7 @@ log = logging.getLogger("edx.onboarding")
 register(User, app=__package__, table_name='auth_historicaluser')
 register(UserProfile, table_name='auth_historicaluserprofile')
 
+models.CharField.register_lookup(models.functions.Length, 'length')
 
 class SchemaOrNoSchemaURLValidator(URLValidator):
     regex = re.compile(
