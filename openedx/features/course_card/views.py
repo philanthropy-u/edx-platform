@@ -44,13 +44,12 @@ def get_course_cards(request):
     current_time = datetime.utcnow()
 
     filtered_courses = []
+    programs = get_programs(request.site)
 
     for course in courses_list:
 
         if course.invitation_only and not CourseEnrollment.is_enrolled(request.user, course.id):
             continue
-
-        programs = get_programs(request.site)
 
         # check if any active (currently open or are starting in future)
         # run of a course is part of a program.
