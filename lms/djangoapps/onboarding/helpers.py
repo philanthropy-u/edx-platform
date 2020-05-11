@@ -13,6 +13,7 @@ from common.lib.mandrill_client.client import MandrillClient
 from mailchimp_pipeline.signals.handlers import update_user_email_in_mailchimp
 from nodebb.tasks import task_update_user_profile_on_nodebb
 from oef.models import OrganizationOefUpdatePrompt
+from lms.djangoapps.onboarding.constants import ORG_SEARCH_TERM_LENGTH
 from lms.djangoapps.onboarding.models import (
     Organization, OrganizationMetricUpdatePrompt, PartnerNetwork, OrganizationAdminHashKeys
 )
@@ -7864,8 +7865,8 @@ def get_close_matching_orgs_with_suggestions(request, query):
     data = {}
 
     organizations = Organization.objects.filter(label__istartswith=query)
-    if len(query) == settings.PHILU_DEFAULT_TERM_SEARCH_LENGTH:
-        organizations = organizations.filter(label__length=settings.PHILU_DEFAULT_TERM_SEARCH_LENGTH)
+    if len(query) == ORG_SEARCH_TERM_LENGTH:
+        organizations = organizations.filter(label__length=ORG_SEARCH_TERM_LENGTH)
     for organization in organizations:
         match_ratio = get_str_match_ratio(query.lower(), organization.label.lower())
         is_suggestion = True if re.match(query, organization.label, re.I) else False
