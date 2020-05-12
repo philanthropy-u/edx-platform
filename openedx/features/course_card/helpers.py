@@ -1,13 +1,14 @@
 from datetime import datetime
-
-import pytz
 from logging import getLogger
 
+import pytz
 from crum import get_current_request
-from custom_settings.models import CustomSettings
+
 from course_action_state.models import CourseRerunState
+from custom_settings.models import CustomSettings
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from openedx.features.course_card.models import CourseCard
+
 log = getLogger(__name__)
 
 
@@ -96,3 +97,19 @@ def get_course_cards_list():
     course_card_ids = [cc.course_id for cc in cards_query_set]
     courses_list = CourseOverview.objects.select_related('image_set').filter(id__in=course_card_ids)
     return courses_list
+
+
+def check_course_part_of_specialization(course_id, programs):
+    """
+    Helper function to check if course is part of specialization
+    @param course_id: crouse key
+    @param programs: list of specialization programs
+    @return:
+    """
+    for program in programs:
+        for program_course in program['courses']:
+            if program_course['course_runs']:
+                for course_rerun in program_course['course_runs']:
+                    if course_rerun['key'] == str(course_id):
+                        return True
+    return False
