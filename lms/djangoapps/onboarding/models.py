@@ -23,6 +23,7 @@ log = logging.getLogger("edx.onboarding")
 register(User, app=__package__, table_name='auth_historicaluser')
 register(UserProfile, table_name='auth_historicaluserprofile')
 
+
 class SchemaOrNoSchemaURLValidator(URLValidator):
     regex = re.compile(
         r'((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]'
