@@ -13,6 +13,8 @@ from __future__ import absolute_import
 # FWIW, this is identical behavior to what happens in Kombu if pkg_resources
 # isn't available.
 import kombu.utils
+from lms.lookups import *
+
 kombu.utils.entrypoints = lambda namespace: iter([])
 
 # This will make sure the app is always imported when
