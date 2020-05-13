@@ -73,7 +73,6 @@ def get_course_dict(course, programs):
     course_dict = vars(course)
 
     course_dict['display_name_with_default'] = course.display_name_with_default
-    course_dict['display_number_with_default'] = course.display_number_with_default
     course_dict['is_program_course'] = is_course_in_programs(course.id, programs)
 
     return course_dict
