@@ -99,12 +99,12 @@ def get_course_cards_list():
     return courses_list
 
 
-def check_course_part_of_specialization(course_id, programs):
+def is_course_in_programs(course_id, programs):
     """
-    Helper function to check if course is part of specialization
-    @param course_id: crouse key
+    Helper function to check if course is part of program
+    @param course_id: course key
     @param programs: list of specialization programs
-    @return:
+    @return: true if course is part of program otherwise false
     """
     for program in programs:
         for program_course in program['courses']:

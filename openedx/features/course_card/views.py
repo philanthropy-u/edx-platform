@@ -11,7 +11,7 @@ from openedx.features.course_card.models import CourseCard
 from philu_overrides.helpers import get_user_current_enrolled_class
 from student.models import CourseEnrollment
 
-from .helpers import check_course_part_of_specialization, get_course_open_date
+from .helpers import is_course_in_programs, get_course_open_date
 
 utc = pytz.UTC
 
@@ -71,10 +71,7 @@ def get_course_cards(request):
 
 def get_course_dict(course, programs):
     course_dict = vars(course)
-
-    course_dict['display_name_with_default'] = course.display_name_with_default
-    course_dict['display_number_with_default'] = course.display_number_with_default
-    course_dict['specialization'] = check_course_part_of_specialization(course.id, programs)
+    course_dict['is_program_course'] = is_course_in_programs(course.id, programs)
 
     return course_dict
 
