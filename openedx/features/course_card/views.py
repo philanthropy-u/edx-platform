@@ -1,22 +1,20 @@
 from datetime import datetime
 
 import pytz
-from django.views.decorators.csrf import csrf_exempt
-
 from course_action_state.models import CourseRerunState
-from edxmako.shortcuts import render_to_response
-from openedx.core.djangoapps.catalog.utils import get_programs
-from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
-from openedx.features.course_card.models import CourseCard
 from philu_overrides.helpers import get_user_current_enrolled_class
+from edxmako.shortcuts import render_to_response
+from openedx.features.course_card.models import CourseCard
+from django.views.decorators.csrf import csrf_exempt
+from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from student.models import CourseEnrollment
-
-from .helpers import is_course_in_programs, get_course_open_date
+from .helpers import get_course_open_date
 
 utc = pytz.UTC
 
 
 def get_course_start_date(course):
+
     """
     this function takes course and returns start date of the course
     if start and end dates are set and start date is in future
@@ -32,6 +30,7 @@ def get_course_start_date(course):
 
 @csrf_exempt
 def get_course_cards(request):
+
     """
     :param request:
     :return: list of active cards
@@ -43,7 +42,6 @@ def get_course_cards(request):
     current_time = datetime.utcnow()
 
     filtered_courses = []
-    programs = get_programs(request.site)
 
     for course in courses_list:
 
@@ -57,9 +55,8 @@ def get_course_cards(request):
             id__in=course_rerun_states, enrollment_end__gte=current_time).order_by('enrollment_start').first()
 
         course = get_course_with_link_and_start_date(course, course_rerun_object, request)
-        course_dict = get_course_dict(course, programs)
 
-        filtered_courses.append(course_dict)
+        filtered_courses.append(course)
 
     return render_to_response(
         "course_card/courses.html",
@@ -69,16 +66,8 @@ def get_course_cards(request):
     )
 
 
-def get_course_dict(course, programs):
-    course_dict = vars(course)
-
-    course_dict['display_name_with_default'] = course.display_name_with_default
-    course_dict['is_program_course'] = is_course_in_programs(course.id, programs)
-
-    return course_dict
-
-
 def get_course_with_link_and_start_date(course, course_rerun_object, request):
+
     date_time_format = '%b %-d, %Y'
     current_time = datetime.utcnow().replace(tzinfo=utc)
 
@@ -118,3 +107,7 @@ def get_course_with_link_and_start_date(course, course_rerun_object, request):
 
     course.start_date = None
     return course
+
+
+
+
