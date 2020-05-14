@@ -6,10 +6,10 @@ from crum import get_current_request
 
 from course_action_state.models import CourseRerunState
 from custom_settings.models import CustomSettings
-from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
-from openedx.features.course_card.models import CourseCard
 from openedx.core.djangoapps.catalog.utils import get_programs
+from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from openedx.core.djangoapps.theming.helpers import get_current_request
+from openedx.features.course_card.models import CourseCard
 
 log = getLogger(__name__)
 
