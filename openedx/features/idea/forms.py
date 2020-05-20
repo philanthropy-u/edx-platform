@@ -8,7 +8,7 @@ from lms.djangoapps.onboarding.helpers import COUNTRIES, get_country_iso
 from lms.djangoapps.onboarding.models import Organization
 from openedx.features.philu_utils.utils import validate_file_size
 
-from .constants import COUNTRY_MAX_LENGTH, IDEA_FILE_MAX_SIZE, IDEA_IMAGE_MAX_SIZE, ORGANIZATION_NAME_MAX_LENGTH
+from .constants import COUNTRY_MAX_LENGTH, CITY_MAX_LENGTH, IDEA_FILE_MAX_SIZE, IDEA_IMAGE_MAX_SIZE, ORGANIZATION_NAME_MAX_LENGTH
 from .helpers import validate_image_dimensions
 from .models import Idea
 
@@ -24,14 +24,21 @@ class IdeaCreationForm(ModelForm):
 
     organization_name = CharField(
         max_length=ORGANIZATION_NAME_MAX_LENGTH,
-        label=_('Organization Name'),
+        label=_('Organization Name*'),
         required=True,
         widget=TextInput(),
     )
 
     country_name = CharField(
         max_length=COUNTRY_MAX_LENGTH,
-        label=_('Country'),
+        label=_('Country:'),
+        required=True,
+        widget=TextInput(),
+    )
+
+    city = CharField(
+        max_length=CITY_MAX_LENGTH,
+        label=_('City:'),
         required=True,
         widget=TextInput(),
     )
