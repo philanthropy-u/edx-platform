@@ -21,14 +21,14 @@ class MarketplaceRequest(OrganizationBase, Location, VisualAttachment, TimeStamp
 
     organization_sector = MultiSelectWithOtherField(other_max_length=50, choices=ORGANIZATION_SECTOR_CHOICES,
                                                     verbose_name=_('Which sector is your organization working in?'),
-                                                    help_text=_('Please select all that apply.'), blank=False)
+                                                    help_text=_('Please select all that apply.'), blank=False, is_other_custom=True)
 
     organizational_problems = MultiSelectWithOtherField(other_max_length=50, choices=ORGANIZATIONAL_PROBLEM_CHOICES,
                                                         verbose_name=_('Current Organizational Problems'),
                                                         help_text=_(
                                                             'What are the areas that your organization is currently '
                                                             'facing a challenge in? Please select all that apply.'),
-                                                        blank=False)
+                                                        blank=False, is_other_custom=True)
 
     description = models.TextField(blank=False, verbose_name=_('Brief Description of Challenges'))
 
@@ -40,7 +40,7 @@ class MarketplaceRequest(OrganizationBase, Location, VisualAttachment, TimeStamp
 
     user_services = MultiSelectWithOtherField(other_max_length=50, choices=USER_SERVICES,
                                               verbose_name=_('What help can you provide to other organizations?'),
-                                              help_text=_('Please select all that apply.'), blank=False)
+                                              help_text=_('Please select all that apply.'), blank=False, is_other_custom=True)
 
     brief_services_summary = models.TextField(verbose_name=_(
         'Brief explanation of services that you can provide to others.'), blank=True, null=True)

@@ -1,0 +1,19 @@
+<label for="other">
+    <input type="{{ widget.type }}" name="{{ widget.name }}" onclick="if(this.checked){ document.getElementById('id_other').disabled=false;}else{ document.getElementById('id_other').disabled=true;}"
+            {%  if widget.selected %}
+                checked
+            {% endif %}
+            {% if widget.value != None %}
+                value="{{ widget.value|stringformat:'s' }}"
+            {% endif %}
+    >
+    Other:
+</label>
+<input type="text" id="id_other" name="{{ widget.name }}"
+        {% if not widget.selected %}
+            disabled
+        {% endif %}
+        {% if widget.value != None %}
+            value="{{ widget.value|stringformat:'s' }}"
+        {% endif %}
+>
