@@ -5,8 +5,8 @@ from multiselectfield import MultiSelectField
 from multiselectfield.db.fields import MSFList
 from multiselectfield.utils import string_type, get_max_length
 
-from openedx.custom.forms.fields import MultiSelectWithOtherFormField
-from openedx.custom.helpers import add_other_field_in_choices
+from openedx.features.custom_fields.multiselect_with_other.forms.fields import MultiSelectWithOtherFormField
+from openedx.features.custom_fields.multiselect_with_other.helpers import add_other_field_in_choices
 
 
 class OtherMultiSelectFieldList(MSFList):
@@ -24,10 +24,9 @@ class MultiSelectWithOtherField(MultiSelectField):
         pipe character i.e. `|`
     """
 
-    def __init__(self, other_max_length=None, is_other_custom=False, *args, **kwargs):
+    def __init__(self, other_max_length=None, *args, **kwargs):
         self.other_max_length = other_max_length
         self.other_delimiter = kwargs.get('other_delimiter', '|')
-        self.is_other_custom = is_other_custom
 
         if kwargs.get('max_length') is None and other_max_length is not None:
             choice_max_length = get_max_length(kwargs['choices'], kwargs.get('max_length'))
@@ -65,7 +64,6 @@ class MultiSelectWithOtherField(MultiSelectField):
             'max_length': self.max_length,
             'max_choices': self.max_choices,
             'other_max_length': self.other_max_length,
-            'is_other_custom': self.is_other_custom
         }
         if self.has_default():
             defaults['initial'] = self.get_default()
@@ -104,7 +102,7 @@ class MultiSelectWithOtherField(MultiSelectField):
         if self.other_max_length is None:
             return [
                 checks.Error(
-                    "MultiSelectWithOtherField must define a 'other_max_length' attribute.",
+                    "multiselect_with_other_field must define a 'other_max_length' attribute.",
                     obj=self,
                     id='fields.E120',
                 )

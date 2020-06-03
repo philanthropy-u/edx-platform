@@ -1,6 +1,6 @@
 from django.forms.widgets import CheckboxSelectMultiple
 
-from openedx.custom.helpers import get_other_values
+from openedx.features.custom_fields.multiselect_with_other.helpers import get_other_values
 
 
 class CheckboxSelectMultipleWithOther(CheckboxSelectMultiple):
@@ -8,30 +8,21 @@ class CheckboxSelectMultipleWithOther(CheckboxSelectMultiple):
     Widget class to handle other value filed.
     """
 
-    def __init__(self, is_other_custom):
+    def __init__(self):
         super(CheckboxSelectMultipleWithOther, self).__init__()
 
         self.other_choice = None
-        self.is_other_custom = is_other_custom
-
-        # if is_other_custom:
-        #     self.other_option_template_name = 'custom.html'
-        # else:
-        #     self.other_option_template_name = 'django/forms/widgets/text.html'
+        self.other_option_template_name = 'other_field.html'
 
     def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
         option = super(CheckboxSelectMultipleWithOther, self).create_option(name, value, label, selected, index,
                                                                             subindex, attrs)
         if value == 'other':
-            if self.other_choice == '':
-                selected = False
-            else:
-                selected = True
+            selected = False if self.other_choice == '' else True
             option.update({
                 'value': self.other_choice,
                 'selected': selected,
-                'type': 'text' if not self.is_other_custom else option['type'],
-                'template_name': 'django/forms/widgets/text.html' if not self.is_other_custom else 'custom.html',
+                'template_name': self.other_option_template_name,
                 'is_other': True
             })
 
@@ -61,6 +52,6 @@ class RadioSelectWithOther(CheckboxSelectMultipleWithOther):
         })
 
         if value != 'other':
-            option['attrs']['onclick'] = "document.getElementById('id_other').disabled=true;"
+            option['attrs']['onclick'] = "document.querySelector('.other_text[name={}]').disabled=true".format(name)
 
         return option

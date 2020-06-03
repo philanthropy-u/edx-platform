@@ -2401,6 +2401,9 @@ INSTALLED_APPS = [
     # User Leads app
     'openedx.features.user_leads',
 
+    # Application for custom fields
+    'openedx.features.custom_fields',
+
     'channels',
     'multiselectfield'
 ]

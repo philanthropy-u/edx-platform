@@ -2,8 +2,8 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from multiselectfield import MultiSelectFormField
 
-from openedx.custom.helpers import add_other_field_in_choices, get_other_values
-from openedx.custom.forms.widgets import CheckboxSelectMultipleWithOther, RadioSelectWithOther
+from openedx.features.custom_fields.multiselect_with_other.helpers import add_other_field_in_choices, get_other_values
+from openedx.features.custom_fields.multiselect_with_other.forms.widgets import CheckboxSelectMultipleWithOther, RadioSelectWithOther
 
 
 class MultiSelectWithOtherFormField(MultiSelectFormField):
@@ -11,18 +11,11 @@ class MultiSelectWithOtherFormField(MultiSelectFormField):
     Form field class to handle other text input field within the multiselect field
     """
 
-    def __init__(self, other_max_length=None, is_other_custom=False, *args, **kwargs):
+    def __init__(self, other_max_length=None, *args, **kwargs):
         if kwargs.get('choices'):
             kwargs['choices'] = add_other_field_in_choices(kwargs['choices'])
 
-        self.widget = CheckboxSelectMultipleWithOther(is_other_custom)
-        # self.widget = CheckboxSelectMultipleWithOther()
-
-        if kwargs.get('max_choices') == 1:
-            self.widget = RadioSelectWithOther(is_other_custom)
-            # self.widget.input_type = 'radio'
-            # self.widget.template_name = 'django/forms/widgets/radio.html'
-            # self.widget.option_template_name = 'django/forms/widgets/radio_option.html'
+        self.widget = RadioSelectWithOther() if kwargs.get('max_choices') == 1 else CheckboxSelectMultipleWithOther()
 
         super(MultiSelectWithOtherFormField, self).__init__(*args, **kwargs)
 
