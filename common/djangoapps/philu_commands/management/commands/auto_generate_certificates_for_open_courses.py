@@ -12,7 +12,7 @@ from courseware.views.views import _get_cert_data
 from django.apps import apps
 from django.core.management.base import BaseCommand
 from opaque_keys.edx.keys import UsageKey
-
+from philu_commands.helpers import has_active_certificate
 from student.models import CourseEnrollment
 from xmodule.modulestore.django import modulestore
 
@@ -30,11 +30,11 @@ GeneratedCertificate = apps.get_model('certificates', 'GeneratedCertificate')
 
 
 def is_course_valid_for_certificate_auto_generation(course):
-    return bool(course.has_started() and not course.has_ended() and course.may_certify())
+    return bool(
+        course.has_started() and not course.has_ended() and course.may_certify()) and has_active_certificate(course)
 
 
-def _is_eligible_for_certificate(user_course_enrollment,
-                                course_chapters, user):
+def _is_eligible_for_certificate(user_course_enrollment, course_chapters, user):
     """
     This is checking if the user enrollment if eligible for the certificate generation.
     :param user_course_enrollment:
