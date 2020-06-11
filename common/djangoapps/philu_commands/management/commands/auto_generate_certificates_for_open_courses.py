@@ -83,7 +83,8 @@ class Command(BaseCommand):
 
                 if _is_eligible_for_certificate(user_course_enrollment, course_chapters, user):
                     log.info('skipping because course with id {course_id} is not eligible for certificate'.format(
-                        course_id=course.id))
+                        course_id=course.id
+                    ))
                     continue
 
                 status = generate_user_certificates(user, course.id, course=course, send_email=True)
