@@ -74,7 +74,8 @@ class Command(BaseCommand):
                 user = user_course_enrollment.user
                 cert_data = _get_cert_data(user, course, user_course_enrollment.mode)
                 if not cert_data or cert_data.cert_status != CertificateStatuses.requesting:
-                    log.info('skipping because status is : {cert_status}'.format(cert_status=cert_data.cert_status))
+                    cert_status = cert_data.cert_status if cert_data else 'not available'
+                    log.info('skipping because status is : {cert_status}'.format(cert_status=cert_status))
                     continue
                 course_chapters = modulestore().get_items(
                     course.id,
