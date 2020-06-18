@@ -98,8 +98,6 @@ def my_badges(request, course_id):
     if status_code == 200 and response:
         # Here we are dealing with just one course so we are getting Zero(0th) index from list.
         add_posts_count_in_badges_list(response[COURSES_KEY][0], badges[BADGES_KEY])
-        print 'aaa'
-    print badges
 
     return render_to_response(
         'features/badging/my_badges.html',
