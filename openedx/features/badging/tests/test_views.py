@@ -24,9 +24,6 @@ class BadgeViewsTestCases(ModuleStoreTestCase):
         self.course = CourseFactory(org="test", number="123", run="1")
         self.request_factory = RequestFactory()
         self.user = UserFactory()
-        self.organization, _created = Organization.objects.get_or_create(label='Arbisoft')
-        self.user.extended_profile.organization = self.organization
-        self.user.extended_profile.save()
         self.client = Client()
 
 
