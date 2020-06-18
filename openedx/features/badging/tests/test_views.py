@@ -5,7 +5,6 @@ from django.http import Http404
 from django.test import RequestFactory, TestCase
 from django.test.client import Client
 
-from lms.djangoapps.onboarding.models import Organization
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
 from openedx.core.djangolib.testing.philu_utils import configure_philu_theme, clear_philu_theme
 from student.tests.factories import CourseEnrollmentFactory
