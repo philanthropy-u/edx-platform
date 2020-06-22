@@ -15,8 +15,6 @@ source =
     openedx/features/student_certificates
     openedx/features/cms
     openedx/features/badging
-    openedx/features/idea
-    openedx/features/philu_utils
 
 omit =
     cms/envs/*
