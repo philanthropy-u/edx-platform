@@ -6,7 +6,7 @@ Mailchimp gives us the ability to create and manage mailing lists. User data is 
 
 ## 2. Data
 
-Currently, the following data is stored in maintained in mailchimp user list.
+Currently, the following data is maintained for every user in mailchimp list.
 
 1. **opt_in** is email preference
 
