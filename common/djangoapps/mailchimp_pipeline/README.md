@@ -2,7 +2,7 @@
 
 ## 1. Introduction
 
-Mailchimp gives us the ability to create and manage mailing lists. User data is sent added to mailchimp list upon creation of account.
+Mailchimp gives us the ability to create and manage mailing lists. User data is added to mailchimp list upon creation of account.
 
 ## 2. Data
 
