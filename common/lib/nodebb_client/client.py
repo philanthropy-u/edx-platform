@@ -21,7 +21,7 @@ class NodeBBClient(Client):
                 based on a `_uid` field. Defaults to `HttpClient.DEFAULT_ADMIN_UID`.
         """
         self.configure(api_endpoint=settings.NODEBB_ENDPOINT,
-                       master_token=settings.NODEBB_MASTER_TOKEN,
+                       master_token="5780dbb9-c042-4290-a483-4b84c3b161ee",
                        admin_uid=admin_uid)
 
         self.http_client = HttpClient()
