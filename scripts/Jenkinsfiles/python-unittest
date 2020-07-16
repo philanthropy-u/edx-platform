@@ -81,7 +81,8 @@ pipeline {
         stage("lms-unit") {
             agent { label "jenkins-worker" }
             environment {
-                TEST_SUITE = "lms-unit"
+                TEST_SUITE = "philu-unit"
+                TOXENV = "test"
                 XDIST_NUM_WORKERS = 1
                 XDIST_REMOTE_NUM_PROCESSES = 1
             }
@@ -146,8 +147,8 @@ pipeline {
                     }
                 }
             }
-        }            
-        
+        }
+
     }
     post {
         always {
