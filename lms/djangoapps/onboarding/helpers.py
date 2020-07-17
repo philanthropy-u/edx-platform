@@ -13,6 +13,7 @@ from common.lib.mandrill_client.client import MandrillClient
 from mailchimp_pipeline.signals.handlers import update_user_email_in_mailchimp
 from nodebb.tasks import task_update_user_profile_on_nodebb
 from oef.models import OrganizationOefUpdatePrompt
+from lms.djangoapps.onboarding.constants import ORG_SEARCH_TERM_LENGTH
 from lms.djangoapps.onboarding.models import (
     Organization, OrganizationMetricUpdatePrompt, PartnerNetwork, OrganizationAdminHashKeys
 )
@@ -7803,11 +7804,6 @@ def get_country_iso(c_name):
     return _iso
 
 
-def get_sorted_choices_from_dict(_dict):
-    sorted_dict = sorted(_dict.items(), key=lambda x: x[1])
-    return ((field_name, label) for field_name, label in sorted_dict)
-
-
 def reorder_registration_form_fields(fields):
     required_order = {
         'first_name': 0,
@@ -7835,10 +7831,6 @@ def reorder_registration_form_fields(fields):
     return required_order
 
 
-def get_actual_field_names(fields):
-    return [f.split("=")[1] for f in fields]
-
-
 def admin_not_assigned_or_me(user, organization):
     return not organization.admin or organization.admin == user
 
@@ -7864,6 +7856,8 @@ def get_close_matching_orgs_with_suggestions(request, query):
     data = {}
 
     organizations = Organization.objects.filter(label__istartswith=query)
+    if len(query) == ORG_SEARCH_TERM_LENGTH:
+        organizations = organizations.filter(label__length=ORG_SEARCH_TERM_LENGTH)
     for organization in organizations:
         match_ratio = get_str_match_ratio(query.lower(), organization.label.lower())
         is_suggestion = True if re.match(query, organization.label, re.I) else False
@@ -8021,6 +8015,7 @@ def serialize_partner_networks():
         ))
 
     return data
+
 
 def get_user_on_demand_courses(user):
     """

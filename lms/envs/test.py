@@ -176,19 +176,19 @@ CONTENTSTORE = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'edxapp',
-        'USER': 'edxapp001',
-        'PASSWORD': 'password',
-        'HOST': 'localhost',
+        'NAME': 'edxtest',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'edx.devstack.mysql',
         'PORT': '3306',
         'ATOMIC_REQUESTS': True,
     },
     'student_module_history': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'edxapp',
-        'USER': 'edxapp001',
-        'PASSWORD': 'password',
-        'HOST': 'localhost',
+        'NAME': 'edxtest',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'edx.devstack.mysql',
         'PORT': '3306',
         'ATOMIC_REQUESTS': True,
     },
@@ -566,35 +566,35 @@ FEATURES['ENABLE_FINANCIAL_ASSISTANCE_FORM'] = True
 
 COURSE_CATALOG_API_URL = 'https://catalog.example.com/api/v1'
 
-# COMPREHENSIVE_THEME_DIRS = [REPO_ROOT / "themes", REPO_ROOT / "common/test"]
-# COMPREHENSIVE_THEME_LOCALE_PATHS = [REPO_ROOT / "themes/conf/locale", ]
+COMPREHENSIVE_THEME_DIRS = [REPO_ROOT / "themes", REPO_ROOT / "common/test"]
+COMPREHENSIVE_THEME_LOCALE_PATHS = [REPO_ROOT / "themes/conf/locale", ]
 
-# SERVICE_VARIANT = os.environ.get('SERVICE_VARIANT', None)
+SERVICE_VARIANT = os.environ.get('SERVICE_VARIANT', None)
 
-# CONFIG_ROOT = path(os.environ.get('CONFIG_ROOT', ENV_ROOT))
+CONFIG_ROOT = path(os.environ.get('CONFIG_ROOT', ENV_ROOT))
 
-# CONFIG_PREFIX = SERVICE_VARIANT + "." if SERVICE_VARIANT else ""
+CONFIG_PREFIX = SERVICE_VARIANT + "." if SERVICE_VARIANT else ""
 
-# with open(CONFIG_ROOT / CONFIG_PREFIX + "auth.json") as auth_file:
-#     AUTH_TOKENS = json.load(auth_file)
+with open(CONFIG_ROOT / CONFIG_PREFIX + "auth.json") as auth_file:
+    AUTH_TOKENS = json.load(auth_file)
 
-LMS_ROOT_URL = "http://localhost:18000"
-# NODEBB_RETRY_DELAY = 60
-# NODEBB_ENDPOINT = "http://local.philanthropyu.org:4567"
-# # replace NODEBB_MASTER_TOKEN with value from your setup
-# NODEBB_MASTER_TOKEN = AUTH_TOKENS.get("NODEBB_MASTER_TOKEN")
-# MANDRILL_API_KEY = AUTH_TOKENS.get("MANDRILL_API_KEY")
-# MAILCHIMP_API_KEY = AUTH_TOKENS.get("MAILCHIMP_API_KEY")
-# MAILCHIMP_LEARNERS_LIST_ID = ""
+LMS_ROOT_URL = "http://local.philanthropyu.org:8000"
+NODEBB_RETRY_DELAY = 60
+NODEBB_ENDPOINT = "http://local.philanthropyu.org:4567"
+# replace NODEBB_MASTER_TOKEN with value from your setup
+NODEBB_MASTER_TOKEN = AUTH_TOKENS.get("NODEBB_MASTER_TOKEN")
+MANDRILL_API_KEY = AUTH_TOKENS.get("MANDRILL_API_KEY")
+MAILCHIMP_API_KEY = AUTH_TOKENS.get("MAILCHIMP_API_KEY")
+MAILCHIMP_LEARNERS_LIST_ID = ""
 
-# with open(CONFIG_ROOT / CONFIG_PREFIX + "env.json") as env_file:
-#     ENV_TOKENS = json.load(env_file)
+with open(CONFIG_ROOT / CONFIG_PREFIX + "env.json") as env_file:
+    ENV_TOKENS = json.load(env_file)
 
-# if ENV_TOKENS.get('COMPREHENSIVE_THEME_DIR'):
-#     COMPREHENSIVE_THEME_DIR = ENV_TOKENS.get('COMPREHENSIVE_THEME_DIR')
+if ENV_TOKENS.get('COMPREHENSIVE_THEME_DIR'):
+    COMPREHENSIVE_THEME_DIR = ENV_TOKENS.get('COMPREHENSIVE_THEME_DIR')
 
-# COMPREHENSIVE_THEME_DIRS = ENV_TOKENS.get('COMPREHENSIVE_THEME_DIRS', COMPREHENSIVE_THEME_DIRS) or []
-# COMPREHENSIVE_THEME_LOCALE_PATHS = ENV_TOKENS.get('COMPREHENSIVE_THEME_LOCALE_PATHS', [])
+COMPREHENSIVE_THEME_DIRS = ENV_TOKENS.get('COMPREHENSIVE_THEME_DIRS', COMPREHENSIVE_THEME_DIRS) or []
+COMPREHENSIVE_THEME_LOCALE_PATHS = ENV_TOKENS.get('COMPREHENSIVE_THEME_LOCALE_PATHS', [])
 
 
 # TODO (felipemontoya): This key is only needed during lettuce tests.
@@ -655,40 +655,8 @@ plugin_settings.add_plugins(__name__, plugin_constants.ProjectType.LMS, plugin_c
 
 ########################## Derive Any Derived Settings  #######################
 
-AUTH_TOKENS = dict()
 
-LMS_ROOT_URL = "http://localhost:18000"
-
-NODEBB_RETRY_DELAY = 60
-NODEBB_ENDPOINT = "http://local.philanthropyu.org:4567"
-# # replace NODEBB_MASTER_TOKEN with value from your setup
-NODEBB_MASTER_TOKEN = AUTH_TOKENS.get("NODEBB_MASTER_TOKEN")
-
-MANDRILL_API_KEY = AUTH_TOKENS.get("MANDRILL_API_KEY")
-MAILCHIMP_API_KEY = AUTH_TOKENS.get("MAILCHIMP_API_KEY")
-MAILCHIMP_LEARNERS_LIST_ID = ""
-
-# with open(CONFIG_ROOT / CONFIG_PREFIX + "env.json") as env_file:
-#     ENV_TOKENS = json.load(env_file)
-
-ENV_TOKENS = dict()
-
-# if ENV_TOKENS.get('COMPREHENSIVE_THEME_DIR'):
-#     COMPREHENSIVE_THEME_DIR = ENV_TOKENS.get('COMPREHENSIVE_THEME_DIR')
-
-# COMPREHENSIVE_THEME_DIRS = ENV_TOKENS.get('COMPREHENSIVE_THEME_DIRS', COMPREHENSIVE_THEME_DIRS) or []
-# COMPREHENSIVE_THEME_LOCALE_PATHS = ENV_TOKENS.get('COMPREHENSIVE_THEME_LOCALE_PATHS', [])
-
-NODEBB_MASTER_TOKEN = "1dae9ee7-3b32-4d17-a35b-c179a1788ec3"
-
-MAILCHIMP_API_KEY = "21bf1dc52e6ef64a6a3f573e4ea9a999-us12"
-
-MANDRILL_API_KEY = "jicwd0XRtP-b7b-lG9hTuQ"
-
-COMPREHENSIVE_THEME_DIRS = ["/home/jenkins/edx-theme/edx-platform"]
-
-ENABLE_COMPREHENSIVE_THEMING = True
-
-COMPREHENSIVE_THEME_LOCALE_PATHS =  []
-
+FILE_UPLOAD_STORAGE_BUCKET_NAME = 'test_bucket'
+AWS_ACCESS_KEY_ID = 'test_access_Key'
+AWS_SECRET_ACCESS_KEY = 'test_secret_access_key'
 derive_settings(__name__)

@@ -2366,14 +2366,16 @@ INSTALLED_APPS = [
     'lms.djangoapps.philu_overrides',
 
     # Philu Features
+    'openedx.features.classrooms',
     'openedx.features.job_board',
     'openedx.features.partners',
     'openedx.features.philu_courseware',
     'openedx.features.student_certificates',
     'openedx.features.marketplace',
     'openedx.features.idea',
+    'openedx.features.smart_referral',
 
-    #third party surveys
+    # third party surveys
     'lms.djangoapps.third_party_surveys',
 
     # timed notification and periodic tasks
@@ -2400,7 +2402,11 @@ INSTALLED_APPS = [
     # User Leads app
     'openedx.features.user_leads',
 
-    'channels'
+    # Application for custom fields
+    'openedx.features.custom_fields',
+
+    'channels',
+    'multiselectfield'
 ]
 
 ######################### CSRF #########################################
@@ -3563,3 +3569,4 @@ OEF_RENEWAL_DAYS = 180
 # CDN LINK
 
 CDN_LINK = "https://static.philanthropyu.org/"
+
