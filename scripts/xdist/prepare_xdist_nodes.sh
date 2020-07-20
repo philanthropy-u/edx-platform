@@ -29,7 +29,12 @@ do
     mkdir /home/jenkins/edx-venv; tar -C /home/jenkins/ -xf /home/jenkins/edx-venv_clean.tar.gz;
     source ../edx-venv/bin/activate;
     pip install -r requirements/philu/base.txt;
-    pip install -r requirements/edx/testing.txt; mkdir reports' & "
+    pip install -r requirements/edx/testing.txt; mkdir reports' & 
+    sudo mkdir -p /edx/src/philu-edx-theme/edx-platform;
+    sudo chmod 755 -R /edx/src/philu-edx-theme/edx-platform;
+    sudo chown -R jenkins:jenkins /edx/src/philu-edx-theme/edx-platform;
+    cd /edx/src/philu-edx-theme/edx-platform;
+    sudo git clone https://philanthropyu:'${THEME_USER_PASSWORD}'@github.com/philanthropy-u/philu-edx-theme.git &"
 
     cmd=$cmd$worker_reqs_cmd
 done
