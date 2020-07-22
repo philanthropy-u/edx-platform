@@ -2348,9 +2348,6 @@ INSTALLED_APPS = [
     # OEF survey
     'lms.djangoapps.oef',
 
-    # Dynamic FAQ page
-    'lms.djangoapps.faq',
-
     # NodeBB
     'nodebb',
 
@@ -2383,9 +2380,6 @@ INSTALLED_APPS = [
 
     # student_dashboard App
     'lms.djangoapps.student_dashboard',
-
-    # Data extraction App
-    'openedx.features.data_extract',
 
     # Course cards app
     'openedx.features.course_card',
