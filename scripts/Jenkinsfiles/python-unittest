@@ -123,7 +123,7 @@ pipeline {
                             doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption',
                             honorRefspec: true, noTags: true, shallow: true]], submoduleCfg: [],
                             userRemoteConfigs: [[credentialsId: 'jenkins-worker',
-                            refspec: git_refspec, url: "git@github.com:ucsd-ets/${REPO_NAME}.git"]]]
+                            refspec: git_refspec, url: "git@github.com:philanthropy-u/${REPO_NAME}.git"]]]
                         unstash 'lms-unit-reports'
                         unstash 'cms-unit-reports'
                         unstash 'commonlib-unit-reports'
@@ -174,7 +174,7 @@ pipeline {
                     build job: 'github-build-status',
                         parameters: [
                             string(name: 'GIT_SHA', value: commit_sha),
-                            string(name: 'GITHUB_ORG', value: 'ucsd-ets'),
+                            string(name: 'GITHUB_ORG', value: 'philanthropy-u'),
                             string(name: 'GITHUB_REPO', value: "${REPO_NAME}"),
                             string(name: 'TARGET_URL', value: "${BUILD_URL}"),
                             string(name: 'DESCRIPTION', value: build_description),
