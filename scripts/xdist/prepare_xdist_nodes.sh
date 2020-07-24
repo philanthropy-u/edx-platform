@@ -18,7 +18,6 @@ else
 fi
 
 theme_git_password=$(printf "%q" $THEME_USER_PASSWORD)
-echo $theme_git_password
 
 ip_list=$(<pytest_worker_ips.txt)
 for ip in $(echo $ip_list | sed "s/,/ /g")

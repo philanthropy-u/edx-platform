@@ -576,8 +576,7 @@ NODEBB_ENDPOINT = "http://local.philanthropyu.org:4567"
 # replace NODEBB_MASTER_TOKEN with value from your setup
 NODEBB_MASTER_TOKEN = 'test-master-token-nodebb'
 MANDRILL_API_KEY = 'test_mandrill_api_key_part1-part2-part3'
-# TODO: Mock usages of mailchimp client in all unit tests and replace this with dummy key
-MAILCHIMP_API_KEY = '21bf1dc52e6ef64a6a3f573e4ea9a999-us12'
+MAILCHIMP_API_KEY = os.environ.get('MAILCHIMP_API_KEY')
 MAILCHIMP_LEARNERS_LIST_ID = "test"
 CAPTCHA_SITE_KEY = 'test-key'
 FILE_UPLOAD_STORAGE_BUCKET_NAME = 'test_bucket'
