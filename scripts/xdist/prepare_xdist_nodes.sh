@@ -31,6 +31,7 @@ do
     source ../edx-venv/bin/activate;
     pip install -r requirements/edx/testing.txt; mkdir reports;
     pip install -r requirements/philu/base.txt;
+    pip install -r requirements/edx/base.txt;
     if [ -e /edx/src/philu-edx-theme/edx-platform ]; then rm -rf /edx/src/philu-edx-theme/edx-platform; fi;
     sudo mkdir -p /edx/src/philu-edx-theme/edx-platform;
     sudo chmod 755 -R /edx/src;
