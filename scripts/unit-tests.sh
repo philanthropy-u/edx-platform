@@ -50,121 +50,109 @@ else
     PARALLEL="--processes=-1"
 fi
 
-declare -a test_suites=(
-"openedx/features/marketplace/tests.py"
-"openedx/features/idea/tests.py"
-)
+# declare -a test_suites=(
+# "openedx/features/marketplace/tests.py"
+# "openedx/features/idea/tests.py"
+# )
 
-for val in ${test_suites[@]}; do
-    paver test_system -s lms -t $val ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.log
-done
-mv reports/.coverage reports/.coverage.lms
+# for val in ${test_suites[@]}; do
+#     paver test_system -s lms -t $val ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.log
+# done
+# mv reports/.coverage reports/.coverage.lms
 
 
-# case "${TEST_SUITE}" in
+case "${TEST_SUITE}" in
 
-#     "lms-unit")
-#         case "$SHARD" in
-#             "all")
-#                 paver test_system -s lms --disable_capture ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.log
-#                 mv reports/.coverage reports/.coverage.lms
-#                 ;;
-#             [1-9])
-#                 paver test_system -s lms --disable_capture --eval-attr="shard==$SHARD" ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.${SHARD}.log
-#                 mv reports/.coverage reports/.coverage.lms.${SHARD}
-#                 ;;
-#             10|"noshard")
-#                 paver test_system -s lms --disable_capture --eval-attr="shard>=$SHARD or not shard" ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.10.log
-#                 mv reports/.coverage reports/.coverage.lms.10
-#                 ;;
-#             *)
-#                 # If no shard is specified, rather than running all tests, create an empty xunit file. This is a
-#                 # backwards compatibility feature. If a new shard (e.g., shard n) is introduced in the build
-#                 # system, but the tests are called with the old code, then builds will not fail because the
-#                 # code is out of date. Instead, there will be an instantly-passing shard.
-#                 mkdir -p reports/lms
-#                 emptyxunit "lms/nosetests"
-#                 ;;
-#         esac
-#         ;;
+    "lms-unit")
+        case "$SHARD" in
+            "all")
+                paver test_system -s lms --disable_capture ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.log
+                mv reports/.coverage reports/.coverage.lms
+                ;;
+            [1-9])
+                paver test_system -s lms --disable_capture --eval-attr="shard==$SHARD" ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.${SHARD}.log
+                mv reports/.coverage reports/.coverage.lms.${SHARD}
+                ;;
+            10|"noshard")
+                paver test_system -s lms --disable_capture --eval-attr="shard>=$SHARD or not shard" ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.10.log
+                mv reports/.coverage reports/.coverage.lms.10
+                ;;
+            *)
+                # If no shard is specified, rather than running all tests, create an empty xunit file. This is a
+                # backwards compatibility feature. If a new shard (e.g., shard n) is introduced in the build
+                # system, but the tests are called with the old code, then builds will not fail because the
+                # code is out of date. Instead, there will be an instantly-passing shard.
+                mkdir -p reports/lms
+                emptyxunit "lms/nosetests"
+                ;;
+        esac
+        ;;
 
-#     "cms-unit")
-#         case "$SHARD" in
-#             "all")
-#                 paver test_system -s cms --disable_capture ${PAVER_ARGS} ${PARALLEL} 2> cms-tests.log
-#                 mv reports/.coverage reports/.coverage.cms
-#                 ;;
-#             1)
-#                 paver test_system -s cms --disable_capture --eval-attr="shard==$SHARD" ${PAVER_ARGS} 2> cms-tests.${SHARD}.log
-#                 mv reports/.coverage reports/.coverage.cms.${SHARD}
-#                 ;;
-#             2|"noshard")
-#                 paver test_system -s cms --disable_capture --eval-attr="shard>=$SHARD or not shard" ${PAVER_ARGS} 2> cms-tests.2.log
-#                 mv reports/.coverage reports/.coverage.cms.2
-#                 ;;
-#             *)
-#                 # If no shard is specified, rather than running all tests, create an empty xunit file. This is a
-#                 # backwards compatibility feature. If a new shard (e.g., shard n) is introduced in the build
-#                 # system, but the tests are called with the old code, then builds will not fail because the
-#                 # code is out of date. Instead, there will be an instantly-passing shard.
-#                 mkdir -p reports/cms
-#                 emptyxunit "cms/nosetests"
-#                 ;;
-#         esac
-#         ;;
+    "cms-unit")
+        case "$SHARD" in
+            "all")
+                paver test_system -s cms --disable_capture ${PAVER_ARGS} ${PARALLEL} 2> cms-tests.log
+                mv reports/.coverage reports/.coverage.cms
+                ;;
+            1)
+                paver test_system -s cms --disable_capture --eval-attr="shard==$SHARD" ${PAVER_ARGS} 2> cms-tests.${SHARD}.log
+                mv reports/.coverage reports/.coverage.cms.${SHARD}
+                ;;
+            2|"noshard")
+                paver test_system -s cms --disable_capture --eval-attr="shard>=$SHARD or not shard" ${PAVER_ARGS} 2> cms-tests.2.log
+                mv reports/.coverage reports/.coverage.cms.2
+                ;;
+            *)
+                # If no shard is specified, rather than running all tests, create an empty xunit file. This is a
+                # backwards compatibility feature. If a new shard (e.g., shard n) is introduced in the build
+                # system, but the tests are called with the old code, then builds will not fail because the
+                # code is out of date. Instead, there will be an instantly-passing shard.
+                mkdir -p reports/cms
+                emptyxunit "cms/nosetests"
+                ;;
+        esac
+        ;;
 
-#     "commonlib-unit")
-#         case "$SHARD" in
-#             "all")
-#                 paver test_lib --disable_capture ${PAVER_ARGS} ${PARALLEL} 2> common-tests.log
-#                 mv reports/.coverage reports/.coverage.commonlib
-#                 ;;
-#             [1-2])
-#                 paver test_lib -l common/lib/xmodule --disable_capture --eval-attr="shard==$SHARD" ${PAVER_ARGS} 2> common-tests.${SHARD}.log
-#                 mv reports/.coverage reports/.coverage.commonlib.${SHARD}
-#                 ;;
-#             3|"noshard")
-#                 paver test_lib --disable_capture --eval-attr="shard>=$SHARD or not shard" ${PAVER_ARGS} 2> common-tests.3.log
-#                 mv reports/.coverage reports/.coverage.commonlib.3
-#                 ;;
-#             *)
-#                 # If no shard is specified, rather than running all tests, create an empty xunit file. This is a
-#                 # backwards compatibility feature. If a new shard (e.g., shard n) is introduced in the build
-#                 # system, but the tests are called with the old code, then builds will not fail because the
-#                 # code is out of date. Instead, there will be an instantly-passing shard.
-#                 mkdir -p reports/common
-#                 emptyxunit "common/nosetests"
-#                 ;;
-#         esac
-#         ;;
+    "commonlib-unit")
+        case "$SHARD" in
+            "all")
+                paver test_lib --disable_capture ${PAVER_ARGS} ${PARALLEL} 2> common-tests.log
+                mv reports/.coverage reports/.coverage.commonlib
+                ;;
+            [1-2])
+                paver test_lib -l common/lib/xmodule --disable_capture --eval-attr="shard==$SHARD" ${PAVER_ARGS} 2> common-tests.${SHARD}.log
+                mv reports/.coverage reports/.coverage.commonlib.${SHARD}
+                ;;
+            3|"noshard")
+                paver test_lib --disable_capture --eval-attr="shard>=$SHARD or not shard" ${PAVER_ARGS} 2> common-tests.3.log
+                mv reports/.coverage reports/.coverage.commonlib.3
+                ;;
+            *)
+                # If no shard is specified, rather than running all tests, create an empty xunit file. This is a
+                # backwards compatibility feature. If a new shard (e.g., shard n) is introduced in the build
+                # system, but the tests are called with the old code, then builds will not fail because the
+                # code is out of date. Instead, there will be an instantly-passing shard.
+                mkdir -p reports/common
+                emptyxunit "common/nosetests"
+                ;;
+        esac
+        ;;
 
-#     "philu-unit")
-#         philu_apps_list=(
-#             "openedx/features/badging/"
-#             "openedx/features/classrooms/"
-#             "openedx/features/cms/"
-#             "openedx/features/course_card/"
-#             "openedx/features/idea/"
-#             "openedx/features/job_board/"
-#             "openedx/features/marketplace/"
-#             "openedx/features/partners/"
-#             "openedx/features/philu_courseware/"
-#             "openedx/features/philu_utils/"
-#             "openedx/features/smart_referral/"
-#             "openedx/features/specializations/"
-#             "openedx/features/student_account/"
-#             "openedx/features/student_certificates/"
-#             "openedx/features/teams/"
-#             "openedx/features/user_leads/"
-#             "common/djangoapps/mailchimp_pipeline/"
-#             "common/djangoapps/nodebb/"
-#             "common/djangoapps/philu_commands/"
-#             "lms/djangoapps/onboarding/"
-#             "lms/djangoapps/philu_api/"
-#             "lms/djangoapps/philu_overrides/"
-#         )
-
-#         philu_apps_str="${philu_apps_list[@]}"
-#         paver test_system -s lms -t "${philu_apps_str}" ${PAVER_ARGS} ${PARALLEL} 2> philu-tests.log
-#         mv reports/.coverage reports/.coverage.philu
-# esac
+    "philu-unit")
+        db_name=$TEST_DB_NAME
+        db_user=$TEST_DB_USER 
+        db_host=$TEST_DB_HOST 
+        db_password=$TEST_DB_PASSWORD
+        echo $db_name
+        echo $db_user 
+        echo $db_host 
+        echo $db_password
+        
+        philu_apps_list=(
+            "openedx/features/marketplace/"
+        )
+        # paver test_system -s lms -t openedx/features/marketplace/ -v --processes=1 2> philu-tests.log
+        philu_apps_str="${philu_apps_list[@]}"
+        paver test_system -s lms -t "${philu_apps_str}" ${PAVER_ARGS} ${PARALLEL} 2> philu-tests.log
+        mv reports/.coverage reports/.coverage.philu
+esac

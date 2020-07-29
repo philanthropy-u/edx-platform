@@ -44,6 +44,7 @@ pipeline {
         timeout(120)
     }
     environment {
+        TOXENV = "test"
         XDIST_GIT_BRANCH = xdist_git_branch()
         XDIST_GIT_REFSPEC = xdist_git_refspec()
         XDIST_INSTANCE_TYPE = 'm5.large'
@@ -88,9 +89,24 @@ pipeline {
             agent { label "jenkins-worker" }
             environment {
                 TEST_SUITE = "philu-unit"
-                TOXENV = "test"
                 XDIST_NUM_WORKERS = 1
                 XDIST_REMOTE_NUM_PROCESSES = 1
+                TOXENV = "test"
+                XDIST_GIT_BRANCH = xdist_git_branch()
+                XDIST_GIT_REFSPEC = xdist_git_refspec()
+                XDIST_INSTANCE_TYPE = 'm5.large'
+                XDIST_WORKER_KEY_NAME = 'philu-jenkins-worker'
+                WTW_CONTEXT = 'python'
+                TEST_DB_NAME = 'edxtest'
+                TEST_DB_USER = 'edxtest'
+                TEST_DB_HOST = 'localhost'
+                TEST_DB_PASSWORD = credentials('TEST_DB_PASSWORD')
+                XDIST_WORKER_IAM_PROFILE_ARN = credentials('XDIST_WORKER_IAM_PROFILE_ARN')
+                XDIST_WORKER_AMI = credentials('XDIST_WORKER_AMI')
+                XDIST_WORKER_SUBNET = credentials('XDIST_WORKER_SUBNET')
+                XDIST_WORKER_SECURITY_GROUP = credentials('XDIST_WORKER_SECURITY_GROUP')
+                THEME_USER_PASSWORD = credentials('philu-theme-user-password')
+                MAILCHIMP_API_KEY = credentials('MAILCHIMP_API_KEY')
             }
             steps {
                 script {
