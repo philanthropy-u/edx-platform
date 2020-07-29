@@ -49,10 +49,10 @@ pipeline {
         XDIST_INSTANCE_TYPE = 'm5.large'
         XDIST_WORKER_KEY_NAME = 'philu-jenkins-worker'
         WTW_CONTEXT = 'python'
-        TEST_DB_NAME = 'edxtest'
-        TEST_DB_USER = 'edxtest'
-        TEST_DB_HOST = 'localhost'
-        TEST_DB_PASSWORD = credentials('TEST_DB_PASSWORD')
+        export TEST_DB_NAME = 'edxtest'
+        export TEST_DB_USER = 'edxtest'
+        export TEST_DB_HOST = 'localhost'
+        export TEST_DB_PASSWORD = 'password'
         XDIST_WORKER_IAM_PROFILE_ARN = credentials('XDIST_WORKER_IAM_PROFILE_ARN')
         XDIST_WORKER_AMI = credentials('XDIST_WORKER_AMI')
         XDIST_WORKER_SUBNET = credentials('XDIST_WORKER_SUBNET')

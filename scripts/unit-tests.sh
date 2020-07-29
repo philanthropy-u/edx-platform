@@ -129,28 +129,7 @@ case "${TEST_SUITE}" in
 
     "philu-unit")
         philu_apps_list=(
-            "openedx/features/badging/"
-            "openedx/features/classrooms/"
-            "openedx/features/cms/"
-            "openedx/features/course_card/"
-            "openedx/features/idea/"
-            "openedx/features/job_board/"
             "openedx/features/marketplace/"
-            "openedx/features/partners/"
-            "openedx/features/philu_courseware/"
-            "openedx/features/philu_utils/"
-            "openedx/features/smart_referral/"
-            "openedx/features/specializations/"
-            "openedx/features/student_account/"
-            "openedx/features/student_certificates/"
-            "openedx/features/teams/"
-            "openedx/features/user_leads/"
-            "common/djangoapps/mailchimp_pipeline/"
-            "common/djangoapps/nodebb/"
-            "common/djangoapps/philu_commands/"
-            "lms/djangoapps/onboarding/"
-            "lms/djangoapps/philu_api/"
-            "lms/djangoapps/philu_overrides/"
         )
 
         philu_apps_str="${philu_apps_list[@]}"
