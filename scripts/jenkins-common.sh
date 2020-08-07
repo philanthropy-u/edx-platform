@@ -78,12 +78,13 @@ export ANSIBLE_TIMER_LOG="test_root/log/timing.ansible.$TIMESTAMP.log"
 
 echo "This node is `curl http://169.254.169.254/latest/meta-data/hostname`"
 
-if [ -e /edx/src/philu-edx-theme/edx-platform ]; then 
-    rm -rf /edx/src/philu-edx-theme/edx-platform 
+theme_clone_path="/edx/src/philu-edx-theme/edx-platform/philu-edx-theme"
+if [ -e $theme_clone_path ]; then 
+    rm -rf $theme_clone_path 
 fi
-sudo mkdir -p /edx/src/philu-edx-theme/edx-platform;
+sudo mkdir -p $theme_clone_path;
 sudo chmod 755 -R /edx/src;
 sudo chown -R jenkins:jenkins /edx/src;
 # cd /edx/src/philu-edx-theme/edx-platform;
 # theme_git_password=$(printf "%q" $THEME_USER_PASSWORD)
-git clone https://philanthropyu:${THEME_USER_PASSWORD}@github.com/philanthropy-u/philu-edx-theme.git /edx/src/philu-edx-theme/edx-platform
+git clone https://philanthropyu:${THEME_USER_PASSWORD}@github.com/philanthropy-u/philu-edx-theme.git $theme_clone_path

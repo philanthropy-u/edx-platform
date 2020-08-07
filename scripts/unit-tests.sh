@@ -139,20 +139,17 @@ case "${TEST_SUITE}" in
         ;;
 
     "philu-unit")
-        db_name=$TEST_DB_NAME
-        db_user=$TEST_DB_USER 
-        db_host=$TEST_DB_HOST 
-        db_password=$TEST_DB_PASSWORD
-        echo $db_name
-        echo $db_user 
-        echo $db_host 
-        echo $db_password
+        echo $TEST_DB_NAME
+        echo $TEST_DB_USER 
+        echo $TEST_DB_HOST 
+        echo $TEST_DB_PASSWORD
         
         philu_apps_list=(
             "openedx/features/marketplace/"
         )
-        # paver test_system -s lms -t openedx/features/marketplace/ -v --processes=1 2> philu-tests.log
-        philu_apps_str="${philu_apps_list[@]}"
-        paver test_system -s lms -t "${philu_apps_str}" ${PAVER_ARGS} ${PARALLEL} 2> philu-tests.log
+        paver test_system -s lms -t openedx/features/marketplace/ -v --processes=1 2> philu-tests.log
+        # philu_apps_str="${philu_apps_list[@]}"
+        # paver test_system -s lms -t "${philu_apps_str}" ${PAVER_ARGS} ${PARALLEL} 2> philu-tests.log
         mv reports/.coverage reports/.coverage.philu
 esac
+-v --processes=1
