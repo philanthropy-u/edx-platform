@@ -16,7 +16,7 @@ sessions. Assumes structure:
 from django.utils.translation import ugettext_lazy
 
 from .common import *
-import json
+import copy
 import os
 from path import Path as path
 from uuid import uuid4
@@ -173,22 +173,27 @@ CONTENTSTORE = {
     }
 }
 
+TEST_DB_NAME = copy.deepcopy(os.environ.get('TEST_DB_NAME', 'edxtest'))
+TEST_DB_USER = copy.deepcopy(os.environ.get('TEST_DB_USER', 'root'))
+TEST_DB_PASSWORD = copy.deepcopy(os.environ.get('TEST_DB_PASSWORD', ''))
+TEST_DB_HOST = copy.deepcopy(os.environ.get('TEST_DB_HOST', 'edx.devstack.mysql'))
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('TEST_DB_NAME', 'edxtest'),
-        'USER': os.environ.get('TEST_DB_USER', 'root'),
-        'PASSWORD': os.environ.get('TEST_DB_PASSWORD', ''),
-        'HOST': os.environ.get('TEST_DB_HOST','edx.devstack.mysql'),
+        'NAME': TEST_DB_NAME,
+        'USER': TEST_DB_USER,
+        'PASSWORD': TEST_DB_PASSWORD,
+        'HOST': TEST_DB_HOST,
         'PORT': '3306',
         'ATOMIC_REQUESTS': True,
     },
     'student_module_history': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('TEST_DB_NAME', 'edxtest'),
-        'USER': os.environ.get('TEST_DB_USER', 'root'),
-        'PASSWORD': os.environ.get('TEST_DB_PASSWORD', ''),
-        'HOST': os.environ.get('TEST_DB_HOST','edx.devstack.mysql'),
+        'NAME': TEST_DB_NAME,
+        'USER': TEST_DB_USER,
+        'PASSWORD': TEST_DB_PASSWORD,
+        'HOST': TEST_DB_HOST,
         'PORT': '3306',
         'ATOMIC_REQUESTS': True,
     },
@@ -576,7 +581,7 @@ NODEBB_ENDPOINT = "http://local.philanthropyu.org:4567"
 # replace NODEBB_MASTER_TOKEN with value from your setup
 NODEBB_MASTER_TOKEN = 'test-master-token-nodebb'
 MANDRILL_API_KEY = 'test_mandrill_api_key_part1-part2-part3'
-MAILCHIMP_API_KEY = os.environ.get('MAILCHIMP_API_KEY')
+MAILCHIMP_API_KEY = copy.deepcopy(os.environ.get('MAILCHIMP_API_KEY'))
 MAILCHIMP_LEARNERS_LIST_ID = "test"
 CAPTCHA_SITE_KEY = 'test-key'
 FILE_UPLOAD_STORAGE_BUCKET_NAME = 'test_bucket'
