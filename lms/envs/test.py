@@ -173,10 +173,23 @@ CONTENTSTORE = {
     }
 }
 
-TEST_DB_NAME = copy.deepcopy(os.environ.get('TEST_DB_NAME', 'edxtest'))
-TEST_DB_USER = copy.deepcopy(os.environ.get('TEST_DB_USER', 'root'))
-TEST_DB_PASSWORD = copy.deepcopy(os.environ.get('TEST_DB_PASSWORD', ''))
-TEST_DB_HOST = copy.deepcopy(os.environ.get('TEST_DB_HOST', 'edx.devstack.mysql'))
+print ('$$$$$$$$$ DB SETTINGS $$$$$$$$$$')
+print (os.environ.get('TEST_DB_NAME', 'edxtest'))
+print(os.environ.get('TEST_DB_USER', 'root'))
+print(os.environ.get('TEST_DB_PASSWORD', ''))
+print(os.environ.get('TEST_DB_HOST', 'edx.devstack.mysql'))
+print ('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+
+
+# TEST_DB_NAME = 'edxtest'  # copy.deepcopy(os.environ.get('TEST_DB_NAME', 'edxtest'))
+# TEST_DB_USER = 'edxtest'  # copy.deepcopy(os.environ.get('TEST_DB_USER', 'root'))
+# TEST_DB_PASSWORD = 'password'  # copy.deepcopy(os.environ.get('TEST_DB_PASSWORD', ''))
+# TEST_DB_HOST = 'localhost'  # copy.deepcopy(os.environ.get('TEST_DB_HOST', 'edx.devstack.mysql'))
+
+TEST_DB_NAME = os.environ.get('TEST_DB_NAME', 'edxtest')
+TEST_DB_USER = os.environ.get('TEST_DB_USER', 'root')
+TEST_DB_PASSWORD = os.environ.get('TEST_DB_PASSWORD', '')
+TEST_DB_HOST = os.environ.get('TEST_DB_HOST', 'edx.devstack.mysql')
 
 DATABASES = {
     'default': {
@@ -581,7 +594,8 @@ NODEBB_ENDPOINT = "http://local.philanthropyu.org:4567"
 # replace NODEBB_MASTER_TOKEN with value from your setup
 NODEBB_MASTER_TOKEN = 'test-master-token-nodebb'
 MANDRILL_API_KEY = 'test_mandrill_api_key_part1-part2-part3'
-MAILCHIMP_API_KEY = copy.deepcopy(os.environ.get('MAILCHIMP_API_KEY'))
+# MAILCHIMP_API_KEY = copy.deepcopy(os.environ.get('MAILCHIMP_API_KEY'))
+MAILCHIMP_API_KEY = os.environ.get("MAILCHIMP_API_KEY")
 MAILCHIMP_LEARNERS_LIST_ID = "test"
 CAPTCHA_SITE_KEY = 'test-key'
 FILE_UPLOAD_STORAGE_BUCKET_NAME = 'test_bucket'

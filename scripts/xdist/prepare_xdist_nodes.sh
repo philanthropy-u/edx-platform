@@ -31,12 +31,18 @@ do
     source ../edx-venv/bin/activate;
     pip install -r requirements/edx/testing.txt; mkdir reports;
     pip install -r requirements/philu/testing.txt;
-    if [ -e /edx/src/philu-edx-theme/edx-platform ]; then rm -rf /edx/src/philu-edx-theme/edx-platform; fi;
-    sudo mkdir -p /edx/src/philu-edx-theme/edx-platform;
+    if [ -e /edx/src ]; then rm -rf /edx/src; fi;
+    sudo mkdir -p /edx/src;
     sudo chmod 755 -R /edx/src;
     sudo chown -R jenkins:jenkins /edx/src;
-    cd /edx/src/philu-edx-theme/edx-platform;
-    git clone https://philanthropyu:${theme_git_password}@github.com/philanthropy-u/philu-edx-theme.git;' & "
+    cd /edx/src;
+    git clone https://philanthropyu:${theme_git_password}@github.com/philanthropy-u/philu-edx-theme.git;
+    echo TEST_DB_NAME=$TEST_DB_NAME >> ~/.profile;
+    echo TEST_DB_USER=$TEST_DB_USER >> ~/.profile;
+    echo TEST_DB_HOST=$TEST_DB_HOST >> ~/.profile;
+    echo TEST_DB_PASSWORD=$TEST_DB_PASSWORD >> ~/.profile;
+    echo MAILCHIMP_API_KEY=$MAILCHIMP_API_KEY >> ~/.profile;
+    exit' & "
 
 
     cmd=$cmd$worker_reqs_cmd

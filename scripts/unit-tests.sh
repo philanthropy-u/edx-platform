@@ -63,7 +63,7 @@ fi
 
 case "${TEST_SUITE}" in
 
-    "lms-unit")
+    "lms-old-unit")
         case "$SHARD" in
             "all")
                 paver test_system -s lms --disable_capture ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.log
@@ -138,16 +138,12 @@ case "${TEST_SUITE}" in
         esac
         ;;
 
-    "philu-unit")
-        db_name=$TEST_DB_NAME
-        db_user=$TEST_DB_USER 
-        db_host=$TEST_DB_HOST 
-        db_password=$TEST_DB_PASSWORD
-        echo $db_name
-        echo $db_user 
-        echo $db_host 
-        echo $db_password
-        
+    "lms-unit")
+        echo $TEST_DB_NAME
+        echo $TEST_DB_USER
+        echo $TEST_DB_HOST
+        echo $TEST_DB_PASSWORD
+
         philu_apps_list=(
             "openedx/features/marketplace/"
         )

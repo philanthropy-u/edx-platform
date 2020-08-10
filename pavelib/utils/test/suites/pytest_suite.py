@@ -161,7 +161,7 @@ class SystemTestSuite(PytestSuite):
                 xdist_remote_processes = self.processes
             for ip in self.xdist_ip_addresses.split(','):
                 # The django settings runtime command does not propagate to xdist remote workers
-                django_env_var_cmd = 'export DJANGO_SETTINGS_MODULE={}' \
+                django_env_var_cmd = 'export MAILCHIMP_API_KEY=6dc59c9677b91c57cde6640592cbc404-us12; export TEST_DB_HOST=localhost; export TEST_DB_USER=edxtest; export TEST_DB_PASSWORD=password; export TEST_DB_NAME=edxtest; export DJANGO_SETTINGS_MODULE={}' \
                                      .format('{}.envs.{}'.format(self.root, self.settings))
                 xdist_string = '--tx {}*ssh="jenkins@{} -o StrictHostKeyChecking=no"' \
                                '//python="source edx-venv/bin/activate; {}; python"' \
@@ -281,9 +281,9 @@ class LibTestSuite(PytestSuite):
             for ip in self.xdist_ip_addresses.split(','):
                 # The django settings runtime command does not propagate to xdist remote workers
                 if 'pavelib/paver_tests' in self.test_id:
-                    django_env_var_cmd = "export DJANGO_SETTINGS_MODULE='lms.envs.test'"
+                    django_env_var_cmd = "export MAILCHIMP_API_KEY=6dc59c9677b91c57cde6640592cbc404-us12; export TEST_DB_HOST=localhost; export TEST_DB_USER=edxtest; export TEST_DB_PASSWORD=password; export TEST_DB_NAME=edxtest; export DJANGO_SETTINGS_MODULE='lms.envs.test'"
                 else:
-                    django_env_var_cmd = "export DJANGO_SETTINGS_MODULE='openedx.tests.settings'"
+                    django_env_var_cmd = "export MAILCHIMP_API_KEY=6dc59c9677b91c57cde6640592cbc404-us12; export TEST_DB_HOST=localhost; export TEST_DB_USER=edxtest; export TEST_DB_PASSWORD=password; export TEST_DB_NAME=edxtest; export DJANGO_SETTINGS_MODULE='openedx.tests.settings'"
                 xdist_string = '--tx {}*ssh="jenkins@{} -o StrictHostKeyChecking=no"' \
                                '//python="source edx-venv/bin/activate; {}; python"' \
                                '//chdir="edx-platform"' \
