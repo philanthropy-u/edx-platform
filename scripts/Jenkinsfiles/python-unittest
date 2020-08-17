@@ -85,7 +85,7 @@ pipeline {
                 }
             }
         }
-        stage("lms-unit") {
+        stage('lms-unit') {
             agent { label "jenkins-worker" }
             environment {
                 TEST_SUITE = "lms-unit"
