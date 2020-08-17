@@ -50,20 +50,10 @@ else
     PARALLEL="--processes=-1"
 fi
 
-# declare -a test_suites=(
-# "openedx/features/marketplace/tests.py"
-# "openedx/features/idea/tests.py"
-# )
-
-# for val in ${test_suites[@]}; do
-#     paver test_system -s lms -t $val ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.log
-# done
-# mv reports/.coverage reports/.coverage.lms
-
 
 case "${TEST_SUITE}" in
 
-    "lms-old-unit")
+    "lms-unit")
         case "$SHARD" in
             "all")
                 paver test_system -s lms --disable_capture ${PAVER_ARGS} ${PARALLEL} 2> lms-tests.log
@@ -138,7 +128,7 @@ case "${TEST_SUITE}" in
         esac
         ;;
 
-    "lms-unit")
+    "philu-unit")
         philu_apps_list=(
             "openedx/features/badging/"
             "openedx/features/classrooms/"

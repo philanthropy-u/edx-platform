@@ -47,17 +47,17 @@ class TestPaverPytestCmd(unittest.TestCase):
                     processes = 1
 
                 if pytestSubclass == "SystemTestSuite":
-                    django_env_var_cmd = "export TEST_DB_HOST=localhost; export DJANGO_SETTINGS_MODULE={}.envs.test".format(root)
+                    django_env_var_cmd = "export DJANGO_SETTINGS_MODULE={}.envs.test".format(root)
                 elif pytestSubclass == "LibTestSuite":
                     if 'pavelib/paver_tests' in test_id:
-                        django_env_var_cmd = "export TEST_DB_HOST=localhost; export DJANGO_SETTINGS_MODULE={}.envs.test".format(root)
+                        django_env_var_cmd = "export DJANGO_SETTINGS_MODULE={}.envs.test".format(root)
                     else:
-                        django_env_var_cmd = "export TEST_DB_HOST=localhost; export DJANGO_SETTINGS_MODULE='openedx.tests.settings'"
+                        django_env_var_cmd = "export DJANGO_SETTINGS_MODULE='openedx.tests.settings'"
 
-                xdist_string = '--tx {}*ssh="jenkins@{} -o StrictHostKeyChecking=no"' \
-                               '//python="source edx-venv/bin/activate; {}; python"' \
-                               '//chdir="edx-platform"' \
-                               .format(processes, ip, django_env_var_cmd)
+                xdist_string = '--tx {}*ssh="ubuntu@{} -o StrictHostKeyChecking=no"' \
+                               '//python="source /edx/app/edxapp/edxapp_env; {}; python"' \
+                               '//chdir="/edx/app/edxapp/edx-platform"'\
+                    .format(processes, ip, django_env_var_cmd)
                 expected_statement.append(xdist_string)
             for rsync_dir in Env.rsync_dirs():
                 expected_statement.append('--rsyncdir {}'.format(rsync_dir))

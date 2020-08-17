@@ -78,7 +78,7 @@ export ANSIBLE_TIMER_LOG="test_root/log/timing.ansible.$TIMESTAMP.log"
 
 echo "This node is `curl http://169.254.169.254/latest/meta-data/hostname`"
 
-theme_clone_path="/edx/src/philu-edx-theme"
+theme_clone_path='/edx/src/philu-edx-theme'
 if [ -e $theme_clone_path ]; then
     rm -rf $theme_clone_path
 fi

@@ -161,8 +161,18 @@ class SystemTestSuite(PytestSuite):
                 xdist_remote_processes = self.processes
             for ip in self.xdist_ip_addresses.split(','):
                 # The django settings runtime command does not propagate to xdist remote workers
-                django_env_var_cmd = 'export MAILCHIMP_API_KEY=6dc59c9677b91c57cde6640592cbc404-us12; export TEST_DB_HOST=localhost; export TEST_DB_USER=edxtest; export TEST_DB_PASSWORD=password; export TEST_DB_NAME=edxtest; export DJANGO_SETTINGS_MODULE={}' \
-                                     .format('{}.envs.{}'.format(self.root, self.settings))
+                custom_exports = 'export MAILCHIMP_API_KEY={MAILCHIMP_API_KEY}; export TEST_DB_HOST={TEST_DB_HOST};' \
+                                 ' export TEST_DB_USER={TEST_DB_USER}; export TEST_DB_PASSWORD={TEST_DB_PASSWORD};' \
+                                 ' export TEST_DB_NAME={TEST_DB_NAME};'\
+                    .format(
+                        MAILCHIMP_API_KEY=os.environ.get('MAILCHIMP_API_KEY'),
+                        TEST_DB_HOST=os.environ.get('TEST_DB_HOST'),
+                        TEST_DB_USER=os.environ.get('TEST_DB_USER'),
+                        TEST_DB_PASSWORD=os.environ.get('TEST_DB_PASSWORD'),
+                        TEST_DB_NAME=os.environ.get('TEST_DB_NAME'),
+                    )
+                django_env_var_cmd = '{} export DJANGO_SETTINGS_MODULE={}' \
+                                     .format(custom_exports, '{}.envs.{}'.format(self.root, self.settings))
                 xdist_string = '--tx {}*ssh="jenkins@{} -o StrictHostKeyChecking=no"' \
                                '//python="source edx-venv/bin/activate; {}; python"' \
                                '//chdir="edx-platform"' \
@@ -281,12 +291,12 @@ class LibTestSuite(PytestSuite):
             for ip in self.xdist_ip_addresses.split(','):
                 # The django settings runtime command does not propagate to xdist remote workers
                 if 'pavelib/paver_tests' in self.test_id:
-                    django_env_var_cmd = "export MAILCHIMP_API_KEY=6dc59c9677b91c57cde6640592cbc404-us12; export TEST_DB_HOST=localhost; export TEST_DB_USER=edxtest; export TEST_DB_PASSWORD=password; export TEST_DB_NAME=edxtest; export DJANGO_SETTINGS_MODULE='lms.envs.test'"
+                    django_env_var_cmd = "export DJANGO_SETTINGS_MODULE='lms.envs.test'"
                 else:
-                    django_env_var_cmd = "export MAILCHIMP_API_KEY=6dc59c9677b91c57cde6640592cbc404-us12; export TEST_DB_HOST=localhost; export TEST_DB_USER=edxtest; export TEST_DB_PASSWORD=password; export TEST_DB_NAME=edxtest; export DJANGO_SETTINGS_MODULE='openedx.tests.settings'"
-                xdist_string = '--tx {}*ssh="jenkins@{} -o StrictHostKeyChecking=no"' \
-                               '//python="source edx-venv/bin/activate; {}; python"' \
-                               '//chdir="edx-platform"' \
+                    django_env_var_cmd = "export DJANGO_SETTINGS_MODULE='openedx.tests.settings'"
+                xdist_string = '--tx {}*ssh="ubuntu@{} -o StrictHostKeyChecking=no"' \
+                               '//python="source /edx/app/edxapp/edxapp_env; {}; python"' \
+                               '//chdir="/edx/app/edxapp/edx-platform"' \
                                .format(xdist_remote_processes, ip, django_env_var_cmd)
                 cmd.append(xdist_string)
             for rsync_dir in Env.rsync_dirs():

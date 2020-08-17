@@ -44,7 +44,7 @@ pipeline {
         timeout(120)
     }
     environment {
-        TOXENV = "test"
+        TOXENV = 'test'
         XDIST_GIT_BRANCH = xdist_git_branch()
         XDIST_GIT_REFSPEC = xdist_git_refspec()
         XDIST_INSTANCE_TYPE = 'm5.large'
@@ -88,7 +88,7 @@ pipeline {
         stage('lms-unit') {
             agent { label "jenkins-worker" }
             environment {
-                TEST_SUITE = "lms-unit"
+                TEST_SUITE = 'philu-unit'
                 XDIST_NUM_WORKERS = 1
                 XDIST_REMOTE_NUM_PROCESSES = 1
                 TOXENV = "test"
@@ -180,15 +180,15 @@ pipeline {
                     build job: 'edx-platform-test-notifier', parameters: [string(name: 'PR_NUMBER', value: "${ghprbPullId}")], wait: false
                 } else {
                     // For master jobs run github-build-status and report to slack when necessary
-                    if (currentBuild.currentResult == "SUCCESS") {
-                        create_deployment = "true"
-                        build_status = "success"
-                        build_description = "Build Passed"
+                    if (currentBuild.currentResult == 'SUCCESS') {
+                        create_deployment = 'true'
+                        build_status = 'success'
+                        build_description = 'Build Passed'
                     }
                     else {
-                        create_deployment = "false"
-                        build_status = "failure"
-                        build_description = "Build Failed"
+                        create_deployment = 'false'
+                        build_status = 'failure'
+                        build_description = 'Build Failed'
                     }
 
                     commit_sha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
@@ -205,7 +205,7 @@ pipeline {
                         ],
                         propagate: false, wait: false
 
-                    if (currentBuild.currentResult != "SUCCESS"){
+                    if (currentBuild.currentResult != 'SUCCESS'){
                         //slackSend botUser: true,
                         //    message: "`${JOB_NAME}` #${BUILD_NUMBER}: ${currentBuild.currentResult} after ${currentBuild.durationString.replace(' and counting', '')}\n${BUILD_URL}"
 
@@ -220,7 +220,7 @@ pipeline {
                         }
                         emailext body: email_body,
                             subject: "Build failed in Jenkins: ${JOB_NAME} #${BUILD_NUMBER}", to: 'devops@arbisoft.com'
-                    } else if (currentBuild.currentResult == "SUCCESS" && currentBuild.previousBuild.currentResult != "SUCCESS") {
+                    } else if (currentBuild.currentResult == 'SUCCESS' && currentBuild.previousBuild.currentResult != 'SUCCESS') {
                         //slackSend botUser: true,
                         //    message: "`${JOB_NAME}` #${BUILD_NUMBER}: Back to normal after ${currentBuild.durationString.replace(' and counting', '')}\n${BUILD_URL}"
                         emailext body: "See <${BUILD_URL}>",
