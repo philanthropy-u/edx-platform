@@ -37,11 +37,6 @@ do
     sudo chown -R jenkins:jenkins /edx/src;
     cd /edx/src;
     git clone https://philanthropyu:${theme_git_password}@github.com/philanthropy-u/philu-edx-theme.git;
-    echo TEST_DB_NAME=$TEST_DB_NAME >> ~/.profile;
-    echo TEST_DB_USER=$TEST_DB_USER >> ~/.profile;
-    echo TEST_DB_HOST=$TEST_DB_HOST >> ~/.profile;
-    echo TEST_DB_PASSWORD=$TEST_DB_PASSWORD >> ~/.profile;
-    echo MAILCHIMP_API_KEY=$MAILCHIMP_API_KEY >> ~/.profile;
     exit' & "
 
 
