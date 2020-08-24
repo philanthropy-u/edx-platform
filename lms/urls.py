@@ -56,7 +56,10 @@ from nodebb.views import nodebb_embedded_topic
 from lms.djangoapps.philu_overrides.views import render_404, render_500
 from openedx.features.course_card.views import get_course_cards
 from lms.djangoapps.philu_overrides.views import course_about, course_auto_enroll
-from lms.djangoapps.philu_overrides.courseware.views.views import generate_user_cert
+from lms.djangoapps.philu_overrides.courseware.views.views import (
+    generate_user_cert,
+    enroll_in_all_specialisation_courses,
+)
 
 
 if settings.DEBUG or settings.FEATURES.get('ENABLE_DJANGO_ADMIN_SITE'):
@@ -761,6 +764,15 @@ urlpatterns += [
         ),
         generate_user_cert,
         name='generate_user_cert',
+    ),
+]
+
+# specialisation enrolment custom view
+urlpatterns += [
+    url(
+        r'^specialisation_enrollment',
+        enroll_in_all_specialisation_courses,
+        name='enroll_in_all_specialisation_courses',
     ),
 ]
 

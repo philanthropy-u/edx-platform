@@ -12,6 +12,8 @@ from openedx.core.djangoapps.site_configuration import helpers as configuration_
 from common.lib.mandrill_client.client import MandrillClient
 from lms.djangoapps.certificates.api import get_certificate_url
 from openedx.core.djangoapps.timed_notification.core import get_course_link
+from student.models import CourseEnrollment, AlreadyEnrolledError
+
 log = logging.getLogger("edx.courseware")
 
 
@@ -121,3 +123,23 @@ def get_course_related_keys(request, course):
         first_section = subsections[0].url_name if subsections else ""
 
     return first_chapter_url, first_section
+
+
+@require_POST
+def enroll_in_all_specialisation_courses(request):
+    user = request.user
+    all_course_ids = request.POST.getlist('course_ids')
+
+    for course_id in all_course_ids:
+        course = CourseKey.from_string(course_id)
+        try:
+            CourseEnrollment.enroll(user, course, check_access=True, mode='audit')
+        except AlreadyEnrolledError:
+            print(_("Student was already enrolled"))
+        except Exception as e:
+            print(e)
+            return HttpResponseBadRequest(_("Could not enroll"))
+
+        print('Enrollment successful')
+
+    return HttpResponse(status=200)
