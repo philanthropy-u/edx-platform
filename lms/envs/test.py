@@ -579,6 +579,12 @@ NODEBB_RETRY_DELAY = 60
 NODEBB_ENDPOINT = "http://local.philanthropyu.org:4567"
 # replace NODEBB_MASTER_TOKEN with value from your setup
 NODEBB_MASTER_TOKEN = 'test-master-token-nodebb'
+
+print('$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+print(os.environ.get('MANDRILL_API_KEY'))
+print(os.environ.get('MAILCHIMP_API_KEY'))
+print('$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+
 MANDRILL_API_KEY = os.environ.get('MANDRILL_API_KEY')
 MAILCHIMP_API_KEY = os.environ.get('MAILCHIMP_API_KEY')
 MAILCHIMP_LEARNERS_LIST_ID = 'test'
