@@ -4,7 +4,7 @@ from io import BytesIO
 from logging import getLogger
 
 import boto
-import img2pdf
+# import img2pdf
 import requests
 from boto.s3.key import Key
 from django.conf import settings
@@ -181,7 +181,7 @@ def get_pdf_data_by_certificate_uuid(uuid):
             raise Exception('Unable to download certificate for url {}'.format(image_url), response.status_code)
 
         certificate_image = BytesIO(response.content)
-        certificate_pdf_data = img2pdf.convert(certificate_image)
+        certificate_pdf_data = ''  # img2pdf.convert(certificate_image)
 
         return certificate_pdf_data
 
