@@ -130,7 +130,7 @@ case "${TEST_SUITE}" in
 
     "philu-unit")
         philu_apps_list=(
-            "openedx/features/assessment/"
+#            "openedx/features/assessment/"
             "openedx/features/badging/"
             "openedx/features/classrooms/"
             "openedx/features/cms/"
