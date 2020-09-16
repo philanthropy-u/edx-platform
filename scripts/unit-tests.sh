@@ -154,7 +154,7 @@ case "${TEST_SUITE}" in
             "common/djangoapps/custom_settings/"
             "common/djangoapps/mailchimp_pipeline/"
             "common/djangoapps/nodebb/"
-#            "common/djangoapps/philu_commands/"
+            "common/djangoapps/philu_commands/"
             "common/lib/discovery_client/"
             "common/lib/mandrill_client/"
             "common/lib/nodebb_client/"
