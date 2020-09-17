@@ -155,7 +155,6 @@ case "${TEST_SUITE}" in
             "common/djangoapps/mailchimp_pipeline/"
             "common/djangoapps/nodebb/"
             "common/djangoapps/philu_commands/"
-            "common/djangoapps/philu_commands/"
             "common/lib/discovery_client/"
             "common/lib/mandrill_client/"
             "common/lib/nodebb_client/"
@@ -168,6 +167,6 @@ case "${TEST_SUITE}" in
             "lms/djangoapps/student_dashboard/"
         )
         philu_apps_str="${philu_apps_list[@]}"
-        paver test_system -s lms -t "${philu_apps_str}" ${PAVER_ARGS} ${PARALLEL} 2> philu-tests.log
+        paver test_system -s lms -t "${philu_apps_str}" -v --processes=-1 2> philu-tests.log
         mv reports/.coverage reports/.coverage.philu
 esac
