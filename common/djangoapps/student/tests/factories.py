@@ -6,6 +6,7 @@ from uuid import uuid4
 import factory
 from django.contrib.auth.models import AnonymousUser, Group, Permission
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import signals
 from factory.django import DjangoModelFactory
 from opaque_keys.edx.keys import CourseKey
 from pytz import UTC
@@ -70,6 +71,7 @@ class RegistrationFactory(DjangoModelFactory):
     activation_key = uuid4().hex.decode('ascii')
 
 
+@factory.django.mute_signals(signals.pre_save, signals.post_save)
 class UserFactory(DjangoModelFactory):
     class Meta(object):
         model = User
