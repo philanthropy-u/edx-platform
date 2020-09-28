@@ -12,7 +12,7 @@ from student.models import UserStanding
 
 
 class UserSessionSharingMiddleware(object):
-    """ 
+    """
     Middleware to set jwt login token on sign in
     Used for session sharing with NodeBB community
     """
@@ -21,7 +21,7 @@ class UserSessionSharingMiddleware(object):
             if request.user.is_authenticated():
                 encoded_jwt = jwt.encode({'id': request.user.id,
                                         'username': request.user.username,
-                                        'email': request.user.email},
+                                        'email': request.user.email.lower()},
                                         'secret', algorithm='HS256')
                 response.set_cookie('token', encoded_jwt, domain=".philanthropyu.org")
             else:

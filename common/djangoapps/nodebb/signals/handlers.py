@@ -149,7 +149,7 @@ def update_user_profile_on_nodebb(sender, instance, created, **kwargs):
     if created:
         data_to_sync = {
             'edx_user_id': instance.id,
-            'email': instance.email,
+            'email': instance.email.lower(),
             'first_name': instance.first_name,
             'last_name': instance.last_name,
             'username': instance.username,
