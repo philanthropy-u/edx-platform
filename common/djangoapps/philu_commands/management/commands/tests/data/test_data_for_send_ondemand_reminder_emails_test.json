@@ -1,0 +1,133 @@
+{
+  "all_course_blocks_without_course_block_type": [
+    {
+      "blocks": {
+        "block_id_1": {
+          "block_type": "openassessment",
+          "graded": false,
+          "display_name": "ORA"
+        }
+      }
+    }
+  ],
+  "all_course_blocks_with_course_block_type_but_without_children": [
+    {
+      "blocks": {
+        "block_id_1": {
+          "block_type": "course",
+          "graded": false,
+          "display_name": "Intro to unit testing",
+          "children": []
+        }
+      }
+    }
+  ],
+  "all_course_blocks_with_course_block_type_and_with_children_but_not_graded_sequential": [
+    {
+      "blocks": {
+        "block_id_1": {
+          "block_type": "course",
+          "graded": false,
+          "display_name": "Intro to unit testing",
+          "children": ["block_id_2"]
+        },
+        "block_id_2": {
+          "block_type": "chapter",
+          "graded": false,
+          "display_name": "Unit Test",
+          "children": ["block_id_3"]
+        },
+        "block_id_3": {
+          "block_type": "sequential",
+          "graded": false,
+          "display_name": "Writing unit tests",
+          "children": ["block_id_4"]
+        },
+        "block_id_4": {
+          "block_type": "vertical",
+          "graded": false,
+          "display_name": "Mocking",
+          "children": ["block_id_5"]
+        },
+        "block_id_5": {
+          "block_type": "openassessment",
+          "graded": false,
+          "display_name": "ORA",
+          "children": []
+        }
+      }
+    }
+  ],
+  "all_course_blocks_with_graded_sequential_but_without_ORA": [
+    {
+      "blocks": {
+        "block_id_1": {
+          "block_type": "course",
+          "graded": false,
+          "display_name": "Intro to unit testing",
+          "children": ["block_id_2"]
+        },
+        "block_id_2": {
+          "block_type": "chapter",
+          "graded": false,
+          "display_name": "Unit Test",
+          "children": ["block_id_3"]
+        },
+        "block_id_3": {
+          "block_type": "sequential",
+          "graded": true,
+          "display_name": "Writing unit tests",
+          "children": ["block_id_4"]
+        },
+        "block_id_4": {
+          "block_type": "vertical",
+          "graded": false,
+          "display_name": "Mocking",
+          "children": ["block_id_5"]
+        },
+        "block_id_5": {
+          "block_type": "problem",
+          "graded": false,
+          "display_name": "Question 1",
+          "children": []
+        }
+      }
+    }
+  ],
+  "all_course_blocks_with_graded_sequential_and_with_ORA": [
+    {
+      "blocks": {
+        "block_id_1": {
+          "block_type": "course",
+          "graded": false,
+          "display_name": "Intro to unit testing",
+          "children": ["block_id_2"]
+        },
+        "block_id_2": {
+          "block_type": "chapter",
+          "graded": false,
+          "display_name": "Unit Test",
+          "children": ["block_id_3"]
+        },
+        "block_id_3": {
+          "block_type": "sequential",
+          "graded": true,
+          "display_name": "Writing unit tests",
+          "children": ["block_id_4"]
+        },
+        "block_id_4": {
+          "block_type": "vertical",
+          "graded": false,
+          "display_name": "Mocking",
+          "children": ["block_id_5"]
+        },
+        "block_id_5": {
+          "block_type": "openassessment",
+          "graded": false,
+          "display_name": "ORA",
+          "children": []
+        }
+      }
+    }
+  ]
+}
