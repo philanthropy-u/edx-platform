@@ -2,9 +2,10 @@
 Client for Sending email via mandrill
 """
 
-from django.conf import settings
 import logging
+
 import mandrill
+from django.conf import settings
 
 log = logging.getLogger(__name__)
 
@@ -49,15 +50,15 @@ class MandrillClient(object):
     def __init__(self):
         self.mandrill_client = mandrill.Mandrill(settings.MANDRILL_API_KEY)
 
-    def get_email_to(self, receiver_emails_string):
+    def get_receiver_emails(self, receiver_emails_string):
         """
-        parsing the comma separated email to a list of emails
+        Parsing the comma separated email to a list of receiver emails
 
         Arguments:
             receiver_emails_string: String contains a comma separated emails
 
         Returns:
-            receiver_emails (List): A List of receiver email
+            receiver_emails (list): A list of receiver emails
         """
         email_list = receiver_emails_string.split(',')
         receiver_emails = [{'email': email} for email in email_list]
@@ -70,20 +71,20 @@ class MandrillClient(object):
 
         arguments:
         template_name: the slug/identifier of the mandrill email template
-        user_email: the email or comma separated emails of the receiver's
+        receiver_emails_string: the email or comma separated emails of the receiver's
         context: the data which is passed to the template. must be a dict
+        attachments: list of file attachments
+        Subject: A subject  title for email
         reply_to_email:  email for reply_to
         images: images attachments for referring it from content of email template
         """
-        if images is None:
-            images = []
-        if attachments is None:
-            attachments = []
+        images = images or []
+        attachments = attachments or []
         global_merge_vars = [{'name': key, 'content': context[key]} for key in context]
 
         message = {
             'from_email': settings.NOTIFICATION_FROM_EMAIL,
-            'to': self.get_email_to(receiver_emails_string),
+            'to': self.get_receiver_emails(receiver_emails_string),
             'global_merge_vars': global_merge_vars,
             'attachments': attachments,
             'images': images,
@@ -101,9 +102,9 @@ class MandrillClient(object):
                 template_content=[],
                 message=message,
             )
-            log.info("A mandrill info:  %s", result)
+            log.info('A mandrill info:  {result}'.format(result=result))
         except mandrill.Error as e:
             # Mandrill errors are thrown as exceptions
-            log.error('A mandrill error occurred: %s - %s' % (e.__class__, e))
+            log.error('A mandrill error occurred: {eClass} - {error}'.format(eClass=e.__class__, error=e))
             raise
         return result
