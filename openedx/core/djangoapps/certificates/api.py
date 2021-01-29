@@ -96,12 +96,19 @@ def can_show_certificate_available_date_field(course):
 
 
 def _course_uses_available_date(course):
+    log.info(
+        'can_show_certificate_available_date_field={can_show_certificate_available_date_field},certificate_available_date={certificate_available_date}'.format(
+            can_show_certificate_available_date_field=can_show_certificate_available_date_field(course),
+            certificate_available_date=course.certificate_available_date))
     return can_show_certificate_available_date_field(course) and course.certificate_available_date
 
 
 def available_date_for_certificate(course, certificate):
     if _course_uses_available_date(course):
+        log.info('certificate_available_date={certificate_available_date}'.format(
+            certificate_available_date=course.certificate_available_date))
         return course.certificate_available_date
+    log.info('modified_date={modified_date}'.format(modified_date=certificate.modified_date))
     return certificate.modified_date
 
 

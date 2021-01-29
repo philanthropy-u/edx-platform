@@ -289,10 +289,13 @@ class ProgramProgressMeter(object):
         certificates_by_run = {cert.course_id: cert for cert in user_certificates}
 
         completed = {}
+        log.info('start programs iteration')
         for program in self.programs:
             available_date = self._available_date_for_program(program, certificates_by_run)
+            log.info('------ %s ------' % available_date)
             if available_date:
                 completed[program['uuid']] = available_date
+        log.info('end programs iteration')
         return completed
 
     def _available_date_for_program(self, program_data, certificates):
@@ -306,15 +309,19 @@ class ProgramProgressMeter(object):
         Returns a datetime object or None if the program is not complete.
         """
         program_available_date = None
+        log.info('start program_data iteration')
         for course in program_data['courses']:
             earliest_course_run_date = None
 
+            log.info('start course_runs iteration')
             for course_run in course['course_runs']:
                 key = CourseKey.from_string(course_run['key'])
 
+                log.info('---- %s ----' % key)
                 # Get a certificate if one exists
                 certificate = certificates.get(key)
                 if certificate is None:
+                    log.info('certificate is None')
                     continue
 
                 # Modes must match (see _is_course_complete() comments for why)
@@ -322,12 +329,24 @@ class ProgramProgressMeter(object):
                 certificate_mode = self._certificate_mode_translation(certificate.mode)
                 modes_match = course_run_mode == certificate_mode
 
+                log.info(
+                    'course_run_mode({course_run_mode}),certificate_mode({certificate_mode}),modes_match({modes_match})'.format(
+                        course_run_mode=course_run_mode, certificate_mode=certificate_mode, modes_match=modes_match))
+
                 # Grab the available date and keep it if it's the earliest one for this catalog course.
+                log.info('is user passing the course {is_passing}'.format(is_is_passing=certificate_api.is_passing_status(certificate.status)))
                 if modes_match and certificate_api.is_passing_status(certificate.status):
                     course_overview = CourseOverview.get_from_id(key)
                     available_date = available_date_for_certificate(course_overview, certificate)
+                    log.info(
+                        'available_date={available_date},earliest_course_run_date={earliest_course_run_date}'.format(
+                            available_date=available_date, earliest_course_run_date=earliest_course_run_date))
                     earliest_course_run_date = min(filter(None, [available_date, earliest_course_run_date]))
+                    log.info('earliest_course_run_date={earliest_course_run_date}'.format(
+                        earliest_course_run_date=earliest_course_run_date))
 
+            log.info('earliest_course_run_date={earliest_course_run_date}'.format(
+                earliest_course_run_date=earliest_course_run_date))
             # If we're missing a cert for a course, the program isn't completed and we should just bail now
             if earliest_course_run_date is None:
                 return None
