@@ -309,7 +309,7 @@ class ProgramProgressMeter(object):
         Returns a datetime object or None if the program is not complete.
         """
         program_available_date = None
-        log.info('start program_data iteration')
+        log.info('------- start program_data iteration -------')
         for course in program_data['courses']:
             earliest_course_run_date = None
 
@@ -344,9 +344,11 @@ class ProgramProgressMeter(object):
                     earliest_course_run_date = min(filter(None, [available_date, earliest_course_run_date]))
                     log.info('earliest_course_run_date={earliest_course_run_date}'.format(
                         earliest_course_run_date=earliest_course_run_date))
+            log.info('end course_runs iteration')
 
             log.info('earliest_course_run_date={earliest_course_run_date}'.format(
                 earliest_course_run_date=earliest_course_run_date))
+            log.info('------- end program_data iteration -------')
             # If we're missing a cert for a course, the program isn't completed and we should just bail now
             if earliest_course_run_date is None:
                 return None
