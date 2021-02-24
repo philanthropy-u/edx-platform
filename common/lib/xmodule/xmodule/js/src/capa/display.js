@@ -645,6 +645,15 @@
                 case 'submitted':
                 case 'incorrect':
                 case 'correct':
+                    console.log("Response", response);
+
+                    var selectedWindow = scormUtils.findWindow(window);
+                    if (selectedWindow) {
+                      selectedWindow.postMessage(
+                        {"action": "SET_VALUE", "element": "cmi.score.raw", "value": 20}, "*");
+                      selectedWindow.postMessage({"action": "GET_VALUE", "element": "cmi.score.raw"}, "*");
+                    }
+
                     var showGrades = $('.show-grades-el-hidden').length;
 
                     if (showGrades) {
