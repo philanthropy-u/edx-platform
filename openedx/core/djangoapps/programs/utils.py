@@ -321,7 +321,7 @@ class ProgramProgressMeter(object):
                 # Get a certificate if one exists
                 certificate = certificates.get(key)
                 if certificate is None:
-                    log.info('certificate is None')
+                    log.info('certificate is None for course {course_key}'.format(course_key=course_run['key']))
                     continue
 
                 # Modes must match (see _is_course_complete() comments for why)
@@ -334,7 +334,7 @@ class ProgramProgressMeter(object):
                         course_run_mode=course_run_mode, certificate_mode=certificate_mode, modes_match=modes_match))
 
                 # Grab the available date and keep it if it's the earliest one for this catalog course.
-                log.info('is user passing the course {is_passing}'.format(is_is_passing=certificate_api.is_passing_status(certificate.status)))
+                log.info('is user passing the course {is_passing}'.format(is_passing=certificate_api.is_passing_status(certificate.status)))
                 if modes_match and certificate_api.is_passing_status(certificate.status):
                     course_overview = CourseOverview.get_from_id(key)
                     available_date = available_date_for_certificate(course_overview, certificate)
