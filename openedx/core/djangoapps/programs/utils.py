@@ -286,7 +286,7 @@ class ProgramProgressMeter(object):
         """
         # Query for all user certs up front, for performance reasons (rather than querying per course run).
         user_certificates = GeneratedCertificate.eligible_certificates.filter(user=self.user)
-        certificates_by_run = {cert.course_id: cert for cert in user_certificates}
+        certificates_by_run = {str(cert.course_id): cert for cert in user_certificates}
 
         completed = {}
         log.info('start programs iteration')
@@ -319,7 +319,7 @@ class ProgramProgressMeter(object):
 
                 log.info('---- %s ----' % key)
                 # Get a certificate if one exists
-                certificate = certificates.get(key)
+                certificate = certificates.get(course_run['key'])
                 if certificate is None:
                     log.info('certificate is None for course {course_key}'.format(course_key=course_run['key']))
                     continue
