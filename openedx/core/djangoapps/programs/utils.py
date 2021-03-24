@@ -327,7 +327,7 @@ class ProgramProgressMeter(object):
                 # Modes must match (see _is_course_complete() comments for why)
                 course_run_mode = self._course_run_mode_translation(course_run['type'])
                 certificate_mode = self._certificate_mode_translation(certificate.mode)
-                modes_match = course_run_mode == certificate_mode
+                modes_match = True if course_run['type'] == None else course_run_mode == certificate_mode
 
                 log.info(
                     'course_run_mode({course_run_mode}),certificate_mode({certificate_mode}),modes_match({modes_match})'.format(
