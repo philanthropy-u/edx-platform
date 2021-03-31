@@ -286,7 +286,7 @@ class ProgramProgressMeter(object):
         """
         # Query for all user certs up front, for performance reasons (rather than querying per course run).
         user_certificates = GeneratedCertificate.eligible_certificates.filter(user=self.user)
-        certificates_by_run = {cert.course_id: cert for cert in user_certificates}
+        certificates_by_run = {str(cert.course_id): cert for cert in user_certificates}
 
         completed = {}
         for program in self.programs:
@@ -313,14 +313,14 @@ class ProgramProgressMeter(object):
                 key = CourseKey.from_string(course_run['key'])
 
                 # Get a certificate if one exists
-                certificate = certificates.get(key)
+                certificate = certificates.get(course_run['key'])
                 if certificate is None:
                     continue
 
                 # Modes must match (see _is_course_complete() comments for why)
                 course_run_mode = self._course_run_mode_translation(course_run['type'])
                 certificate_mode = self._certificate_mode_translation(certificate.mode)
-                modes_match = course_run_mode == certificate_mode
+                modes_match = True if course_run['type'] is None else course_run_mode == certificate_mode
 
                 # Grab the available date and keep it if it's the earliest one for this catalog course.
                 if modes_match and certificate_api.is_passing_status(certificate.status):
