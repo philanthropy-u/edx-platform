@@ -11,6 +11,7 @@ class CompetencyAssessmentRecordSerializer(serializers.ModelSerializer):
     """
     Serializer for model CompetencyAssessmentRecord
     """
+
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     def validate_problem_id(self, problem_id):
